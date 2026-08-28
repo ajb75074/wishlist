@@ -1,0 +1,15 @@
+{
+    "manifest_version": 3,
+    "name": "Wishlist",
+    "version": "0.1.0",
+    "description":  "Save products from the web to your personal wishlist.",
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content.js"]
+        }
+    ]
+}
