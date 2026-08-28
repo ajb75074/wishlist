@@ -4,7 +4,8 @@
     "version": "0.1.0",
     "permissions": [
         "activeTab",
-        "storage"
+        "storage",
+        "scripting"
     ],
     "description":  "Save products from the web to your personal wishlist.",
     "action": {
@@ -15,5 +16,8 @@
             "matches": ["<all_urls>"],
             "js": ["content.js"]
         }
+    ],
+    "host_permissions": [
+        "https://cffvawaeampdspmatxpo.supabase.co/*"
     ]
 }

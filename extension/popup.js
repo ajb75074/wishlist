@@ -1,6 +1,26 @@
 // Get the Save button
 const saveButton = document.getElementById("saveButton");
 
+const saveMessage = document.getElementById("saveMessage");
+const productContainer = document.getElementById("product");
+
+function displayProduct(product) {
+    productContainer.innerHTML = `
+        <img
+            src="${product.imageUrl}"
+            width="150"
+        >
+
+        <h2>${product.name}</h2>
+
+        <p>${product.store}</p>
+
+        <p>${product.color || ""}</p>
+
+        <p>$${product.price}</p>
+    `;
+}
+
 // When the Save button is clicked
 saveButton.addEventListener("click", async () => {
 
@@ -18,54 +38,27 @@ saveButton.addEventListener("click", async () => {
 
             console.log("Product received:", product);
 
-            if (!product) {
+            if (!product || !product.name || !product.imageUrl) {
                 console.log("No product found.");
+                saveMessage.textContent = "Product not found.";
                 return;
             }
 
-            // Get the existing wishlist
-            const result = await chrome.storage.local.get("wishlist");
+            const result = await WishlistService.saveWishlistItem(product);
 
-            console.log("Existing wishlist:", result);
+            if (result.duplicate) {
+                saveMessage.textContent = "Item already saved.";
+                return;
+            }
 
-            // If no wishlist exists yet, create an empty array
-            const wishlist = result.wishlist || [];
+            if (!result.success) {
+                saveMessage.textContent = result.savedLocally
+                    ? "Saved locally. Supabase unavailable."
+                    : "Could not save item.";
+                return;
+            }
 
-            // Add the new product
-            wishlist.push(product);
-
-            console.log("Wishlist after adding:", wishlist);
-
-            // Save the updated wishlist
-            await chrome.storage.local.set({
-                wishlist: wishlist
-            });
-
-            console.log("Wishlist saved!");
-
-            // Show the product in the popup
-            const productContainer =
-                document.getElementById("product");
-
-            productContainer.innerHTML = `
-                <img
-                    src="${product.imageUrl}"
-                    width="150"
-                >
-
-                <h2>${product.name}</h2>
-
-                <p>${product.store}</p>
-
-                <p>${product.color || ""}</p>
-
-                <p>$${product.price}</p>
-            `;
-
-            // Show save confirmation
-            const saveMessage =
-                document.getElementById("saveMessage");
-
+            displayProduct(product);
             saveMessage.textContent = "✓ Item Saved!";
         }
     );
@@ -92,30 +85,17 @@ async function loadProduct() {
 
             console.log("Product loaded:", product);
 
-            // Display product
-            const productContainer =
-                document.getElementById("product");
-
-            productContainer.innerHTML = `
-                <img
-                    src="${product.imageUrl}"
-                    width="150"
-                >
-
-                <h2>${product.name}</h2>
-
-                <p>${product.store}</p>
-
-                <p>${product.color || ""}</p>
-
-                <p>$${product.price}</p>
-            `;
+            displayProduct(product);
         }
     );
 }
 
 loadProduct();
 
-chrome.storage.local.get("wishlist").then(result => {
-    console.log("CURRENT WISHLIST:", result);
+const wishlistButton = document.getElementById("wishlistButton");
+
+wishlistButton.addEventListener("click", () => {
+    chrome.tabs.create({
+        url: chrome.runtime.getURL("wishlist/index.html")
+    });
 });
