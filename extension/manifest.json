@@ -2,6 +2,10 @@
     "manifest_version": 3,
     "name": "Wishlist",
     "version": "0.1.0",
+    "permissions": [
+        "activeTab",
+        "storage"
+    ],
     "description":  "Save products from the web to your personal wishlist.",
     "action": {
         "default_popup": "popup.html"
