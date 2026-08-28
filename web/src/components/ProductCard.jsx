@@ -1,4 +1,4 @@
-function ProductCard({ product }) {
+function ProductCard({ product, onDelete, isDeleting }) {
   return (
     <div>
       <img
@@ -18,6 +18,14 @@ function ProductCard({ product }) {
           ? `$${product.price}`
           : "Price unavailable"}
       </p>
+
+      <button
+        type="button"
+        onClick={() => onDelete(product.id)}
+        disabled={isDeleting}
+      >
+        {isDeleting ? "Deleting..." : "Delete"}
+      </button>
     </div>
   );
 }

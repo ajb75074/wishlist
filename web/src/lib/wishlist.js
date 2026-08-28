@@ -41,6 +41,8 @@ export async function deleteWishlistItem(id) {
     .eq("id", id);
 
   if (error) {
-    throw error;
+    return { success: false, error };
   }
+
+  return { success: true };
 }
