@@ -1,0 +1,288 @@
+.product-card {
+  position: relative;
+  overflow: hidden;
+
+  /* Less modern / bubbly */
+  border-radius: 5px;
+
+  background: #f5f0e8;
+}
+
+
+/* IMAGE */
+
+.product-card__visual {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.product-card__image {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transition: transform 400ms ease;
+}
+
+
+/* Small pixel heart, top right corner of every card */
+
+.product-card__favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.6));
+}
+
+
+/* HOVER OVERLAY */
+
+.product-card__overlay {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  /* Smaller padding for 4-column cards */
+  padding: 18px;
+
+  background: rgba(20, 18, 18, 0.68);
+
+  opacity: 0;
+
+  transition: opacity 180ms ease;
+}
+
+.product-card__visual:hover .product-card__overlay {
+  opacity: 1;
+}
+
+.product-card__visual:hover .product-card__image {
+  transform: scale(1.03);
+}
+
+
+/* PRODUCT DETAILS */
+
+.product-card__details {
+  width: 100%;
+
+  color: #fff;
+  text-align: center;
+}
+
+
+/* Product title */
+
+.product-card__name {
+  margin: 0 auto 8px;
+
+  max-width: 90%;
+
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.1;
+
+  text-align: center;
+}
+
+
+/* Store */
+
+.product-card__store {
+  margin: 0 0 12px;
+
+  font-family: monospace;
+  font-size: 0.58rem;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  opacity: 0.7;
+
+  text-align: center;
+}
+
+
+/* Price */
+
+.product-card__price {
+  margin: 0;
+
+  font-family: Georgia, serif;
+  font-size: 1.15rem;
+
+  text-align: center;
+}
+
+
+/* COLOR + SIZE */
+
+.product-card__meta {
+  margin-top: 16px;
+  padding-top: 14px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  text-align: left;
+}
+
+.product-card__meta > div {
+  display: grid;
+
+  /* Label on left, value on right */
+  grid-template-columns: 55px minmax(0, 1fr);
+
+  gap: 10px;
+
+  align-items: start;
+}
+
+.product-card__meta span {
+  font-family: monospace;
+  font-size: 0.58rem;
+
+  letter-spacing: 0.1em;
+
+  opacity: 0.6;
+}
+
+.product-card__meta strong {
+  font-family: monospace;
+  font-size: 0.62rem;
+
+  font-weight: normal;
+
+  /* Prevent long colors from overflowing */
+  overflow-wrap: anywhere;
+}
+
+
+/* Inline color/size inputs, styled to sit inside the metadata row */
+
+.product-card__meta-input {
+  width: 100%;
+
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+
+  padding: 0 0 2px;
+
+  color: white;
+  font-family: monospace;
+  font-size: 0.62rem;
+
+  outline: none;
+}
+
+.product-card__meta-input:focus {
+  border-bottom-color: #f17ba6;
+}
+
+
+/* EDIT/CANCEL + VIEW ITEM/SAVE */
+
+.product-card__actions {
+  display: grid;
+
+  /* Keep your original unequal button proportions */
+  grid-template-columns: 1fr 1.4fr;
+
+  gap: 6px;
+
+  margin-top: 16px;
+}
+
+.product-card__action {
+  min-height: 30px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 4px;
+
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+
+  font-family: monospace;
+  font-size: 0.52rem;
+
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+
+  text-decoration: none;
+}
+
+
+/* Secondary action: Edit / Cancel */
+
+.product-card__action--secondary {
+  background: transparent;
+
+  color: white;
+}
+
+
+/* Primary action: View Item / Save */
+
+.product-card__action--primary {
+  background: #f17ba6;
+
+  color: white;
+
+  border-color: #f17ba6;
+}
+
+.product-card__action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+
+/* Low-emphasis delete, only shown while editing */
+
+.product-card__remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+  margin: 8px auto 0;
+  padding: 0;
+
+  background: none;
+  border: none;
+
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.product-card__remove:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.product-card__remove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

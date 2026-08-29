@@ -6,6 +6,7 @@ const WishlistProductUtils = (() => {
         "mc_eid"
     ]);
 
+    // Clean up text before storing it
     function cleanText(value) {
         if (typeof value !== "string") {
             return null;
@@ -15,6 +16,7 @@ const WishlistProductUtils = (() => {
         return cleanedValue || null;
     }
 
+    // Convert price into a number
     function normalizePrice(value) {
         if (value === null || value === undefined || value === "") {
             return null;
@@ -27,6 +29,7 @@ const WishlistProductUtils = (() => {
         return Number.isFinite(numberValue) ? numberValue : null;
     }
 
+    // Remove common tracking parameters from URLs
     function normalizeUrl(value) {
         try {
             const url = new URL(value);
@@ -46,6 +49,7 @@ const WishlistProductUtils = (() => {
         }
     }
 
+    // Make sure image URLs are valid HTTP/HTTPS URLs
     function normalizeImageUrl(value) {
         const imageUrl = normalizeUrl(value);
 
@@ -53,11 +57,13 @@ const WishlistProductUtils = (() => {
             return null;
         }
 
-        return imageUrl.startsWith("http://") || imageUrl.startsWith("https://")
+        return imageUrl.startsWith("http://") ||
+            imageUrl.startsWith("https://")
             ? imageUrl
             : null;
     }
 
+    // Normalize a product before using it in the app
     function normalizeProduct(product) {
         return {
             id: product.id || null,
@@ -66,12 +72,14 @@ const WishlistProductUtils = (() => {
             currency: cleanText(product.currency)?.toUpperCase() || "USD",
             imageUrl: normalizeImageUrl(product.imageUrl),
             color: cleanText(product.color),
+            size: cleanText(product.size),
             productUrl: normalizeUrl(product.productUrl),
             store: cleanText(product.store)?.toLowerCase() || null,
             dateSaved: product.dateSaved || null
         };
     }
 
+    // Convert app field names into Supabase column names
     function productToDatabaseRow(product) {
         const normalizedProduct = normalizeProduct(product);
 
@@ -81,6 +89,7 @@ const WishlistProductUtils = (() => {
             currency: normalizedProduct.currency,
             image_url: normalizedProduct.imageUrl,
             color: normalizedProduct.color,
+            size: normalizedProduct.size,
             product_url: normalizedProduct.productUrl,
             store: normalizedProduct.store
         };

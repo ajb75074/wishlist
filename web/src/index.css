@@ -50,8 +50,22 @@
   }
 }
 
+/* Custom cursors */
+
 body {
   margin: 0;
+  cursor: url("./assets/normal.cur"), auto;
+}
+
+a,
+button {
+  cursor: url("./assets/link.cur"), pointer;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  cursor: url("./assets/Text Select.cur"), text;
 }
 
 #root {

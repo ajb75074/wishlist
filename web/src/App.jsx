@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ProductCard from "./components/ProductCard";
+import ProductGrid from "./components/ProductGrid";
 import {
   deleteWishlistItem,
   getWishlistItems,
@@ -94,16 +94,15 @@ function App() {
       {!loading && !error && products.length === 0 && (
         <p>No saved items yet.</p>
       )}
-      {!loading && !error && products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
+      {!loading && !error && products.length > 0 && (
+        <ProductGrid
+          products={products}
           onDelete={handleDelete}
-          isDeleting={deletingId === product.id}
+          deletingId={deletingId}
           onUpdate={handleUpdate}
-          isUpdating={updatingId === product.id}
+          updatingId={updatingId}
         />
-      ))}
+      )}
     </div>
   );
 }
