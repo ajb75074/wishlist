@@ -1,0 +1,301 @@
+.header {
+  position: relative;
+
+  padding: 24px 0 30px;
+
+  /* Temporary while the page background is dark */
+  color: #f5f0e8;
+
+  border-bottom: 1px solid rgba(245, 240, 232, 0.2);
+}
+/* Scattered scraps - kept above the header content so every sticker
+   stays hoverable/draggable, even where it visually overlaps text */
+.header-decor {
+  position: absolute;
+  z-index: 5;
+
+  height: auto;
+  cursor: grab;
+
+  /* Pointer drag owns positioning; keep the browser's own touch
+     scroll/zoom gestures from fighting it. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.2s ease;
+}
+
+.header-decor.is-wiggling {
+  animation: sticker-wiggle 0.35s ease;
+}
+
+.header-decor.is-dragging {
+  cursor: grabbing;
+
+  /* Dragging repositions every frame - a transform transition here
+     would make the sticker visibly lag behind the pointer. */
+  transition: none;
+}
+
+@keyframes sticker-wiggle {
+  0% {
+    transform: rotate(var(--rot, 0deg)) scale(1);
+  }
+
+  25% {
+    transform: rotate(calc(var(--rot, 0deg) - 8deg)) scale(1.08);
+  }
+
+  50% {
+    transform: rotate(calc(var(--rot, 0deg) + 8deg)) scale(1.1);
+  }
+
+  75% {
+    transform: rotate(calc(var(--rot, 0deg) - 4deg)) scale(1.05);
+  }
+
+  100% {
+    transform: rotate(var(--rot, 0deg)) scale(1);
+  }
+}
+
+/* Shopping bags — closest to title, upper-left of sticker area */
+.header-decor--bags {
+  --rot: 16deg;
+
+  top: 14%;
+  left: 49%;
+
+  width: 38px;
+}
+
+.header-decor--stem {
+  --rot: -11deg;
+
+  top: 44%;
+  left: 63%;
+
+  width: 29px;
+}
+
+.header-decor--planet {
+  --rot: 7deg;
+
+  top: 25%;
+  left: 72%;
+
+  width: 45px;
+}
+
+.header-decor--pin {
+  --rot: -20deg;
+
+  top: 11%;
+  right: 6%;
+
+  width: 27px;
+}
+
+.header-decor--flower {
+  --rot: 13deg;
+
+  bottom: 9%;
+  left: 67%;
+
+  width: 33px;
+}
+
+.header-decor--bag {
+  --rot: -8deg;
+
+  bottom: 23%;
+  right: 11%;
+
+  width: 37px;
+}
+
+
+/* Keep real header content above decorations */
+
+.header-top,
+.header-title,
+.header-bottom {
+  position: relative;
+  z-index: 2;
+}
+
+.header-title {
+  position: relative;
+
+  margin-top: 22px;
+  text-align: left;
+}
+
+/* Shrinks to the rendered width of "Wishlist" so the tape can anchor
+   to its real right edge instead of guessing a % of the whole header */
+.header-title-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.header-title h1 {
+  margin: -8px 0 0;
+
+  color: #f5f0e8;
+
+  font-family: Georgia, serif;
+  font-size: clamp(4.5rem, 9vw, 8rem);
+  font-weight: 400;
+  line-height: 0.85;
+  letter-spacing: -0.06em;
+}
+
+.header-title p {
+  margin: 16px 0 0;
+
+  color: #f5f0e8;
+
+  font-family: monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+/* Taken out of flow so it can't push the title down or grow the header.
+   Only its bottom edge dips onto the title, like a small taped-on label. */
+.header-note {
+  position: absolute;
+  z-index: 2;
+
+  top: -18px;
+  right: -20%;
+
+  /* Sized as a % of the word's own box (see .header-title-wrap) so it
+     always lands on the text instead of a fixed px width overshooting
+     a shorter word on smaller screens. */
+  width: 42%;
+  max-width: 190px;
+  height: auto;
+
+  transform: rotate(-4deg);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  color: #f5f0e8;
+
+  font-family: monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.header-status {
+  color: #f5f0e8;
+}
+
+/* Taken out of the header-top flex row so its image can't stretch
+   that row's height; positioned as its own small widget instead. */
+.header-loader {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+
+  color: #f5f0e8;
+}
+
+.header-loader img {
+  display: block;
+  width: 30px;
+  max-width: 16vw;
+  height: auto;
+}
+
+.loader-label {
+  animation: glow 1.8s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    text-shadow: 0 0 2px rgba(241, 123, 166, 0.4);
+  }
+  50% {
+    text-shadow:
+      0 0 8px rgba(241, 123, 166, 0.9),
+      0 0 14px rgba(241, 123, 166, 0.5);
+  }
+}
+
+.header-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 24px;
+}
+
+.header-nav button {
+  padding: 8px 14px;
+
+  border: 0;
+  background: transparent;
+
+  color: #f5f0e8;
+
+  font-family: monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.header-nav .active {
+  background: #f3b3cc;
+  color: #171313;
+}
+
+.header-search {
+  width: 260px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 8px 10px;
+
+
+  color: #f5f0e8;
+}
+
+.header-search input {
+  flex: 1;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  color: #f5f0e8;
+
+  font-family: monospace;
+  font-size: 0.7rem;
+}
+
+.header-search input::placeholder {
+  color: rgba(245, 240, 232, 0.6);
+}
+
+.header-search span {
+  color: #f5f0e8;
+}
+
+
