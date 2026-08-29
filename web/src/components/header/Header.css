@@ -32,7 +32,7 @@
 }
 
 .header-decor.is-dragging {
-  cursor: grabbing;
+  cursor: url("../../assets/move.cur"), grabbing;
 
   /* Dragging repositions every frame - a transform transition here
      would make the sticker visibly lag behind the pointer. */
@@ -255,8 +255,6 @@
   font-family: monospace;
   font-size: 0.68rem;
   text-transform: uppercase;
-
-  cursor: pointer;
 }
 
 .header-nav .active {

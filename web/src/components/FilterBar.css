@@ -1,18 +1,25 @@
-/* 3 columns: two equal spacers (for true centering) + the button.
-   The controls sit in the middle column so they stay centered
-   regardless of the button's width, on the same row as the button. */
+/* The button is pinned via absolute position - fixed to the same
+   spot whether or not .filter-bar__controls exists, so it can never
+   shift when the filters are opened/closed. min-height reserves its
+   space even when controls is hidden and the row would otherwise
+   collapse. */
 .filter-bar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 16px;
+  position: relative;
 
-  margin: 20px 0;
+  min-height: 30px;
+
+  margin: 22px 0 20px;
+
+  overflow-x: auto;
 }
 
 .filter-bar__toggle {
-  grid-column: 3;
-  justify-self: end;
+  position: absolute;
+  top: 50%;
+  right: 0;
+
+  transform: translateY(-50%) rotate(0deg);
+  transition: transform 0.2s ease;
 
   display: flex;
   align-items: center;
@@ -27,8 +34,10 @@
   background: transparent;
 
   color: var(--text-h);
+}
 
-  cursor: pointer;
+.filter-bar__toggle--open {
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .filter-bar__toggle:hover,
@@ -38,15 +47,21 @@
 }
 
 .filter-bar__controls {
-  grid-column: 2;
+  width: 100%;
+  /* Room for the button (30px) + gap, so centered controls never
+     sit underneath it */
+  padding-right: 46px;
 
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  align-items: center;
   gap: 16px;
 }
 
 .filter-bar__controls label {
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   gap: 6px;

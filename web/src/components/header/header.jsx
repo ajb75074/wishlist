@@ -1,5 +1,5 @@
 import "./Header.css";
-import Sticker from "./Sticker";
+import Sticker from "./sticker";
 
 function Header({ searchTerm, onSearchChange }) {
   return (

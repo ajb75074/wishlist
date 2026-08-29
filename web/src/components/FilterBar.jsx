@@ -36,7 +36,7 @@ function FilterBar({
     <div className="filter-bar">
       <button
         type="button"
-        className="filter-bar__toggle"
+        className={`filter-bar__toggle ${isOpen ? "filter-bar__toggle--open" : ""}`}
         onClick={() => setIsOpen((open) => !open)}
         aria-label={isOpen ? "Hide filters" : "Show filters"}
         title={isOpen ? "Hide filters" : "Show filters"}
