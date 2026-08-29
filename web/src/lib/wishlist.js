@@ -67,3 +67,5 @@ export async function deleteWishlistItem(id) {
 
   return { success: true };
 }
+
+
