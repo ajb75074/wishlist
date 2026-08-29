@@ -34,6 +34,27 @@ export async function saveWishlistItem(product) {
   return { success: true, product: databaseRowToProduct(data) };
 }
 
+// Only these fields are user-editable. Anything else passed in `updates` is ignored.
+export async function updateWishlistItem(id, updates) {
+  const row = {
+    color: updates.color || null,
+    size: updates.size || null,
+  };
+
+  const { data, error } = await supabase
+    .from(WISHLIST_TABLE)
+    .update(row)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error };
+  }
+
+  return { success: true, product: databaseRowToProduct(data) };
+}
+
 export async function deleteWishlistItem(id) {
   const { error } = await supabase
     .from(WISHLIST_TABLE)

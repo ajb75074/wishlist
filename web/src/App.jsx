@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./components/ProductCard";
-import { deleteWishlistItem, getWishlistItems } from "./lib/wishlist";
+import {
+  deleteWishlistItem,
+  getWishlistItems,
+  updateWishlistItem,
+} from "./lib/wishlist";
 
 function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
     async function loadWishlist() {
@@ -53,6 +58,33 @@ function App() {
     }
   }
 
+  async function handleUpdate(id, updates) {
+    setError(null);
+    setUpdatingId(id);
+
+    try {
+      const result = await updateWishlistItem(id, updates);
+
+      if (!result.success) {
+        setError("Could not save your changes.");
+        return { success: false };
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.map((product) =>
+          product.id === id ? result.product : product,
+        ),
+      );
+
+      return { success: true };
+    } catch {
+      setError("Could not save your changes.");
+      return { success: false };
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <div>
       <h1>Wishlist</h1>
@@ -68,6 +100,8 @@ function App() {
           product={product}
           onDelete={handleDelete}
           isDeleting={deletingId === product.id}
+          onUpdate={handleUpdate}
+          isUpdating={updatingId === product.id}
         />
       ))}
     </div>

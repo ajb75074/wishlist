@@ -6,6 +6,7 @@ export function databaseRowToProduct(row) {
     currency: row.currency,
     imageUrl: row.image_url,
     color: row.color,
+    size: row.size,
     productUrl: row.product_url,
     store: row.store,
     dateSaved: row.date_saved,
@@ -19,6 +20,7 @@ export function productToDatabaseRow(product) {
     currency: product.currency,
     image_url: product.imageUrl,
     color: product.color,
+    size: product.size,
     product_url: product.productUrl,
     store: product.store,
   };
