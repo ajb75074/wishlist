@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interactive Cutout Prototype</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>Interactive Cutout Prototype</h1>
+  <p class="hint">
+    Upload a retailer photo, then left-click the product you want (include) and
+    right-click anything that shouldn't be included (exclude). The mask updates
+    after every click.
+  </p>
+
+  <div class="toolbar">
+    <input type="file" id="file-input" accept="image/*" disabled />
+    <button id="undo-btn" disabled>Undo last point</button>
+    <button id="clear-btn" disabled>Clear selection</button>
+    <button id="export-btn" disabled>Export transparent PNG</button>
+  </div>
+
+  <p id="status">Loading model...</p>
+
+  <div class="canvas-wrap">
+    <canvas id="image-canvas"></canvas>
+  </div>
+
+  <div class="preview-wrap" id="preview-wrap" hidden>
+    <h2>Cutout preview</h2>
+    <canvas id="preview-canvas"></canvas>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
