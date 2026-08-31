@@ -5,6 +5,7 @@ import SelectModeBar from "../../components/SelectModeBar";
 import ActionTray from "../../components/ActionTray";
 import CreateLookModal from "./CreateLookModal";
 import LookCard from "./LookCard";
+import LookDetailView from "./LookDetailView";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
 import { createLook, getLooksForCollection } from "./looks";
 import "./CollectionDetailView.css";
@@ -35,6 +36,7 @@ function CollectionDetailView({
   const [looks, setLooks] = useState([]);
   const [isLooksLoading, setIsLooksLoading] = useState(true);
   const [isCreateLookModalOpen, setIsCreateLookModalOpen] = useState(false);
+  const [selectedLook, setSelectedLook] = useState(null);
 
   // Switching to a different collection (e.g. via the Sidebar, without
   // ever unmounting this view) shouldn't carry over select state from
@@ -48,6 +50,7 @@ function CollectionDetailView({
     setRemoveError("");
     setSuccessMessage("");
     setActiveTab("pieces");
+    setSelectedLook(null);
   }
 
   useEffect(() => {
@@ -199,6 +202,19 @@ function CollectionDetailView({
     }
   }
 
+  // A Look's own detail replaces this whole view (same drill-down
+  // pattern App.jsx uses for CollectionsView -> CollectionDetailView),
+  // rather than nesting inside the Pieces/Looks tabs.
+  if (selectedLook) {
+    return (
+      <LookDetailView
+        look={selectedLook}
+        collectionName={collection.name}
+        onBack={() => setSelectedLook(null)}
+      />
+    );
+  }
+
   return (
     <div className="collection-detail">
       <button
@@ -331,7 +347,11 @@ function CollectionDetailView({
 
               <div className="looks-grid">
                 {looks.map((look) => (
-                  <LookCard key={look.id} look={look} />
+                  <LookCard
+                    key={look.id}
+                    look={look}
+                    onClick={() => setSelectedLook(look)}
+                  />
                 ))}
               </div>
             </>

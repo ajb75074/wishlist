@@ -34,15 +34,11 @@ function LookCollage({ pieces }) {
   );
 }
 
-// No onClick yet - Look Detail doesn't exist. A plain button still gives
-// real keyboard focus and hover affordance without a dead link or a
-// fake destination, same "leave the handler off" approach the Looks
-// empty state's create button used before its modal existed.
-function LookCard({ look }) {
+function LookCard({ look, onClick }) {
   const pieceCount = look.wishitems.length;
 
   return (
-    <button type="button" className="look-card">
+    <button type="button" className="look-card" onClick={onClick}>
       <LookCollage pieces={look.wishitems} />
 
       <div className="look-card__meta">
