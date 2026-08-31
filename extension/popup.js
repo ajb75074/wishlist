@@ -24,8 +24,6 @@ function displayProduct(product) {
 // When the Save button is clicked
 saveButton.addEventListener("click", async () => {
 
-    console.log("Save button clicked!");
-
     const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true
@@ -36,10 +34,7 @@ saveButton.addEventListener("click", async () => {
         { action: "extractProduct" },
         async (product) => {
 
-            console.log("Product received:", product);
-
             if (!product || !product.name || !product.imageUrl) {
-                console.log("No product found.");
                 saveMessage.textContent = "Product not found.";
                 return;
             }
@@ -77,14 +72,7 @@ async function loadProduct() {
         tab.id,
         { action: "extractProduct" },
         (product) => {
-
-            if (!product) {
-                console.log("No product found.");
-                return;
-            }
-
-            console.log("Product loaded:", product);
-
+            if (!product) return;
             displayProduct(product);
         }
     );

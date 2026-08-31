@@ -225,12 +225,7 @@ function extractProduct() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === "extractProduct") {
-
-        const product = extractProduct();
-
-        console.log("Normalized product:", product);
-
-        sendResponse(product);
+        sendResponse(extractProduct());
     }
 
     return true;

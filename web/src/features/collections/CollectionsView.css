@@ -1,0 +1,233 @@
+/* Fixed column counts (not auto-fit/minmax) on purpose: with only a
+   couple of collections, auto-fit stretches those 1fr cards to fill
+   the whole row, so card size kept changing based on how many
+   collections existed. A fixed 3-column grid keeps every card the
+   same size regardless of count - more collections just wrap to a new
+   row instead of resizing existing ones. */
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .collections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .collections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.collection-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+
+  text-align: center;
+  cursor: pointer;
+
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Restrained per design intent - the jewel frame already carries the
+   personality, so hover just needs to confirm interactivity. */
+.collection-card:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.05);
+}
+
+/* The framed photo area. aspect-ratio matches border.png's own native
+   218:172 (reduced to 109:86) so stretching the frame image to
+   width/height: 100% is a uniform scale, never a skew/distortion,
+   regardless of how wide the responsive grid column ends up. */
+.collection-card__visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 109 / 86;
+}
+
+/* CollectionThumbnail's own span - sized purely by this class (no size
+   prop passed) since the visual is now a responsive percentage of the
+   card, not a fixed pixel thumbnail. Inset ~8% keeps the photo/color
+   clear of border.png's decorative ring (verified against the actual
+   asset: its jewels/stars sit within roughly the outer 5-10% on each
+   edge) without needing to fully avoid it - the frame renders above
+   the photo regardless, so it's never actually "covered". */
+.collection-card__image {
+  position: absolute;
+  inset: 8%;
+  width: 84%;
+  height: 84%;
+
+  border-radius: 6px;
+}
+
+.collection-card__frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  width: 100%;
+  height: 100%;
+
+  /* Decorative only - never intercepts the card button's own click. */
+  pointer-events: none;
+}
+
+/* Wraps the card button + its hover-only delete button as siblings,
+   avoiding a button nested inside a button. */
+.collection-card-wrapper {
+  position: relative;
+}
+
+/* Sits level with the name row at the bottom of the card (not the
+   thumbnail), so it reads as a title-row action instead of overlapping
+   the image. */
+.collection-card__delete {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  padding: 0;
+
+  border: none;
+  border-radius: 4px;
+  background: rgba(20, 18, 18, 0.65);
+
+  color: #fff;
+
+  opacity: 0;
+
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.collection-card-wrapper:hover .collection-card__delete,
+.collection-card__delete:focus-visible {
+  opacity: 1;
+}
+
+.collection-card__delete:hover {
+  background: #f17ba6;
+  transform: scale(1.08);
+}
+
+.collection-card__name {
+  width: 100%;
+  box-sizing: border-box;
+  /* Reserves room for the delete icon sitting at the same bottom-right
+     corner, so a long name wraps before reaching it instead of running
+     underneath. */
+  padding-right: 28px;
+
+  font-family: monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: #f5f0e8;
+
+  overflow-wrap: anywhere;
+}
+
+.collection-card--new .collection-card__name {
+  padding-right: 0;
+}
+
+/* Distinct from real collection cards - thin dashed pink outline
+   instead of the jewel frame, so it reads as "create something new"
+   rather than an existing decorated collection. aspect-ratio (instead
+   of a fixed min-height) keeps its footprint scaling with the same
+   responsive grid column width real cards use. */
+.collection-card--new {
+  align-items: center;
+  justify-content: center;
+
+  aspect-ratio: 6 / 5;
+
+  border: 1px dashed rgba(241, 123, 166, 0.5);
+  border-radius: 8px;
+  background: transparent;
+
+  text-align: center;
+
+  transition: transform 0.2s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.collection-card--new:hover {
+  transform: translateY(-3px);
+  background: rgba(241, 123, 166, 0.08);
+  border-color: #f17ba6;
+}
+
+.collection-card--new__plus {
+  font-family: Georgia, serif;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #f17ba6;
+}
+
+.collection-card--new .collection-card__name {
+  color: #f17ba6;
+}
+
+.collections-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  padding: 32px 0;
+}
+
+.collections-empty__title {
+  margin: 0;
+
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  color: #f5f0e8;
+}
+
+.collections-empty__subtitle {
+  margin: 0 0 10px;
+
+  font-family: monospace;
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
+
+.collections-empty button {
+  padding: 8px 16px;
+
+  border: 1px solid #f17ba6;
+  border-radius: 4px;
+  background: #f17ba6;
+
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  cursor: pointer;
+}

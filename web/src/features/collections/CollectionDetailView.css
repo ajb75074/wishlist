@@ -1,0 +1,101 @@
+.collection-detail__back {
+  margin-bottom: 18px;
+
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+
+  color: var(--text);
+  font-family: monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+
+  cursor: pointer;
+
+  transition: color 0.15s ease;
+}
+
+.collection-detail__back:hover {
+  color: #f5f0e8;
+}
+
+.collection-detail__heading {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  margin-bottom: 28px;
+}
+
+.collection-detail__thumbnail {
+  border-radius: 50%;
+}
+
+.collection-detail__heading h2 {
+  margin: 0 0 4px;
+
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 1.3rem;
+  text-transform: lowercase;
+  color: #f5f0e8;
+}
+
+.collection-detail__heading p {
+  margin: 0;
+
+  font-family: monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  opacity: 0.65;
+}
+
+.collection-detail__status {
+  font-family: monospace;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.collection-detail__status--error {
+  color: #f17ba6;
+  opacity: 1;
+}
+
+/* Same pink success-banner treatment as CollectionSavePopover's
+   "added to X ♡" message, reused here for "removed from X ♡". */
+.collection-detail__success {
+  margin: 0 0 16px;
+  padding: 6px 8px;
+
+  background: rgba(241, 123, 166, 0.15);
+  border-radius: 4px;
+
+  color: #f3a6c0;
+  font-family: monospace;
+  font-size: 0.68rem;
+}
+
+.collection-detail__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  padding: 24px 0;
+}
+
+.collection-detail__empty-title {
+  margin: 0;
+
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  color: #f5f0e8;
+}
+
+.collection-detail__empty-subtitle {
+  margin: 0;
+
+  font-family: monospace;
+  font-size: 0.72rem;
+  opacity: 0.65;
+}

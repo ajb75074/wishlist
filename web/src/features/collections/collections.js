@@ -1,8 +1,19 @@
-import { databaseRowToProduct } from "./productUtils";
-import { supabase } from "./supabase";
+import { databaseRowToProduct } from "../../lib/productUtils";
+import { supabase } from "../../lib/supabase";
 
 const COLLECTIONS_TABLE = "collections";
 const COLLECTION_ITEMS_TABLE = "collection_items";
+
+// Keeps snake_case (image_url) out of the UI - components only ever see imageUrl.
+function databaseRowToCollection(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    imageUrl: row.image_url,
+    color: row.color,
+    createdAt: row.created_at,
+  };
+}
 
 // Returns every collection, newest first.
 export async function getCollections() {
@@ -15,7 +26,7 @@ export async function getCollections() {
     throw error;
   }
 
-  return data;
+  return data.map(databaseRowToCollection);
 }
 
 // Returns one collection by id, or null if it doesn't exist.
@@ -30,11 +41,13 @@ export async function getCollectionById(collectionId) {
     throw error;
   }
 
-  return data;
+  return data ? databaseRowToCollection(data) : null;
 }
 
 // Creates a new collection. Throws if the name is blank after trimming.
-export async function createCollection(name) {
+// image_url is optional; color always gets a value (the DB column also
+// has its own default, so this is belt-and-suspenders, not the only guard).
+export async function createCollection({ name, imageUrl, color }) {
   const trimmedName = name.trim();
 
   if (!trimmedName) {
@@ -43,7 +56,11 @@ export async function createCollection(name) {
 
   const { data, error } = await supabase
     .from(COLLECTIONS_TABLE)
-    .insert({ name: trimmedName })
+    .insert({
+      name: trimmedName,
+      image_url: imageUrl?.trim() || null,
+      color: color || undefined,
+    })
     .select()
     .single();
 
@@ -51,7 +68,7 @@ export async function createCollection(name) {
     throw error;
   }
 
-  return data;
+  return databaseRowToCollection(data);
 }
 
 // Renames an existing collection. Throws if the new name is blank after trimming.
@@ -73,7 +90,7 @@ export async function renameCollection(collectionId, name) {
     throw error;
   }
 
-  return data;
+  return databaseRowToCollection(data);
 }
 
 // Deletes a collection. The database's ON DELETE CASCADE removes its
@@ -160,5 +177,6 @@ export async function getCollectionsForItem(wishitemId) {
 
   return data
     .map((row) => row.collections)
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(databaseRowToCollection);
 }

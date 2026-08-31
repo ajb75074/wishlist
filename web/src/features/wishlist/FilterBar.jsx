@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CATEGORIES } from "../lib/categorize";
-import { basicColor } from "../lib/basicColor";
+import { CATEGORIES } from "../../lib/categorize";
+import { basicColor } from "../../lib/basicColor";
 import "./FilterBar.css";
 
 // Three decreasing bars - the standard "filter" glyph.

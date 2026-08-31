@@ -1,0 +1,149 @@
+/* Container base/typography/buttons now live in ../modal.css - this
+   file only holds what's specific to this modal's form. */
+.create-collection-modal {
+  width: 360px;
+}
+
+.create-collection-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+/* The shared title's own bottom margin isn't needed here - the header
+   row already provides the space below it. */
+.create-collection-modal__header .modal__title {
+  margin: 0;
+}
+
+.create-collection-modal__close {
+  border: 0;
+  background: transparent;
+
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+
+  padding: 2px 6px;
+
+  cursor: pointer;
+}
+
+.create-collection-modal__close:hover {
+  opacity: 0.7;
+}
+
+.create-collection-modal__label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: rgba(245, 240, 232, 0.8);
+}
+
+.create-collection-modal input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 10px 12px;
+
+  background: transparent;
+  border: 1px solid rgba(245, 240, 232, 0.25);
+  border-radius: 8px;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+
+.create-collection-modal input::placeholder {
+  color: rgba(245, 240, 232, 0.35);
+}
+
+.create-collection-modal input:focus {
+  outline: none;
+  border-color: #f17ba6;
+}
+
+.create-collection-modal__thumbnail-section {
+  margin-top: 22px;
+}
+
+/* Lighter, more editorial than a settings-style segmented pill - the
+   selected cover type is just a pink underline. */
+.cover-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+
+  margin: 6px 0 14px;
+
+  border-bottom: 1px solid rgba(245, 240, 232, 0.12);
+}
+
+.cover-toggle button {
+  position: relative;
+
+  padding: 4px 2px 10px;
+
+  border: 0;
+  background: transparent;
+
+  color: rgba(245, 240, 232, 0.55);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+
+  cursor: pointer;
+
+  transition: color 0.15s ease;
+}
+
+.cover-toggle button:hover {
+  color: rgba(245, 240, 232, 0.8);
+}
+
+.cover-toggle button.active {
+  color: #f5f0e8;
+}
+
+.cover-toggle button.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+
+  height: 2px;
+  background: #f17ba6;
+}
+
+.color-palette {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+
+  margin: 8px 0 4px;
+}
+
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+
+  border: 2px solid transparent;
+  border-radius: 6px;
+
+  cursor: pointer;
+}
+
+.color-swatch.active {
+  border-color: #f5f0e8;
+}
+
+.create-collection-modal .modal__actions {
+  justify-content: center;
+}

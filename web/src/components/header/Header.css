@@ -119,7 +119,6 @@
 
 /* Keep real header content above decorations */
 
-.header-top,
 .header-title,
 .header-bottom {
   position: relative;
@@ -181,85 +180,13 @@
   transform: rotate(-4deg);
 }
 
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  color: #f5f0e8;
-
-  font-family: monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-}
-
-.header-status {
-  color: #f5f0e8;
-}
-
-/* Taken out of the header-top flex row so its image can't stretch
-   that row's height; positioned as its own small widget instead. */
-.header-loader {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  right: 0;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-
-  color: #f5f0e8;
-}
-
-.header-loader img {
-  display: block;
-  width: 30px;
-  max-width: 16vw;
-  height: auto;
-}
-
-.loader-label {
-  animation: glow 1.8s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%,
-  100% {
-    text-shadow: 0 0 2px rgba(241, 123, 166, 0.4);
-  }
-  50% {
-    text-shadow:
-      0 0 8px rgba(241, 123, 166, 0.9),
-      0 0 14px rgba(241, 123, 166, 0.5);
-  }
-}
-
+/* Only the search box lives here now - nav moved to the Sidebar */
 .header-bottom {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 
   margin-top: 24px;
-}
-
-.header-nav button {
-  padding: 8px 14px;
-
-  border: 0;
-  background: transparent;
-
-  color: #f5f0e8;
-
-  font-family: monospace;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-}
-
-.header-nav .active {
-  background: #f3b3cc;
-  color: #171313;
 }
 
 .header-search {

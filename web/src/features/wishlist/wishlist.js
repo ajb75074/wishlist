@@ -1,5 +1,5 @@
-import { databaseRowToProduct, productToDatabaseRow } from "./productUtils";
-import { supabase } from "./supabase";
+import { databaseRowToProduct, productToDatabaseRow } from "../../lib/productUtils";
+import { supabase } from "../../lib/supabase";
 
 const WISHLIST_TABLE = "wishitems";
 

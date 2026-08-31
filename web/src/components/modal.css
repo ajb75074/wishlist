@@ -1,0 +1,116 @@
+/* Shared visual language for the app's confirmation/creation modals -
+   a calm, editorial "task" surface that's intentionally quieter than
+   the scrapbook/jewel-frame personality of the page behind it. Each
+   modal's own CSS file only needs its width and any content-specific
+   layout (form controls, toggles, etc.); this file owns the backdrop,
+   container base, typography scale, and buttons so the three modals
+   read as one system instead of three hand-copied ones. */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(10, 9, 9, 0.6);
+}
+
+.modal {
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
+
+  padding: 28px;
+
+  background: #1c191a;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+  color: #f5f0e8;
+  text-align: center;
+}
+
+/* Serif carries the emotional weight - titles/questions only, nothing
+   else in the modal competes with it. */
+.modal__title {
+  margin: 0 0 10px;
+
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.35;
+  /* Explicit, not inherited from .modal - a bare global `h2` rule
+     elsewhere would otherwise win (direct rules beat inherited ones)
+     and tie this to the visitor's OS light/dark preference instead of
+     this app's fixed dark theme. */
+  color: #f5f0e8;
+
+  overflow-wrap: anywhere;
+}
+
+/* Everything else is clean sans-serif - reusing the app's own --sans
+   stack (index.css) rather than introducing another display font. */
+.modal__body {
+  margin: 0;
+
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  line-height: 1.55;
+
+  color: rgba(245, 240, 232, 0.65);
+}
+
+.modal__error {
+  margin: 12px 0 0;
+
+  font-family: var(--sans);
+  font-size: 0.78rem;
+
+  color: #f17ba6;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.modal__button {
+  padding: 10px 18px;
+
+  border: 1px solid rgba(245, 240, 232, 0.22);
+  border-radius: 8px;
+  background: transparent;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.modal__button:hover:not(:disabled) {
+  border-color: rgba(245, 240, 232, 0.4);
+}
+
+.modal__button--primary {
+  background: #f17ba6;
+  border-color: #f17ba6;
+  color: #fff;
+}
+
+.modal__button--primary:hover:not(:disabled) {
+  background: #ee6a9b;
+  border-color: #ee6a9b;
+}
+
+.modal__button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -1,0 +1,72 @@
+/* Row shared by both features that use SelectModeBar - All Saves (with
+   FilterBar alongside it) and Collection Detail (on its own). */
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin: 22px 0 20px;
+}
+
+/* Icon-only, sized to match FilterBar's own toggle button (30x30) so
+   the toolbar row's controls stay visually aligned. */
+.select-mode-bar__enter {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+
+  color: var(--text-h);
+
+  cursor: pointer;
+
+  transition: border-color 0.15s ease;
+}
+
+.select-mode-bar__enter:hover {
+  border-color: #f17ba6;
+}
+
+.select-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.select-mode-bar__cancel {
+  padding: 6px 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+
+  color: var(--text-h);
+  font-family: var(--mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.select-mode-bar__cancel:hover {
+  border-color: #f17ba6;
+}
+
+.select-mode-bar__count {
+  font-family: var(--mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  color: #f3a6c0;
+}

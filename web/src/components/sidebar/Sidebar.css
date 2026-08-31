@@ -1,0 +1,160 @@
+/* Pinned to the viewport so it stays put while the main content
+   scrolls, instead of scrolling away with the rest of the page. */
+.sidebar {
+  position: sticky;
+  top: 0;
+
+  width: 220px;
+  height: 100vh;
+  flex-shrink: 0;
+  overflow-y: auto;
+
+  padding: 24px 18px;
+
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Shared button reset only - typography/color/padding are set per
+   section below so nav, collection rows, and the new-collection
+   sticker can each have their own scale without fighting each other. */
+.sidebar-nav button,
+.sidebar-collections button {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* NAV - tight group, small editorial/utility type */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sidebar-nav button {
+  padding: 6px 10px;
+  border-radius: 2px;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+
+  transition: color 0.15s ease;
+}
+
+.sidebar-nav button:hover {
+  color: #f5f0e8;
+}
+
+/* Imperfect paper-highlight, not a rounded dashboard pill */
+.sidebar-nav button.active {
+  background: #f3a6c0;
+  color: #17171d;
+  border-radius: 2px;
+  transform: rotate(-1deg);
+}
+
+.sidebar-divider {
+  height: 1px;
+
+  margin: 18px 0;
+
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-collections {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+
+.sidebar-label {
+  margin: 0 0 8px;
+
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+
+  color: #f5f0e8;
+  opacity: 0.9;
+}
+
+/* Collection rows - tight list, consistent casing regardless of how
+   each name was typed, flex row so a thumbnail can slot in before the
+   text later without restructuring. */
+.sidebar-collection-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 2px;
+
+  font-size: 13px;
+  text-transform: lowercase;
+  color: var(--text);
+
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-collection-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f0e8;
+}
+
+/* Subtle - distinct from the pink nav active state so "Collections is
+   the active section" and "this is the open collection" don't compete. */
+.sidebar-collection-item.active {
+  background: rgba(255, 255, 255, 0.09);
+  color: #f5f0e8;
+}
+
+/* Playful scrapbook sticker - pulled off the functional grid: centered,
+   tilted, and given a bigger gap above to read as its own moment
+   rather than another list row. */
+button.sidebar-new-collection {
+  align-self: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 26px;
+  padding: 4px;
+
+  text-align: center;
+
+  transform: rotate(-3deg);
+  transition: transform 0.2s ease, opacity 0.15s ease;
+}
+
+/* Hovering/clicking anywhere on the button - image or text - triggers
+   the same feedback together, since they're both inside it. */
+.sidebar-new-collection:hover,
+.sidebar-new-collection:focus-visible {
+  opacity: 0.85;
+  transform: rotate(-1deg) translateY(-3px) scale(1.04);
+}
+
+.sidebar-new-collection__label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #f5f0e8;
+}
+
+.sidebar-new-collection__image {
+  width: 120px;
+  height: auto;
+}

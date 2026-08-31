@@ -1,0 +1,193 @@
+/* Lightweight floating picker, not a modal - no dimmed backdrop.
+   z-index sits above ProductCard content but below CreateCollectionModal's
+   backdrop (z-index: 50), so opening "+ create collection" from here
+   correctly layers the modal on top rather than behind. */
+.collection-save-popover {
+  position: fixed;
+  z-index: 40;
+
+  display: flex;
+  flex-direction: column;
+  /* Caps the whole popover - at roughly 5+ collections the list below
+     scrolls internally (overflow-y: auto) instead of the popover
+     itself growing arbitrarily tall. */
+  max-height: 340px;
+
+  padding: 16px;
+
+  background: #1c191a;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+  color: #f5f0e8;
+}
+
+.collection-save-popover__title {
+  margin: 0 0 10px;
+
+  font-family: Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.collection-save-popover__search {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+
+  margin-bottom: 8px;
+  padding: 8px 10px;
+
+  background: transparent;
+  border: 1px solid rgba(245, 240, 232, 0.25);
+  border-radius: 8px;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+}
+
+.collection-save-popover__search::placeholder {
+  color: rgba(245, 240, 232, 0.35);
+}
+
+.collection-save-popover__search:focus {
+  outline: none;
+  border-color: #f17ba6;
+}
+
+.collection-save-popover__success {
+  flex-shrink: 0;
+
+  margin: 0 0 8px;
+  padding: 6px 8px;
+
+  background: rgba(241, 123, 166, 0.15);
+  border-radius: 6px;
+
+  color: #f3a6c0;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+}
+
+.collection-save-popover__error {
+  flex-shrink: 0;
+
+  margin: 0 0 8px;
+
+  color: #f17ba6;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+}
+
+.collection-save-popover__status {
+  margin: 4px 0;
+
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: rgba(245, 240, 232, 0.6);
+}
+
+.collection-save-popover__empty {
+  margin: 4px 0 8px;
+
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: rgba(245, 240, 232, 0.7);
+}
+
+/* The only flexible child - shrinks to fit within the popover's own
+   max-height and scrolls internally, rather than growing the popover
+   past it (min-height: 0 is required for a flex child to shrink/scroll
+   instead of forcing its parent taller). */
+.collection-save-popover__list {
+  flex: 1;
+  min-height: 0;
+
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+
+  overflow-y: auto;
+}
+
+.collection-save-popover__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 6px 4px;
+
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.collection-save-popover__row:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.collection-save-popover__row:disabled {
+  cursor: default;
+}
+
+.collection-save-popover__row-name {
+  flex: 1;
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-transform: lowercase;
+}
+
+.collection-save-popover__badge {
+  flex-shrink: 0;
+
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: rgba(245, 240, 232, 0.6);
+}
+
+.collection-save-popover__no-matches {
+  padding: 6px 4px;
+
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: rgba(245, 240, 232, 0.55);
+}
+
+.collection-save-popover__create {
+  flex-shrink: 0;
+
+  border: 1px dashed rgba(241, 123, 166, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  padding: 8px 10px;
+
+  color: #f3a6c0;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.collection-save-popover__create:hover {
+  background: rgba(241, 123, 166, 0.08);
+  border-color: #f17ba6;
+}

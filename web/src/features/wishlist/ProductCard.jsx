@@ -1,21 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./ProductCard.css";
 
-// Pixel-style trash icon for the low-emphasis "remove" action.
-// fill uses currentColor so CSS controls its color/hover state.
-function TrashIcon() {
+// Simple blocky plus, matching FilterBar's rect-based icon style.
+function AddToCollectionIcon() {
   return (
-    <svg viewBox="0 0 32 32" width="14" height="14" aria-hidden="true">
-      <path d="m25.905 8.38 0 16.76 1.53 0 0 -16.76 3.04 0 0 -1.52 -1.52 0 0 -1.53 -6.1 0 0 -3.05 -1.52 0 0 3.05 -10.67 0 0 -3.05 -1.52 0 0 3.05 -6.09 0 0 1.53 -1.53 0 0 1.52 3.05 0 0 16.76 1.52 0 0 -16.76 19.81 0z" fill="currentColor" />
-      <path d="M24.385 25.14h1.52v4.57h-1.52Z" fill="currentColor" />
-      <path d="M7.625 29.71h16.76v1.53H7.625Z" fill="currentColor" />
-      <path d="M21.335 11.43h1.52v12.19h-1.52Z" fill="currentColor" />
-      <path d="M19.815 23.62h1.52v3.04h-1.52Z" fill="currentColor" />
-      <path d="M15.245 11.43h1.52v15.23h-1.52Z" fill="currentColor" />
-      <path d="M10.665 0.76h10.67v1.52h-10.67Z" fill="currentColor" />
-      <path d="M10.665 23.62h1.53v3.04h-1.53Z" fill="currentColor" />
-      <path d="M9.145 11.43h1.52v12.19h-1.52Z" fill="currentColor" />
-      <path d="M6.095 25.14h1.53v4.57h-1.53Z" fill="currentColor" />
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+      <rect x="7" y="1" width="2" height="14" fill="currentColor" />
+      <rect x="1" y="7" width="14" height="2" fill="currentColor" />
     </svg>
   );
 }
@@ -36,10 +27,14 @@ function HeartIcon() {
 
 function ProductCard({
   product,
-  onDelete,
-  isDeleting,
   onUpdate,
   isUpdating,
+  context = "all",
+  onAddToCollection,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
+  startEditSignal,
 }) {
   // Controls whether the overlay is showing inputs instead of text
   const [isEditing, setIsEditing] = useState(false);
@@ -48,15 +43,30 @@ function ProductCard({
   const [colorInput, setColorInput] = useState("");
   const [sizeInput, setSizeInput] = useState("");
 
-  // Focus the color input the moment editing opens
+  // Focus the color input whenever editing begins, from either trigger
+  // below - a real DOM side effect, so this belongs in an effect.
   const colorInputRef = useRef(null);
+  useEffect(() => {
+    if (isEditing) {
+      requestAnimationFrame(() => colorInputRef.current?.focus());
+    }
+  }, [isEditing]);
 
-  // Open inline editing with current values
-  function startEditing() {
+  // Lets App.jsx's "edit" action-tray button (Select Mode, exactly one
+  // item selected) open THIS card's existing edit mode, without lifting
+  // isEditing out of the card. startEditSignal changes to a new,
+  // distinct value each time the tray button is clicked - even for the
+  // same product twice in a row - so this keeps re-triggering correctly.
+  // Handled during render (React's sanctioned way to react to a prop
+  // change without an effect) rather than in a useEffect, since calling
+  // setState synchronously inside an effect body is the exact pattern
+  // React's own lint rule flags as a cascading-render risk.
+  const [lastEditSignal, setLastEditSignal] = useState(startEditSignal);
+  if (startEditSignal && startEditSignal !== lastEditSignal) {
+    setLastEditSignal(startEditSignal);
     setColorInput(product.color || "");
     setSizeInput(product.size || "");
     setIsEditing(true);
-    requestAnimationFrame(() => colorInputRef.current?.focus());
   }
 
   // Close inline editing without saving
@@ -78,7 +88,7 @@ function ProductCard({
 
   return (
     <article className="product-card">
-      <div className="product-card__visual">
+      <div className={`product-card__visual ${isEditing ? "is-editing" : ""}`}>
         {/* Product image */}
         <img
           className="product-card__image"
@@ -86,10 +96,25 @@ function ProductCard({
           alt={product.name}
         />
 
-        {/* Decorative for now, no favorite behavior yet */}
+        {/* Decorative for now, no favorite behavior yet - moved to the
+            top-left so it doesn't collide with the save button below */}
         <span className="product-card__favorite">
           <HeartIcon />
         </span>
+
+        {/* Browse Mode only - hidden while editing or selecting so it
+            never competes with those other actions */}
+        {context === "all" && !isEditing && !isSelectMode && (
+          <button
+            type="button"
+            className="product-card__save"
+            onClick={(event) => onAddToCollection(product, event.currentTarget)}
+            aria-label="Add to collection"
+            title="Add to collection"
+          >
+            <AddToCollectionIcon />
+          </button>
+        )}
 
         {/* Product information shown on hover */}
         <div className="product-card__overlay">
@@ -170,41 +195,34 @@ function ProductCard({
                 </button>
               </>
             ) : (
-              <>
-                <button
-                  type="button"
-                  className="product-card__action product-card__action--secondary"
-                  onClick={startEditing}
-                >
-                  Edit
-                </button>
-
-                <a
-                  className="product-card__action product-card__action--primary"
-                  href={product.productUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View Item ↗
-                </a>
-              </>
+              // Browse Mode only shows View Item - editing now only
+              // happens via the Select Mode action tray's "edit".
+              <a
+                className="product-card__action product-card__action--primary product-card__action--full"
+                href={product.productUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View Item ↗
+              </a>
             )}
           </div>
-
-          {/* Delete only surfaces while editing, kept low-emphasis */}
-          {isEditing && (
-            <button
-              type="button"
-              className="product-card__remove"
-              onClick={() => onDelete(product.id)}
-              disabled={isDeleting || isUpdating}
-              aria-label={isDeleting ? "Removing item" : "Remove item"}
-              title={isDeleting ? "Removing item" : "Remove item"}
-            >
-              <TrashIcon />
-            </button>
-          )}
         </div>
+
+        {/* Select Mode - a transparent layer on top of everything else
+            in the card, so a click toggles selection instead of
+            reaching View Item/Edit/+ collection underneath it. */}
+        {isSelectMode && (
+          <button
+            type="button"
+            className={`product-card__select-layer ${isSelected ? "is-selected" : ""}`}
+            onClick={() => onToggleSelect(product.id)}
+            aria-pressed={isSelected}
+            aria-label={isSelected ? `Deselect ${product.name}` : `Select ${product.name}`}
+          >
+            {isSelected && <span className="product-card__select-mark">✓</span>}
+          </button>
+        )}
       </div>
     </article>
   );

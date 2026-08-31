@@ -18,11 +18,13 @@ const CATEGORY_KEYWORDS = {
     "loafers", "mule", "mules", "slipper", "slippers", "pump", "pumps",
   ],
   Bags: [
-    "bag", "purse", "tote", "clutch", "backpack", "handbag", "satchel",
+    "bag", "purse", "tote", "clutch", "backpack", "handbag", "satchel", "crossbody",
+    "shoulder bag", "duffel", "briefcase", "fanny pack", "belt bag",
   ],
   Accessories: [
     "necklace", "earring", "earrings", "bracelet", "ring", "belt", "hat",
-    "scarf", "sunglasses", "watch", "glove", "gloves",
+    "scarf", "sunglasses", "watch", "glove", "gloves", "hair clip", "hair clips", 
+    "headband", "beanie", "cap", "visor", "glasses", "wallet", "keychain", "brooch", "cufflink", "tie", "bowtie",
   ],
 };
 

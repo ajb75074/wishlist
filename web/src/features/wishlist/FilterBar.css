@@ -5,10 +5,10 @@
    collapse. */
 .filter-bar {
   position: relative;
+  flex: 1;
+  min-width: 0;
 
   min-height: 30px;
-
-  margin: 22px 0 20px;
 
   overflow-x: auto;
 }
