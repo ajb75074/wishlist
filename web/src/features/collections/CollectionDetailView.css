@@ -173,6 +173,40 @@
   color: rgba(245, 240, 232, 0.65);
 }
 
+/* Deliberately plain - a placeholder list, not the eventual Look card
+   grid, which is a later stage. */
+.collection-detail__looks-list {
+  margin: 0 0 20px;
+  padding: 0;
+
+  list-style: none;
+}
+
+.collection-detail__looks-list-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 0;
+
+  border-bottom: 1px solid rgba(245, 240, 232, 0.12);
+}
+
+.collection-detail__looks-list-name {
+  font-family: Georgia, serif;
+  font-size: 0.98rem;
+  color: #f5f0e8;
+}
+
+.collection-detail__looks-list-count {
+  flex-shrink: 0;
+
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: rgba(245, 240, 232, 0.55);
+}
+
 .collection-detail__create-look {
   margin-top: 14px;
   padding: 10px 18px;

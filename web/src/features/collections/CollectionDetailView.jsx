@@ -3,7 +3,9 @@ import CollectionThumbnail from "./CollectionThumbnail";
 import ProductGrid from "../wishlist/ProductGrid";
 import SelectModeBar from "../../components/SelectModeBar";
 import ActionTray from "../../components/ActionTray";
+import CreateLookModal from "./CreateLookModal";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
+import { createLook, getLooksForCollection } from "./looks";
 import "./CollectionDetailView.css";
 
 // Owns its own fetched product list (separate from the global wishlist
@@ -29,6 +31,9 @@ function CollectionDetailView({
   // Pieces/Looks is local view state, not navigation - App.jsx never
   // needs to know which one is showing.
   const [activeTab, setActiveTab] = useState("pieces");
+  const [looks, setLooks] = useState([]);
+  const [isLooksLoading, setIsLooksLoading] = useState(true);
+  const [isCreateLookModalOpen, setIsCreateLookModalOpen] = useState(false);
 
   // Switching to a different collection (e.g. via the Sidebar, without
   // ever unmounting this view) shouldn't carry over select state from
@@ -80,6 +85,33 @@ function CollectionDetailView({
     };
   }, [collection.id]);
 
+  useEffect(() => {
+    let isCurrent = true;
+
+    async function loadLooks() {
+      setIsLooksLoading(true);
+
+      try {
+        const items = await getLooksForCollection(collection.id);
+        if (isCurrent) {
+          setLooks(items);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isCurrent) {
+          setIsLooksLoading(false);
+        }
+      }
+    }
+
+    loadLooks();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [collection.id]);
+
   // Same idea for edits: the real update still goes through App.jsx's
   // existing handler; this just mirrors the result into the local copy.
   async function handleUpdate(id, updates) {
@@ -92,6 +124,19 @@ function CollectionDetailView({
     }
 
     return result;
+  }
+
+  // Presentation + form state lives in CreateLookModal - this just makes
+  // the actual Supabase call and mirrors the result into local state,
+  // same division of responsibility as handleCreateCollection.
+  async function handleCreateLook(name, wishitemIds) {
+    try {
+      const look = await createLook(collection.id, name, wishitemIds);
+      setLooks((current) => [look, ...current]);
+      return { success: true };
+    } catch {
+      return { success: false, error: "Could not create this look. Please try again." };
+    }
   }
 
   function handleEnterSelectMode() {
@@ -264,18 +309,61 @@ function CollectionDetailView({
       )}
 
       {activeTab === "looks" && (
-        <div className="collection-detail__looks-empty">
-          <p className="collection-detail__looks-heart">♡</p>
-          <p className="collection-detail__looks-title">no looks planned yet</p>
-          <p className="collection-detail__looks-subtitle">
-            start putting together outfits
-            <br />
-            for {collection.name}
-          </p>
-          <button type="button" className="collection-detail__create-look">
-            + create a look
-          </button>
+        <div className="collection-detail__looks">
+          {isLooksLoading && (
+            <p className="collection-detail__status">Loading...</p>
+          )}
+
+          {!isLooksLoading && looks.length > 0 && (
+            <>
+              <ul className="collection-detail__looks-list">
+                {looks.map((look) => (
+                  <li key={look.id} className="collection-detail__looks-list-item">
+                    <span className="collection-detail__looks-list-name">{look.name}</span>
+                    <span className="collection-detail__looks-list-count">
+                      {look.wishitems.length} {look.wishitems.length === 1 ? "piece" : "pieces"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                type="button"
+                className="collection-detail__create-look"
+                onClick={() => setIsCreateLookModalOpen(true)}
+              >
+                + create a look
+              </button>
+            </>
+          )}
+
+          {!isLooksLoading && looks.length === 0 && (
+            <div className="collection-detail__looks-empty">
+              <p className="collection-detail__looks-heart">♡</p>
+              <p className="collection-detail__looks-title">no looks planned yet</p>
+              <p className="collection-detail__looks-subtitle">
+                start putting together outfits
+                <br />
+                for {collection.name}
+              </p>
+              <button
+                type="button"
+                className="collection-detail__create-look"
+                onClick={() => setIsCreateLookModalOpen(true)}
+              >
+                + create a look
+              </button>
+            </div>
+          )}
         </div>
+      )}
+
+      {isCreateLookModalOpen && (
+        <CreateLookModal
+          pieces={products}
+          onClose={() => setIsCreateLookModalOpen(false)}
+          onCreate={handleCreateLook}
+        />
       )}
     </div>
   );
