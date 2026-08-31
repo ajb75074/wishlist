@@ -291,17 +291,42 @@
 }
 
 
-/* ACTIONS + PIECES LIST - secondary to the bed above */
+/* LAYOUT - bed canvas on the left, a secondary pieces panel on the
+   right. Falls back to a single column on narrow viewports. */
+.look-detail__layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 28px;
+  align-items: start;
 
-.look-detail__actions-row {
+  margin-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .look-detail__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.look-detail__panel {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 14px;
+}
 
-  max-width: 640px;
-  margin: 20px auto 0;
+.look-detail__panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.look-detail__pieces-label {
+  margin: 0;
+
+  color: rgba(245, 240, 232, 0.65);
+  font-family: var(--sans);
+  font-size: 0.78rem;
 }
 
 .look-detail__count {
@@ -310,6 +335,22 @@
   color: rgba(245, 240, 232, 0.6);
   font-family: var(--sans);
   font-size: 0.78rem;
+}
+
+.look-detail__panel-empty {
+  margin: 0;
+
+  color: rgba(245, 240, 232, 0.5);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+}
+
+.look-detail__panel-error {
+  margin: 0;
+
+  color: #f17ba6;
+  font-family: var(--sans);
+  font-size: 0.74rem;
 }
 
 .look-detail__button {
@@ -337,19 +378,6 @@
   outline-offset: 2px;
 }
 
-.look-detail__pieces-section {
-  max-width: 640px;
-  margin: 32px auto 0;
-}
-
-.look-detail__pieces-label {
-  margin: 0 0 12px;
-
-  color: rgba(245, 240, 232, 0.65);
-  font-family: var(--sans);
-  font-size: 0.78rem;
-}
-
 .look-detail__pieces-list {
   display: flex;
   flex-wrap: wrap;
@@ -357,6 +385,7 @@
 }
 
 .look-detail__piece-thumb {
+  position: relative;
   overflow: hidden;
 
   width: 64px;
@@ -373,6 +402,48 @@
   height: 100%;
 
   object-fit: cover;
+}
+
+/* Always visible, not hover-only - has to work on touch and with
+   keyboard navigation, not just a mouse hovering the thumbnail. */
+.look-detail__piece-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 18px;
+  height: 18px;
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 18, 18, 0.72);
+
+  color: #f5f0e8;
+  font-size: 0.7rem;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.look-detail__piece-remove:hover:not(:disabled) {
+  background: #f17ba6;
+}
+
+.look-detail__piece-remove:focus-visible {
+  outline: 2px solid #f17ba6;
+  outline-offset: 2px;
+}
+
+.look-detail__piece-remove:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .look-detail__edit {

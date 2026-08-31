@@ -1,3 +1,5 @@
+import { useState } from "react";
+import AddPiecesModal from "./AddPiecesModal";
 import "./LookDetailView.css";
 
 // Detail preview caps at more pieces than LookCard's compact collage
@@ -69,11 +71,34 @@ function LookBed({ pieces }) {
   );
 }
 
-// "+ add pieces" and "edit look ♡" are shells only - no onClick, same
-// "leave the handler off" approach used before Create Look had a modal
-// to open. Wiring them up is planned work for a later stage, not this one.
-function LookDetailView({ look, collectionName, onBack }) {
+// "edit look ♡" stays a shell only - no onClick yet, same "leave the
+// handler off" approach used before Create Look had a modal to open.
+// Add/remove pieces are real now; arrangement editing is still later work.
+function LookDetailView({
+  look,
+  collectionName,
+  onBack,
+  collectionPieces,
+  onAddPieces,
+  onRemovePiece,
+}) {
+  const [isAddPiecesModalOpen, setIsAddPiecesModalOpen] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
+  const [removeError, setRemoveError] = useState("");
   const pieceCount = look.wishitems.length;
+
+  async function handleRemoveClick(piece) {
+    setRemoveError("");
+    setRemovingId(piece.id);
+
+    const result = await onRemovePiece(piece.id);
+
+    if (!result.success) {
+      setRemoveError(result.error);
+    }
+
+    setRemovingId(null);
+  }
 
   return (
     <div className="look-detail">
@@ -83,35 +108,67 @@ function LookDetailView({ look, collectionName, onBack }) {
 
       <h2 className="look-detail__title">{look.name} ♡</h2>
 
-      <LookBed pieces={look.wishitems} />
-
-      <div className="look-detail__actions-row">
-        <p className="look-detail__count">
-          {pieceCount} {pieceCount === 1 ? "piece" : "pieces"}
-        </p>
-
-        <button type="button" className="look-detail__button">
-          + add pieces
-        </button>
-      </div>
-
-      {pieceCount > 0 && (
-        <div className="look-detail__pieces-section">
-          <p className="look-detail__pieces-label">pieces in this look</p>
-
-          <div className="look-detail__pieces-list">
-            {look.wishitems.map((piece) => (
-              <div key={piece.id} className="look-detail__piece-thumb">
-                <img src={piece.imageUrl} alt={piece.name} />
-              </div>
-            ))}
-          </div>
+      <div className="look-detail__layout">
+        <div className="look-detail__canvas">
+          <LookBed pieces={look.wishitems} />
         </div>
-      )}
+
+        {/* Secondary to the bed - compact thumbnails, not ProductCards. */}
+        <div className="look-detail__panel">
+          <div className="look-detail__panel-header">
+            <p className="look-detail__pieces-label">pieces in this look</p>
+            <p className="look-detail__count">
+              {pieceCount} {pieceCount === 1 ? "piece" : "pieces"}
+            </p>
+          </div>
+
+          {removeError && <p className="look-detail__panel-error">{removeError}</p>}
+
+          {pieceCount > 0 ? (
+            <div className="look-detail__pieces-list">
+              {look.wishitems.map((piece) => (
+                <div key={piece.id} className="look-detail__piece-thumb">
+                  <img src={piece.imageUrl} alt={piece.name} />
+
+                  <button
+                    type="button"
+                    className="look-detail__piece-remove"
+                    onClick={() => handleRemoveClick(piece)}
+                    disabled={removingId === piece.id}
+                    aria-label={`Remove ${piece.name} from look`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="look-detail__panel-empty">no pieces in this look yet ♡</p>
+          )}
+
+          <button
+            type="button"
+            className="look-detail__button look-detail__add-pieces"
+            onClick={() => setIsAddPiecesModalOpen(true)}
+          >
+            + add pieces ♡
+          </button>
+        </div>
+      </div>
 
       <button type="button" className="look-detail__button look-detail__edit">
         edit look ♡
       </button>
+
+      {isAddPiecesModalOpen && (
+        <AddPiecesModal
+          collectionName={collectionName}
+          collectionPieces={collectionPieces}
+          existingWishitemIds={new Set(look.wishitems.map((piece) => piece.id))}
+          onClose={() => setIsAddPiecesModalOpen(false)}
+          onAdd={onAddPieces}
+        />
+      )}
     </div>
   );
 }

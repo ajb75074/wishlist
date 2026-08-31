@@ -94,6 +94,47 @@ export async function createLook(collectionId, name, wishitemIds = []) {
   return getLookById(look.id);
 }
 
+// Adds wishitems to an existing Look and returns the refreshed Look -
+// same "return the fresh row via getLookById" approach createLook uses,
+// so callers always get the real post-write shape back.
+export async function addItemsToLook(lookId, wishitemIds) {
+  if (wishitemIds.length === 0) {
+    return getLookById(lookId);
+  }
+
+  const { error } = await supabase
+    .from(LOOK_ITEMS_TABLE)
+    .insert(
+      wishitemIds.map((wishitemId) => ({
+        look_id: lookId,
+        wishitem_id: wishitemId,
+      })),
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  return getLookById(lookId);
+}
+
+// Removes one wishitem from a Look. Only deletes the look_items
+// relationship - the wishitem row itself (and its membership in the
+// parent Collection or any other Look) is untouched.
+export async function removeItemFromLook(lookId, wishitemId) {
+  const { error } = await supabase
+    .from(LOOK_ITEMS_TABLE)
+    .delete()
+    .eq("look_id", lookId)
+    .eq("wishitem_id", wishitemId);
+
+  if (error) {
+    throw error;
+  }
+
+  return getLookById(lookId);
+}
+
 // Deletes a Look. The database's ON DELETE CASCADE removes its
 // look_items rows automatically - the wishitems themselves are a
 // separate table and are never touched.

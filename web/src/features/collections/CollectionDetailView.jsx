@@ -7,7 +7,7 @@ import CreateLookModal from "./CreateLookModal";
 import LookCard from "./LookCard";
 import LookDetailView from "./LookDetailView";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
-import { createLook, getLooksForCollection } from "./looks";
+import { addItemsToLook, createLook, getLooksForCollection, removeItemFromLook } from "./looks";
 import "./CollectionDetailView.css";
 
 // Owns its own fetched product list (separate from the global wishlist
@@ -143,6 +143,35 @@ function CollectionDetailView({
     }
   }
 
+  // Both mirror the fresh Look (with its updated wishitems) returned by
+  // the service call into `looks` and `selectedLook` together, so the
+  // grid card and the open Detail view can never disagree.
+  async function handleAddPiecesToLook(wishitemIds) {
+    try {
+      const updatedLook = await addItemsToLook(selectedLook.id, wishitemIds);
+      setSelectedLook(updatedLook);
+      setLooks((current) =>
+        current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
+      );
+      return { success: true };
+    } catch {
+      return { success: false, error: "Could not add those pieces. Please try again." };
+    }
+  }
+
+  async function handleRemovePieceFromLook(wishitemId) {
+    try {
+      const updatedLook = await removeItemFromLook(selectedLook.id, wishitemId);
+      setSelectedLook(updatedLook);
+      setLooks((current) =>
+        current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
+      );
+      return { success: true };
+    } catch {
+      return { success: false, error: "Could not remove that piece. Please try again." };
+    }
+  }
+
   function handleEnterSelectMode() {
     setIsSelectMode(true);
     setSelectedProductIds(new Set());
@@ -211,6 +240,9 @@ function CollectionDetailView({
         look={selectedLook}
         collectionName={collection.name}
         onBack={() => setSelectedLook(null)}
+        collectionPieces={products}
+        onAddPieces={handleAddPiecesToLook}
+        onRemovePiece={handleRemovePieceFromLook}
       />
     );
   }
