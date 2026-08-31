@@ -25,13 +25,6 @@ function Sidebar({
         >
           Collections
         </button>
-
-        <button
-          className={activeView === "outfits" ? "active" : ""}
-          onClick={() => onViewChange("outfits")}
-        >
-          Outfits
-        </button>
       </nav>
 
       <div className="sidebar-divider" />

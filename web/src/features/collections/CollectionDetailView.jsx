@@ -26,6 +26,9 @@ function CollectionDetailView({
   const [removeError, setRemoveError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const successTimeoutRef = useRef(null);
+  // Pieces/Looks is local view state, not navigation - App.jsx never
+  // needs to know which one is showing.
+  const [activeTab, setActiveTab] = useState("pieces");
 
   // Switching to a different collection (e.g. via the Sidebar, without
   // ever unmounting this view) shouldn't carry over select state from
@@ -38,6 +41,7 @@ function CollectionDetailView({
     setSelectedProductIds(new Set());
     setRemoveError("");
     setSuccessMessage("");
+    setActiveTab("pieces");
   }
 
   useEffect(() => {
@@ -173,69 +177,105 @@ function CollectionDetailView({
         </div>
       </div>
 
-      {loading && (
-        <p className="collection-detail__status">Loading...</p>
+      <div className="collection-tabs">
+        <button
+          type="button"
+          className={`collection-tabs__tab${activeTab === "pieces" ? " is-active" : ""}`}
+          onClick={() => setActiveTab("pieces")}
+        >
+          Pieces
+        </button>
+        <button
+          type="button"
+          className={`collection-tabs__tab${activeTab === "looks" ? " is-active" : ""}`}
+          onClick={() => setActiveTab("looks")}
+        >
+          Looks
+        </button>
+      </div>
+
+      {activeTab === "pieces" && (
+        <>
+          {loading && (
+            <p className="collection-detail__status">Loading...</p>
+          )}
+
+          {!loading && error && (
+            <p className="collection-detail__status collection-detail__status--error">
+              {error}
+            </p>
+          )}
+
+          {!loading && !error && products.length > 0 && (
+            <div className="toolbar-row">
+              <SelectModeBar
+                isActive={isSelectMode}
+                selectedCount={selectedProductIds.size}
+                onEnter={handleEnterSelectMode}
+                onCancel={handleCancelSelectMode}
+              />
+            </div>
+          )}
+
+          {successMessage && (
+            <p className="collection-detail__success">{successMessage}</p>
+          )}
+
+          {removeError && (
+            <p className="collection-detail__status collection-detail__status--error">
+              {removeError}
+            </p>
+          )}
+
+          {!loading && !error && products.length === 0 && (
+            <div className="collection-detail__empty">
+              <p className="collection-detail__empty-title">nothing here yet ♡</p>
+              <p className="collection-detail__empty-subtitle">
+                add saved pieces to this collection to start building the mood
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && products.length > 0 && (
+            <ProductGrid
+              products={products}
+              onUpdate={handleUpdate}
+              updatingId={updatingId}
+              context="collection"
+              isSelectMode={isSelectMode}
+              selectedProductIds={selectedProductIds}
+              onToggleSelect={handleToggleProductSelected}
+            />
+          )}
+
+          {isSelectMode && selectedProductIds.size > 0 && (
+            <ActionTray>
+              <button
+                type="button"
+                className="action-tray__button action-tray__button--primary"
+                onClick={handleRemoveFromRack}
+                disabled={isRemoving}
+              >
+                {isRemoving ? "removing..." : "remove from rack ♡"}
+              </button>
+            </ActionTray>
+          )}
+        </>
       )}
 
-      {!loading && error && (
-        <p className="collection-detail__status collection-detail__status--error">
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && products.length > 0 && (
-        <div className="toolbar-row">
-          <SelectModeBar
-            isActive={isSelectMode}
-            selectedCount={selectedProductIds.size}
-            onEnter={handleEnterSelectMode}
-            onCancel={handleCancelSelectMode}
-          />
-        </div>
-      )}
-
-      {successMessage && (
-        <p className="collection-detail__success">{successMessage}</p>
-      )}
-
-      {removeError && (
-        <p className="collection-detail__status collection-detail__status--error">
-          {removeError}
-        </p>
-      )}
-
-      {!loading && !error && products.length === 0 && (
-        <div className="collection-detail__empty">
-          <p className="collection-detail__empty-title">nothing here yet ♡</p>
-          <p className="collection-detail__empty-subtitle">
-            add saved pieces to this collection to start building the mood
+      {activeTab === "looks" && (
+        <div className="collection-detail__looks-empty">
+          <p className="collection-detail__looks-heart">♡</p>
+          <p className="collection-detail__looks-title">no looks planned yet</p>
+          <p className="collection-detail__looks-subtitle">
+            start putting together outfits
+            <br />
+            for {collection.name}
           </p>
-        </div>
-      )}
-
-      {!loading && !error && products.length > 0 && (
-        <ProductGrid
-          products={products}
-          onUpdate={handleUpdate}
-          updatingId={updatingId}
-          context="collection"
-          isSelectMode={isSelectMode}
-          selectedProductIds={selectedProductIds}
-          onToggleSelect={handleToggleProductSelected}
-        />
-      )}
-
-      {isSelectMode && selectedProductIds.size > 0 && (
-        <ActionTray>
-          <button
-            type="button"
-            className="action-tray__button action-tray__button--primary"
-            onClick={handleRemoveFromRack}
-            disabled={isRemoving}
-          >
-            {isRemoving ? "removing..." : "remove from rack ♡"}
+          <button type="button" className="collection-detail__create-look">
+            + create a look
           </button>
-        </ActionTray>
+        </div>
       )}
     </div>
   );

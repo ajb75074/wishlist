@@ -352,12 +352,6 @@ function App() {
           />
         )}
 
-        {activeView === "outfits" && (
-          <div>
-            <h2>Outfits</h2>
-          </div>
-        )}
-
       </div>
 
       {isCreateModalOpen && (
