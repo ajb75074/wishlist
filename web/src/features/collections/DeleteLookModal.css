@@ -1,0 +1,5 @@
+/* Container base/typography/buttons now live in ../modal.css - this
+   file only holds what's actually specific to this modal. */
+.delete-look-modal {
+  width: 320px;
+}

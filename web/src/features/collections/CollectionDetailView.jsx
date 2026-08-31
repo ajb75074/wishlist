@@ -6,8 +6,15 @@ import ActionTray from "../../components/ActionTray";
 import CreateLookModal from "./CreateLookModal";
 import LookCard from "./LookCard";
 import LookDetailView from "./LookDetailView";
+import DeleteLookModal from "./DeleteLookModal";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
-import { addItemsToLook, createLook, getLooksForCollection, removeItemFromLook } from "./looks";
+import {
+  addItemsToLook,
+  createLook,
+  deleteLook,
+  getLooksForCollection,
+  removeItemFromLook,
+} from "./looks";
 import "./CollectionDetailView.css";
 
 // Owns its own fetched product list (separate from the global wishlist
@@ -37,6 +44,9 @@ function CollectionDetailView({
   const [isLooksLoading, setIsLooksLoading] = useState(true);
   const [isCreateLookModalOpen, setIsCreateLookModalOpen] = useState(false);
   const [selectedLook, setSelectedLook] = useState(null);
+  const [lookPendingRemoval, setLookPendingRemoval] = useState(null);
+  const [isRemovingLook, setIsRemovingLook] = useState(false);
+  const [removeLookError, setRemoveLookError] = useState("");
 
   // Switching to a different collection (e.g. via the Sidebar, without
   // ever unmounting this view) shouldn't carry over select state from
@@ -169,6 +179,37 @@ function CollectionDetailView({
       return { success: true };
     } catch {
       return { success: false, error: "Could not remove that piece. Please try again." };
+    }
+  }
+
+  // Same shape as useCollections.js's own delete flow: ask first, then
+  // filter the removed Look out of local state on success rather than
+  // refetching the whole list.
+  function handleRequestRemoveLook(look) {
+    setRemoveLookError("");
+    setLookPendingRemoval(look);
+  }
+
+  function handleCancelRemoveLook() {
+    if (isRemovingLook) return;
+    setLookPendingRemoval(null);
+    setRemoveLookError("");
+  }
+
+  async function handleConfirmRemoveLook() {
+    setIsRemovingLook(true);
+    setRemoveLookError("");
+
+    try {
+      await deleteLook(lookPendingRemoval.id);
+      setLooks((current) =>
+        current.filter((look) => look.id !== lookPendingRemoval.id),
+      );
+      setLookPendingRemoval(null);
+    } catch {
+      setRemoveLookError("Could not remove this Look. Please try again.");
+    } finally {
+      setIsRemovingLook(false);
     }
   }
 
@@ -383,6 +424,7 @@ function CollectionDetailView({
                     key={look.id}
                     look={look}
                     onClick={() => setSelectedLook(look)}
+                    onRequestRemove={handleRequestRemoveLook}
                   />
                 ))}
               </div>
@@ -415,6 +457,17 @@ function CollectionDetailView({
           pieces={products}
           onClose={() => setIsCreateLookModalOpen(false)}
           onCreate={handleCreateLook}
+        />
+      )}
+
+      {lookPendingRemoval && (
+        <DeleteLookModal
+          lookName={lookPendingRemoval.name}
+          collectionName={collection.name}
+          isSubmitting={isRemovingLook}
+          errorMessage={removeLookError}
+          onCancel={handleCancelRemoveLook}
+          onConfirm={handleConfirmRemoveLook}
         />
       )}
     </div>

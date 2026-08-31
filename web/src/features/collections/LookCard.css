@@ -1,9 +1,25 @@
+/* Wrapper holds the card button + the menu trigger as siblings (the
+   card itself is a <button>, so the trigger can't nest inside it) and
+   owns the hover lift so both move together instead of the trigger
+   staying still while the card underneath it shifts. */
+.look-card-wrapper {
+  position: relative;
+
+  transition: transform 0.15s ease;
+}
+
+.look-card-wrapper:hover,
+.look-card-wrapper:focus-within {
+  transform: translateY(-2px);
+}
+
 /* Editorial lookbook object, not a ProductCard/dashboard tile - the
    collage does the visual work, the border/hover stay quiet. */
 .look-card {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  width: 100%;
 
   padding: 0;
   overflow: hidden;
@@ -15,17 +31,94 @@
   text-align: left;
   cursor: pointer;
 
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
 .look-card:hover {
   border-color: rgba(241, 123, 166, 0.5);
-  transform: translateY(-2px);
 }
 
 .look-card:focus-visible {
   outline: 2px solid #f17ba6;
   outline-offset: 2px;
+}
+
+
+/* MENU - same dark-surface/border/shadow tokens as
+   CollectionSavePopover, kept compact since it only ever holds one row
+   for now. */
+
+.look-card__menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+}
+
+.look-card__menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+  padding: 0;
+
+  border: 1px solid rgba(245, 240, 232, 0.3);
+  border-radius: 4px;
+  background: rgba(28, 25, 26, 0.55);
+
+  color: #f5f0e8;
+
+  cursor: pointer;
+
+  transition: border-color 0.15s ease;
+}
+
+.look-card__menu-trigger:hover,
+.look-card__menu-trigger:focus-visible {
+  border-color: #f17ba6;
+}
+
+.look-card-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+
+  min-width: 160px;
+  padding: 6px;
+
+  background: #1c191a;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.look-card-menu__item {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 8px 10px;
+
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.look-card-menu__item:hover,
+.look-card-menu__item:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* Fixed height regardless of name length - every card's collage is the
