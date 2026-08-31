@@ -4,6 +4,7 @@ import ProductGrid from "../wishlist/ProductGrid";
 import SelectModeBar from "../../components/SelectModeBar";
 import ActionTray from "../../components/ActionTray";
 import CreateLookModal from "./CreateLookModal";
+import LookCard from "./LookCard";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
 import { createLook, getLooksForCollection } from "./looks";
 import "./CollectionDetailView.css";
@@ -316,24 +317,23 @@ function CollectionDetailView({
 
           {!isLooksLoading && looks.length > 0 && (
             <>
-              <ul className="collection-detail__looks-list">
-                {looks.map((look) => (
-                  <li key={look.id} className="collection-detail__looks-list-item">
-                    <span className="collection-detail__looks-list-name">{look.name}</span>
-                    <span className="collection-detail__looks-list-count">
-                      {look.wishitems.length} {look.wishitems.length === 1 ? "piece" : "pieces"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <div className="looks-header">
+                <p className="looks-header__title">planned looks ♡</p>
 
-              <button
-                type="button"
-                className="collection-detail__create-look"
-                onClick={() => setIsCreateLookModalOpen(true)}
-              >
-                + create a look
-              </button>
+                <button
+                  type="button"
+                  className="collection-detail__create-look"
+                  onClick={() => setIsCreateLookModalOpen(true)}
+                >
+                  + create a look
+                </button>
+              </div>
+
+              <div className="looks-grid">
+                {looks.map((look) => (
+                  <LookCard key={look.id} look={look} />
+                ))}
+              </div>
             </>
           )}
 
