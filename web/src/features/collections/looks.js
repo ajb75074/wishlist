@@ -6,9 +6,14 @@ const LOOK_ITEMS_TABLE = "look_items";
 
 // Nested select pulls each Look's items straight from the join table,
 // already resolved to their wishitem rows - same nested-embed pattern
-// collections.js uses for collection_items(wishitems(*)).
-const LOOK_SELECT = "*, look_items(wishitems(*))";
+// collections.js uses for collection_items(wishitems(*)). Also pulls
+// each look_item's own x/y so the bed canvas can restore a saved
+// arrangement instead of always falling back to the deterministic one.
+const LOOK_SELECT = "*, look_items(x_position, y_position, wishitems(*))";
 
+// `position` is Look-specific (the same wishitem could sit somewhere
+// else in a different Look), so it's attached per-item here rather
+// than on the shared product shape from lib/productUtils.
 function databaseRowToLook(row) {
   return {
     id: row.id,
@@ -16,9 +21,14 @@ function databaseRowToLook(row) {
     collectionId: row.collection_id,
     createdAt: row.created_at,
     wishitems: (row.look_items || [])
-      .map((item) => item.wishitems)
-      .filter(Boolean)
-      .map(databaseRowToProduct),
+      .filter((item) => item.wishitems)
+      .map((item) => ({
+        ...databaseRowToProduct(item.wishitems),
+        position:
+          item.x_position != null && item.y_position != null
+            ? { x: item.x_position, y: item.y_position }
+            : null,
+      })),
   };
 }
 
@@ -127,6 +137,36 @@ export async function removeItemFromLook(lookId, wishitemId) {
     .delete()
     .eq("look_id", lookId)
     .eq("wishitem_id", wishitemId);
+
+  if (error) {
+    throw error;
+  }
+
+  return getLookById(lookId);
+}
+
+// Persists each look_item's canvas position - a 0-1 fraction of the
+// bed canvas's own width/height, not raw pixels, so a saved
+// arrangement stays meaningful at any canvas size. Upserts by the
+// existing UNIQUE(look_id, wishitem_id) constraint (same approach
+// collections.js's addItemToCollection uses) rather than looping
+// individual updates, so moving several pieces is still one round trip.
+export async function updateLookLayout(lookId, positions) {
+  if (positions.length === 0) {
+    return getLookById(lookId);
+  }
+
+  const { error } = await supabase
+    .from(LOOK_ITEMS_TABLE)
+    .upsert(
+      positions.map(({ wishitemId, x, y }) => ({
+        look_id: lookId,
+        wishitem_id: wishitemId,
+        x_position: x,
+        y_position: y,
+      })),
+      { onConflict: "look_id,wishitem_id" },
+    );
 
   if (error) {
     throw error;

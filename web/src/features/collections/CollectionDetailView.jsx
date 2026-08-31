@@ -14,6 +14,7 @@ import {
   deleteLook,
   getLooksForCollection,
   removeItemFromLook,
+  updateLookLayout,
 } from "./looks";
 import "./CollectionDetailView.css";
 
@@ -213,6 +214,19 @@ function CollectionDetailView({
     }
   }
 
+  async function handleSaveLookLayout(positions) {
+    try {
+      const updatedLook = await updateLookLayout(selectedLook.id, positions);
+      setSelectedLook(updatedLook);
+      setLooks((current) =>
+        current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
+      );
+      return { success: true };
+    } catch {
+      return { success: false, error: "Could not save this arrangement. Please try again." };
+    }
+  }
+
   function handleEnterSelectMode() {
     setIsSelectMode(true);
     setSelectedProductIds(new Set());
@@ -284,6 +298,7 @@ function CollectionDetailView({
         collectionPieces={products}
         onAddPieces={handleAddPiecesToLook}
         onRemovePiece={handleRemovePieceFromLook}
+        onSaveLayout={handleSaveLookLayout}
       />
     );
   }
