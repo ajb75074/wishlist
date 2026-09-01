@@ -4,6 +4,11 @@ import { supabase } from "../../lib/supabase";
 const LOOKS_TABLE = "looks";
 const LOOK_ITEMS_TABLE = "look_items";
 
+// The one avatar image the app has - lives here (rather than on
+// LookDetailView or IllustrateLookModal directly) so both can import
+// the exact same source without either one importing from the other.
+export const AVATAR_SRC = "avatar.png";
+
 // Nested select pulls each Look's items straight from the join table,
 // already resolved to their wishitem rows - same nested-embed pattern
 // collections.js uses for collection_items(wishitems(*)). Also pulls

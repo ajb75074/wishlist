@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PreparePieceModal from "../wishlist/PreparePieceModal";
+import IllustrateLookModal from "./IllustrateLookModal";
+import { AVATAR_SRC } from "./looks";
 import { categorizeProduct } from "../../lib/categorize";
 import "./LookDetailView.css";
 
@@ -224,7 +226,7 @@ function LookBed({
         onClick={isEditMode ? onCanvasClick : undefined}
       >
         <img className="look-bed__image" src="bed.png" alt="" aria-hidden="true" />
-        <img className="look-bed__avatar" src="avatar.png" alt="" aria-hidden="true" />
+        <img className="look-bed__avatar" src={AVATAR_SRC} alt="" aria-hidden="true" />
 
         {visiblePieces.length > 0 ? (
           <div className={`look-bed__pieces look-bed__pieces--${visiblePieces.length}`}>
@@ -350,6 +352,10 @@ function LookDetailView({
   // The piece currently open in Prepare Piece, or null - a fresh mount
   // of the modal each time, same pattern as every other modal here.
   const [preparingPiece, setPreparingPiece] = useState(null);
+  // Illustrate Look's prep/confirmation modal - just an open/closed
+  // flag, same pattern as preparingPiece. No separate "which pieces are
+  // styled" state; the modal is handed bedPieces directly (see below).
+  const [isIllustrateModalOpen, setIsIllustrateModalOpen] = useState(false);
 
   // Edit Mode / arrangement state. draftPositions/draftPlacedIds are the
   // ONLY things moving or placing a piece ever touch - Supabase doesn't
@@ -810,11 +816,17 @@ function LookDetailView({
             onKeyMove={handleKeyMove}
           />
 
-          {/* Cancel/Save toolbar belonging to the bed - only present while
-              actually editing. The View Mode entry point into Edit Mode
-              ("style look") now lives at the bottom of the catalog panel
-              instead, as a bigger, more visible call-to-action. */}
-          {isEditMode && (
+          {/* Belongs to the bed, not the catalog. Two different states of
+              the same region: Edit Mode's Cancel/Save toolbar, or View
+              Mode's Illustrate Look action - kept separate from "style
+              look" (which lives in the catalog panel's own footer) so
+              the two aren't sitting side by side as a pair. Illustrate
+              Look is a final/output action on the SAVED arrangement, so
+              it's hidden entirely (not just disabled) until there's
+              actually something styled to illustrate - nothing to
+              explain to a screen reader when the control doesn't exist
+              yet. */}
+          {isEditMode ? (
             <div className="look-studio__bed-controls">
               <div className="look-detail__edit-toolbar">
                 <button
@@ -836,6 +848,18 @@ function LookDetailView({
                 </button>
               </div>
             </div>
+          ) : (
+            bedPieces.length > 0 && (
+              <div className="look-studio__bed-controls">
+                <button
+                  type="button"
+                  className="look-studio__illustrate-cta"
+                  onClick={() => setIsIllustrateModalOpen(true)}
+                >
+                  ✧ illustrate look
+                </button>
+              </div>
+            )
           )}
 
           {heldPieceId && (
@@ -920,7 +944,9 @@ function LookDetailView({
               visible than the old subtle link, since styling the look
               is the primary action this whole screen exists for. Only
               shown in View Mode; Edit Mode's own Cancel/Save toolbar
-              stays with the bed (see .look-studio__bed-controls). */}
+              stays with the bed (see .look-studio__bed-controls), and
+              so does Illustrate Look now - kept out of this footer so
+              it's not sitting right beside Style Look as a pair. */}
           {!isEditMode && (
             <div className="look-studio__panel-footer">
               <button
@@ -940,6 +966,14 @@ function LookDetailView({
           product={preparingPiece}
           onClose={() => setPreparingPiece(null)}
           onSave={(blob) => onPrepareCutout(preparingPiece.id, blob)}
+        />
+      )}
+
+      {isIllustrateModalOpen && (
+        <IllustrateLookModal
+          look={look}
+          pieces={bedPieces}
+          onClose={() => setIsIllustrateModalOpen(false)}
         />
       )}
     </div>

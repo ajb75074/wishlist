@@ -167,8 +167,11 @@
 }
 
 /* Small toolbar strip directly under the bed - not a floating page-level
-   CTA. The same region swaps its content between View Mode's subtle
-   "style look" trigger and Edit Mode's cancel/save pair. */
+   CTA. The same region swaps its content between View Mode's Illustrate
+   Look action and Edit Mode's cancel/save pair - kept deliberately
+   separate from Style Look (which lives in the catalog panel's own
+   footer, see .look-studio__panel-footer) so the two aren't presented
+   as a paired duo. */
 .look-studio__bed-controls {
   display: flex;
   justify-content: center;
@@ -177,18 +180,62 @@
   margin-top: 10px;
 }
 
-/* View Mode's entry point into Edit Mode - now anchored to the bottom
-   of the catalog panel (see .look-studio__panel-footer) as a bigger,
-   more visible call-to-action, since styling the look is the primary
-   thing this whole screen exists to do. flex-shrink: 0 + living inside
-   the panel's own fixed-height flex column means adding this footer
-   only shrinks the catalog grid's available space - it never pushes
-   the panel (or the page) into scrolling. */
+/* View Mode's entry point into Edit Mode - a bigger, more visible
+   call-to-action anchored to the bottom of the catalog panel, since
+   styling the look is the primary thing this whole screen exists to
+   do. flex-shrink: 0 + living inside the panel's own fixed-height flex
+   column means this footer only shrinks the catalog grid's available
+   space - it never pushes the panel (or the page) into scrolling. */
 .look-studio__panel-footer {
   flex-shrink: 0;
   padding-top: 12px;
 
   border-top: 1px solid rgba(241, 123, 166, 0.35);
+}
+
+/* Dark 3D secondary button, same beveled language as the header/filter
+   circles - sized to its own content (not full-width) since it now
+   sits alone under the bed rather than paired with another button. */
+.look-studio__illustrate-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 20px;
+
+  border: 1px solid rgba(241, 123, 166, 0.4);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.18));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.look-studio__illustrate-cta:hover:not(:disabled) {
+  border-color: #f17ba6;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(241, 123, 166, 0.14);
+}
+
+.look-studio__illustrate-cta:focus-visible {
+  outline: 2px solid #f17ba6;
+  outline-offset: 2px;
+}
+
+.look-studio__illustrate-cta:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .look-studio__style-cta {
