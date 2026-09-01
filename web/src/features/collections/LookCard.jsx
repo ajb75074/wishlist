@@ -57,7 +57,11 @@ function LookCollage({ pieces }) {
 function LookCard({ look, onClick, onRequestRemove }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const wrapperRef = useRef(null);
-  const pieceCount = look.wishitems.length;
+  // Only pieces currently styled on the bed count/show here - a Look's
+  // catalog (every Collection piece) is no longer the same thing as
+  // what's actually arranged, so look.wishitems.length would overcount.
+  const placedPieces = look.wishitems.filter((piece) => piece.isPlaced);
+  const pieceCount = placedPieces.length;
 
   useEffect(() => {
     if (!isMenuOpen) return undefined;
@@ -88,7 +92,7 @@ function LookCard({ look, onClick, onRequestRemove }) {
   return (
     <div className="look-card-wrapper" ref={wrapperRef}>
       <button type="button" className="look-card" onClick={onClick}>
-        <LookCollage pieces={look.wishitems} />
+        <LookCollage pieces={placedPieces} />
 
         <div className="look-card__meta">
           <p className="look-card__name">{look.name}</p>

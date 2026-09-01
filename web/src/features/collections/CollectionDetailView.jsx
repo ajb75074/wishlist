@@ -8,12 +8,11 @@ import LookCard from "./LookCard";
 import LookDetailView from "./LookDetailView";
 import DeleteLookModal from "./DeleteLookModal";
 import { getCollectionItems, removeItemFromCollection } from "./collections";
+import { updateWishitemCutoutImage, uploadPieceCutout } from "../wishlist/wishlist";
 import {
-  addItemsToLook,
   createLook,
   deleteLook,
   getLooksForCollection,
-  removeItemFromLook,
   updateLookLayout,
 } from "./looks";
 import "./CollectionDetailView.css";
@@ -143,43 +142,18 @@ function CollectionDetailView({
 
   // Presentation + form state lives in CreateLookModal - this just makes
   // the actual Supabase call and mirrors the result into local state,
-  // same division of responsibility as handleCreateCollection.
+  // same division of responsibility as handleCreateCollection. A new
+  // Look always starts empty (wishitemIds is always []) - selecting it
+  // immediately drops the user straight into Look Studio to style it,
+  // rather than back onto the Looks grid.
   async function handleCreateLook(name, wishitemIds) {
     try {
       const look = await createLook(collection.id, name, wishitemIds);
       setLooks((current) => [look, ...current]);
+      setSelectedLook(look);
       return { success: true };
     } catch {
       return { success: false, error: "Could not create this look. Please try again." };
-    }
-  }
-
-  // Both mirror the fresh Look (with its updated wishitems) returned by
-  // the service call into `looks` and `selectedLook` together, so the
-  // grid card and the open Detail view can never disagree.
-  async function handleAddPiecesToLook(wishitemIds) {
-    try {
-      const updatedLook = await addItemsToLook(selectedLook.id, wishitemIds);
-      setSelectedLook(updatedLook);
-      setLooks((current) =>
-        current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
-      );
-      return { success: true };
-    } catch {
-      return { success: false, error: "Could not add those pieces. Please try again." };
-    }
-  }
-
-  async function handleRemovePieceFromLook(wishitemId) {
-    try {
-      const updatedLook = await removeItemFromLook(selectedLook.id, wishitemId);
-      setSelectedLook(updatedLook);
-      setLooks((current) =>
-        current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
-      );
-      return { success: true };
-    } catch {
-      return { success: false, error: "Could not remove that piece. Please try again." };
     }
   }
 
@@ -224,6 +198,44 @@ function CollectionDetailView({
       return { success: true };
     } catch {
       return { success: false, error: "Could not save this arrangement. Please try again." };
+    }
+  }
+
+  // Uploads through wishlist.js (the only place that ever touches
+  // Supabase Storage), then mirrors the new cutoutImageUrl into every
+  // spot this wishitem currently appears - the open Look and (in case
+  // the same piece is in more than one Look in this Collection) every
+  // entry in `looks` too. Global wishlist state (All Saves) is
+  // deliberately left untouched - Prepare Piece only affects Looks.
+  async function handlePrepareCutoutSaved(wishitemId, blob) {
+    try {
+      const uploadResult = await uploadPieceCutout(wishitemId, blob);
+      if (!uploadResult.success) {
+        return { success: false, error: "Could not save this piece. Please try again." };
+      }
+
+      const updateResult = await updateWishitemCutoutImage(wishitemId, uploadResult.url);
+      if (!updateResult.success) {
+        return { success: false, error: "Could not save this piece. Please try again." };
+      }
+
+      const { cutoutImageUrl } = updateResult.product;
+
+      function withUpdatedCutout(look) {
+        return {
+          ...look,
+          wishitems: look.wishitems.map((item) =>
+            item.id === wishitemId ? { ...item, cutoutImageUrl } : item,
+          ),
+        };
+      }
+
+      setSelectedLook((current) => (current ? withUpdatedCutout(current) : current));
+      setLooks((current) => current.map(withUpdatedCutout));
+
+      return { success: true };
+    } catch {
+      return { success: false, error: "Could not save this piece. Please try again." };
     }
   }
 
@@ -296,9 +308,8 @@ function CollectionDetailView({
         collectionName={collection.name}
         onBack={() => setSelectedLook(null)}
         collectionPieces={products}
-        onAddPieces={handleAddPiecesToLook}
-        onRemovePiece={handleRemovePieceFromLook}
         onSaveLayout={handleSaveLookLayout}
+        onPrepareCutout={handlePrepareCutoutSaved}
       />
     );
   }
@@ -469,7 +480,6 @@ function CollectionDetailView({
 
       {isCreateLookModalOpen && (
         <CreateLookModal
-          pieces={products}
           onClose={() => setIsCreateLookModalOpen(false)}
           onCreate={handleCreateLook}
         />

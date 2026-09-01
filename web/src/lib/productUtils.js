@@ -5,6 +5,7 @@ export function databaseRowToProduct(row) {
     price: row.price,
     currency: row.currency,
     imageUrl: row.image_url,
+    cutoutImageUrl: row.cutout_image_url,
     color: row.color,
     size: row.size,
     productUrl: row.product_url,

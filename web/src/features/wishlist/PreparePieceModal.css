@@ -1,0 +1,154 @@
+/* Container base/typography/buttons live in ../../components/modal.css -
+   this file only holds what's specific to this modal's editor. */
+.prepare-piece-modal {
+  width: 640px;
+  max-width: calc(100vw - 32px);
+}
+
+.prepare-piece-modal__status {
+  margin: 20px 0 0;
+
+  color: rgba(245, 240, 232, 0.65);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+}
+
+/* Underline-tab pair, same lightweight pattern CreateCollectionModal's
+   cover-type toggle already uses - not a segmented pill. */
+.prepare-piece-modal__mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+
+  margin: 18px 0 14px;
+
+  border-bottom: 1px solid rgba(245, 240, 232, 0.12);
+}
+
+.prepare-piece-modal__mode-btn {
+  position: relative;
+
+  padding: 4px 2px 10px;
+
+  border: 0;
+  background: transparent;
+
+  color: rgba(245, 240, 232, 0.55);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+
+  cursor: pointer;
+
+  transition: color 0.15s ease;
+}
+
+.prepare-piece-modal__mode-btn:hover {
+  color: rgba(245, 240, 232, 0.8);
+}
+
+.prepare-piece-modal__mode-btn.is-active {
+  color: #f5f0e8;
+}
+
+.prepare-piece-modal__mode-btn.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+
+  height: 2px;
+  background: #f17ba6;
+}
+
+.prepare-piece-modal__canvas-wrap {
+  position: relative;
+
+  display: flex;
+  justify-content: center;
+
+  max-height: 55vh;
+  overflow: auto;
+
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  border-radius: 10px;
+  background: #141212;
+}
+
+.prepare-piece-modal__canvas {
+  display: block;
+  max-width: 100%;
+  cursor: crosshair;
+}
+
+.prepare-piece-modal__segmenting {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  margin: 0;
+  padding: 4px 10px;
+
+  border-radius: 10px;
+  background: rgba(20, 18, 18, 0.75);
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+}
+
+.prepare-piece-modal__point-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+
+  margin-top: 14px;
+}
+
+.prepare-piece-modal__point-actions button {
+  padding: 8px 14px;
+
+  border: 1px solid rgba(245, 240, 232, 0.22);
+  border-radius: 8px;
+  background: transparent;
+
+  color: #f5f0e8;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+
+  cursor: pointer;
+
+  transition: border-color 0.15s ease;
+}
+
+.prepare-piece-modal__point-actions button:hover:not(:disabled) {
+  border-color: #f17ba6;
+}
+
+.prepare-piece-modal__point-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.prepare-piece-modal__preview {
+  display: flex;
+  justify-content: center;
+
+  margin-top: 16px;
+  padding: 16px;
+
+  border: 1px dashed rgba(245, 240, 232, 0.2);
+  border-radius: 10px;
+  background:
+    linear-gradient(45deg, #2a2426 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, #2a2426 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(45deg, transparent 75%, #2a2426 75%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, #2a2426 75%) -8px 0 / 16px 16px;
+}
+
+.prepare-piece-modal__preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+}

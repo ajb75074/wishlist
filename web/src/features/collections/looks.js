@@ -7,13 +7,17 @@ const LOOK_ITEMS_TABLE = "look_items";
 // Nested select pulls each Look's items straight from the join table,
 // already resolved to their wishitem rows - same nested-embed pattern
 // collections.js uses for collection_items(wishitems(*)). Also pulls
-// each look_item's own x/y so the bed canvas can restore a saved
-// arrangement instead of always falling back to the deterministic one.
-const LOOK_SELECT = "*, look_items(x_position, y_position, wishitems(*))";
+// each look_item's own x/y/scale/is_placed so the bed canvas can
+// restore a saved arrangement instead of always falling back to the
+// deterministic one.
+const LOOK_SELECT = "*, look_items(x_position, y_position, scale, is_placed, wishitems(*))";
 
-// `position` is Look-specific (the same wishitem could sit somewhere
-// else in a different Look), so it's attached per-item here rather
-// than on the shared product shape from lib/productUtils.
+// `position`/`isPlaced` are Look-specific (the same wishitem could sit
+// somewhere else, or not be placed at all, in a different Look), so
+// they're attached per-item here rather than on the shared product
+// shape from lib/productUtils. scale is optional even when x/y are
+// present - older rows saved before scale existed simply have it null,
+// which falls back to normal size (1x).
 function databaseRowToLook(row) {
   return {
     id: row.id,
@@ -24,9 +28,10 @@ function databaseRowToLook(row) {
       .filter((item) => item.wishitems)
       .map((item) => ({
         ...databaseRowToProduct(item.wishitems),
+        isPlaced: item.is_placed,
         position:
           item.x_position != null && item.y_position != null
-            ? { x: item.x_position, y: item.y_position }
+            ? { x: item.x_position, y: item.y_position, scale: item.scale }
             : null,
       })),
   };
@@ -92,6 +97,7 @@ export async function createLook(collectionId, name, wishitemIds = []) {
         wishitemIds.map((wishitemId) => ({
           look_id: look.id,
           wishitem_id: wishitemId,
+          is_placed: false,
         })),
       );
 
@@ -104,50 +110,15 @@ export async function createLook(collectionId, name, wishitemIds = []) {
   return getLookById(look.id);
 }
 
-// Adds wishitems to an existing Look and returns the refreshed Look -
-// same "return the fresh row via getLookById" approach createLook uses,
-// so callers always get the real post-write shape back.
-export async function addItemsToLook(lookId, wishitemIds) {
-  if (wishitemIds.length === 0) {
-    return getLookById(lookId);
-  }
-
-  const { error } = await supabase
-    .from(LOOK_ITEMS_TABLE)
-    .insert(
-      wishitemIds.map((wishitemId) => ({
-        look_id: lookId,
-        wishitem_id: wishitemId,
-      })),
-    );
-
-  if (error) {
-    throw error;
-  }
-
-  return getLookById(lookId);
-}
-
-// Removes one wishitem from a Look. Only deletes the look_items
-// relationship - the wishitem row itself (and its membership in the
-// parent Collection or any other Look) is untouched.
-export async function removeItemFromLook(lookId, wishitemId) {
-  const { error } = await supabase
-    .from(LOOK_ITEMS_TABLE)
-    .delete()
-    .eq("look_id", lookId)
-    .eq("wishitem_id", wishitemId);
-
-  if (error) {
-    throw error;
-  }
-
-  return getLookById(lookId);
-}
-
-// Persists each look_item's canvas position - a 0-1 fraction of the
-// bed canvas's own width/height, not raw pixels, so a saved
-// arrangement stays meaningful at any canvas size. Upserts by the
+// Persists each look_item's canvas position, size, AND placement -
+// position as a 0-1 fraction of the bed canvas's own width/height (not
+// raw pixels) so a saved arrangement stays meaningful at any canvas
+// size, scale as the same multiplier the resize toolbar already
+// adjusts (1 = normal size), and isPlaced as whether it should render
+// on the bed at all. Entries may omit x/y/scale entirely (used when a
+// piece is being taken OFF the bed - its old position is deliberately
+// left alone in the database, so it reappears where it was last time
+// it's placed again, rather than being cleared). Upserts by the
 // existing UNIQUE(look_id, wishitem_id) constraint (same approach
 // collections.js's addItemToCollection uses) rather than looping
 // individual updates, so moving several pieces is still one round trip.
@@ -159,12 +130,14 @@ export async function updateLookLayout(lookId, positions) {
   const { error } = await supabase
     .from(LOOK_ITEMS_TABLE)
     .upsert(
-      positions.map(({ wishitemId, x, y }) => ({
-        look_id: lookId,
-        wishitem_id: wishitemId,
-        x_position: x,
-        y_position: y,
-      })),
+      positions.map(({ wishitemId, x, y, scale, isPlaced }) => {
+        const row = { look_id: lookId, wishitem_id: wishitemId };
+        if (isPlaced !== undefined) row.is_placed = isPlaced;
+        if (x !== undefined) row.x_position = x;
+        if (y !== undefined) row.y_position = y;
+        if (scale !== undefined) row.scale = scale;
+        return row;
+      }),
       { onConflict: "look_id,wishitem_id" },
     );
 
