@@ -5,6 +5,8 @@
    so that's overridden here. */
 .illustrate-look-modal {
   width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
   text-align: left;
 }
 
@@ -218,6 +220,64 @@
   font-size: 0.76rem;
 }
 
+/* Save confirmation - a distinct, calmer green so it doesn't read as
+   another error alongside .illustrate-look-modal__note's pink. */
+.illustrate-look-modal__note--success {
+  color: rgba(140, 209, 156, 0.9);
+}
+
+/* Result state - the generated image fits within a fixed max-height so
+   a tall/odd-aspect result can never push the modal (and Look Studio's
+   own no-page-scroll layout behind it) past the viewport. The modal
+   itself already scrolls its own overflow via the browser's default
+   flow if content ever exceeds it, but capping height here keeps that
+   from ever being needed in practice. */
+.illustrate-look-modal__result-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  max-height: 60vh;
+  padding: 8px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.illustrate-look-modal__result-image {
+  max-width: 100%;
+  max-height: calc(60vh - 16px);
+
+  object-fit: contain;
+  border-radius: 10px;
+}
+
 .illustrate-look-modal .modal__actions {
   justify-content: flex-end;
+}
+
+/* Pulsating glow while a generation request is in flight - a real
+   working-state cue instead of a static disabled button, without a
+   fake progress bar/percentage (there's nothing to measure). Respects
+   reduced-motion; the button's own "illustrating your look..." label
+   still communicates the state either way. */
+@keyframes illustrate-look-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(241, 123, 166, 0.55);
+  }
+  50% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 20px 6px rgba(241, 123, 166, 0.55);
+  }
+}
+
+.illustrate-look-modal .modal__button--primary.is-generating {
+  animation: illustrate-look-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .illustrate-look-modal .modal__button--primary.is-generating {
+    animation: none;
+  }
 }

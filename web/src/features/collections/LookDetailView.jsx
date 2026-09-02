@@ -7,8 +7,11 @@ import "./LookDetailView.css";
 
 // Detail preview caps at more pieces than LookCard's compact collage
 // (4) since there's far more room here - this is the planning surface,
-// not the browsing thumbnail.
-const MAX_BED_PIECES = 5;
+// not the browsing thumbnail. Also mirrored server-side as MAX_PIECES
+// in supabase/functions/illustrate-look/index.ts - keep both in sync,
+// since a bed that allows more pieces than the generation endpoint
+// accepts would let a fully-styled Look fail Illustrate Look outright.
+const MAX_BED_PIECES = 8;
 
 // How far one arrow-key press nudges a piece, as a fraction of the bed
 // canvas's own width/height.
@@ -45,6 +48,40 @@ const DEFAULT_POSITIONS = {
     { x: 0.38, y: 0.82 },
     { x: 0.62, y: 0.34 },
   ],
+  // x/y stay within the same envelope the 1-5 slots above already
+  // proved safe (roughly x: 0.1-0.62, y: 0.3-0.83) - bed.png's own
+  // drawn comforter artwork has transparent padding baked into the
+  // file, so a piece can sit inside the (square, clipped) bed surface
+  // yet still visually land outside the drawn bed if its anchor pushes
+  // much past that range - packing 6-8 slots tighter within the same
+  // proven bounds instead of widening them.
+  6: [
+    { x: 0.3, y: 0.22 },
+    { x: 0.1, y: 0.4 },
+    { x: 0.5, y: 0.24 },
+    { x: 0.12, y: 0.62 },
+    { x: 0.36, y: 0.58 },
+    { x: 0.58, y: 0.54 },
+  ],
+  7: [
+    { x: 0.28, y: 0.2 },
+    { x: 0.1, y: 0.36 },
+    { x: 0.48, y: 0.22 },
+    { x: 0.12, y: 0.56 },
+    { x: 0.3, y: 0.52 },
+    { x: 0.52, y: 0.5 },
+    { x: 0.6, y: 0.3 },
+  ],
+  8: [
+    { x: 0.26, y: 0.2 },
+    { x: 0.1, y: 0.34 },
+    { x: 0.46, y: 0.2 },
+    { x: 0.12, y: 0.52 },
+    { x: 0.28, y: 0.5 },
+    { x: 0.46, y: 0.48 },
+    { x: 0.6, y: 0.28 },
+    { x: 0.6, y: 0.64 },
+  ],
 };
 
 function getDefaultPosition(count, index) {
@@ -61,6 +98,9 @@ const ROTATIONS = {
   3: [-2, -7, 6],
   4: [-2, -8, 5, 2],
   5: [-3, -8, 5, 2, 9],
+  6: [-3, -9, 4, -6, 3, 8],
+  7: [-4, -9, 5, -7, 2, 9, -2],
+  8: [-4, -9, 5, -7, 2, 9, -2, 6],
 };
 
 function getRotation(count, index) {
@@ -97,6 +137,33 @@ const SIZES = {
     { width: 18, height: 11 },
     { width: 16, height: 16 },
   ],
+  6: [
+    { width: 20, height: 22 },
+    { width: 20, height: 20 },
+    { width: 22, height: 22 },
+    { width: 16, height: 10 },
+    { width: 18, height: 18 },
+    { width: 14, height: 14 },
+  ],
+  7: [
+    { width: 19, height: 21 },
+    { width: 19, height: 19 },
+    { width: 20, height: 20 },
+    { width: 15, height: 9 },
+    { width: 17, height: 17 },
+    { width: 13, height: 13 },
+    { width: 15, height: 15 },
+  ],
+  8: [
+    { width: 18, height: 20 },
+    { width: 18, height: 18 },
+    { width: 19, height: 19 },
+    { width: 14, height: 9 },
+    { width: 16, height: 16 },
+    { width: 12, height: 12 },
+    { width: 14, height: 14 },
+    { width: 13, height: 13 },
+  ],
 };
 
 function getSize(count, index) {
@@ -105,6 +172,28 @@ function getSize(count, index) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+// wishitems.price is a real numeric column (arrives as a JS number, or
+// null when unknown) - the string/empty-string cases are only handled
+// defensively in case that ever changes upstream, not because live
+// data currently needs it.
+function parsePrice(price) {
+  if (typeof price === "number" && Number.isFinite(price)) return price;
+  if (typeof price === "string" && price.trim() !== "") {
+    const parsed = Number.parseFloat(price.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+// Sums only the pieces that actually have a usable price - unpriced
+// pieces are silently skipped rather than treated as $0, and the total
+// is null (not 0) only when NOT ONE placed piece has a usable price.
+function calculateFitTotal(pieces) {
+  const prices = pieces.map((piece) => parsePrice(piece.price)).filter((price) => price != null);
+  if (prices.length === 0) return null;
+  return prices.reduce((sum, price) => sum + price, 0);
 }
 
 // Persisted in look_items.scale alongside x/y (1 = normal size) - kept
@@ -339,6 +428,46 @@ function CatalogTile({ piece, isPlaced, isEditMode, onToggle, onPrepare }) {
   );
 }
 
+// The Look Studio layout's left zone. One clickable frame that's
+// either the saved illustration (click -> IllustrateLookModal, which
+// already renders its own "saved" phase - image + Close, no
+// regeneration risk) or, with no saved illustration yet, the
+// generation entry point (click -> the same modal's "form" phase).
+// Deliberately no title/date/piece-count/status text here - just the
+// image (or empty state) and, below it, the fit total.
+const ILLUSTRATE_EMPTY_ASSET = "illustrate-look-empty.png";
+
+function IllustrationColumn({ illustrationUrl, fitTotal, onOpen }) {
+  const formattedTotal = fitTotal == null ? "—" : `$${fitTotal.toFixed(2)}`;
+
+  return (
+    <div className="look-studio__illustration-column">
+      <button
+        type="button"
+        className={`look-studio__illustration-frame${illustrationUrl ? "" : " look-studio__illustration-frame--empty"}`}
+        onClick={onOpen}
+        aria-label={illustrationUrl ? "View saved fashion illustration" : "Illustrate this look"}
+      >
+        {illustrationUrl ? (
+          <img className="look-studio__illustration-image" src={illustrationUrl} alt="" />
+        ) : (
+          <img className="look-studio__illustration-empty-asset" src={ILLUSTRATE_EMPTY_ASSET} alt="" />
+        )}
+      </button>
+
+      <div className="look-studio__fit-total">
+        <p
+          className="look-studio__fit-total-label"
+          title="Based on saved prices for pieces currently in this look."
+        >
+          est. fit total
+        </p>
+        <p className="look-studio__fit-total-value">{formattedTotal}</p>
+      </div>
+    </div>
+  );
+}
+
 function LookDetailView({
   look,
   collectionName,
@@ -346,6 +475,7 @@ function LookDetailView({
   collectionPieces,
   onSaveLayout,
   onPrepareCutout,
+  onSaveIllustration,
 }) {
   const [activeFilter, setActiveFilter] = useState("all");
   const [catalogNotice, setCatalogNotice] = useState("");
@@ -427,6 +557,11 @@ function LookDetailView({
   }, [collectionPieces, look.wishitems, isEditMode, draftPlacedIds]);
 
   const bedPositions = isEditMode ? draftPositions : savedPositions;
+  // Reuses bedPieces (the same "currently placed" list the bed itself
+  // renders from) rather than a second placed-state computation - live
+  // during Edit Mode too, so the total updates as pieces are added/
+  // removed, same immediacy as the bed itself.
+  const fitTotal = useMemo(() => calculateFitTotal(bedPieces), [bedPieces]);
   const hasUnsavedChanges =
     JSON.stringify(draftPositions) !== JSON.stringify(initialPositions) ||
     JSON.stringify([...draftPlacedIds].sort()) !== JSON.stringify([...initialPlacedIds].sort());
@@ -799,12 +934,22 @@ function LookDetailView({
           <span className="look-studio__name">{look.name}</span>
         </div>
 
-        <p className="look-studio__meta">
-          {bedPieces.length} {bedPieces.length === 1 ? "piece" : "pieces"}
-        </p>
+        {/* The header's 3rd grid column is intentionally left empty now -
+            piece count moved out of the persistent chrome (see
+            IllustrationColumn's fit total below, and section 13's "no
+            piece-count repeated" direction). bedPieces.length is still
+            computed above for everything that actually needs it
+            (bed-full checks, etc.) - no DOM element needed here for an
+            empty grid cell to still center .look-studio__title-group. */}
       </div>
 
       <div className="look-studio__body">
+        <IllustrationColumn
+          illustrationUrl={look.illustrationUrl}
+          fitTotal={fitTotal}
+          onOpen={() => setIsIllustrateModalOpen(true)}
+        />
+
         <div className="look-detail__canvas">
           <LookBed
             pieces={bedPieces}
@@ -816,17 +961,14 @@ function LookDetailView({
             onKeyMove={handleKeyMove}
           />
 
-          {/* Belongs to the bed, not the catalog. Two different states of
-              the same region: Edit Mode's Cancel/Save toolbar, or View
-              Mode's Illustrate Look action - kept separate from "style
-              look" (which lives in the catalog panel's own footer) so
-              the two aren't sitting side by side as a pair. Illustrate
-              Look is a final/output action on the SAVED arrangement, so
-              it's hidden entirely (not just disabled) until there's
-              actually something styled to illustrate - nothing to
-              explain to a screen reader when the control doesn't exist
-              yet. */}
-          {isEditMode ? (
+          {/* Belongs to the bed, not the catalog - Edit Mode's own
+              Cancel/Save toolbar. Illustrate Look no longer has a
+              button here at all: the persistent left illustration
+              column (see IllustrationColumn, rendered above) is now
+              the single entry point for both viewing a saved
+              illustration and generating a new one, so there's nothing
+              for View Mode to show in this spot anymore. */}
+          {isEditMode && (
             <div className="look-studio__bed-controls">
               <div className="look-detail__edit-toolbar">
                 <button
@@ -848,18 +990,6 @@ function LookDetailView({
                 </button>
               </div>
             </div>
-          ) : (
-            bedPieces.length > 0 && (
-              <div className="look-studio__bed-controls">
-                <button
-                  type="button"
-                  className="look-studio__illustrate-cta"
-                  onClick={() => setIsIllustrateModalOpen(true)}
-                >
-                  ✧ illustrate look
-                </button>
-              </div>
-            )
           )}
 
           {heldPieceId && (
@@ -944,9 +1074,7 @@ function LookDetailView({
               visible than the old subtle link, since styling the look
               is the primary action this whole screen exists for. Only
               shown in View Mode; Edit Mode's own Cancel/Save toolbar
-              stays with the bed (see .look-studio__bed-controls), and
-              so does Illustrate Look now - kept out of this footer so
-              it's not sitting right beside Style Look as a pair. */}
+              stays with the bed (see .look-studio__bed-controls). */}
           {!isEditMode && (
             <div className="look-studio__panel-footer">
               <button
@@ -974,6 +1102,7 @@ function LookDetailView({
           look={look}
           pieces={bedPieces}
           onClose={() => setIsIllustrateModalOpen(false)}
+          onSaveIllustration={onSaveIllustration}
         />
       )}
     </div>

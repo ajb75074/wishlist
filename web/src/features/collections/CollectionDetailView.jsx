@@ -13,8 +13,10 @@ import {
   createLook,
   deleteLook,
   getLooksForCollection,
+  saveLookIllustration,
   updateLookLayout,
 } from "./looks";
+import { useRefetchOnFocus } from "../../lib/useRefetchOnFocus";
 import "./CollectionDetailView.css";
 
 // Owns its own fetched product list (separate from the global wishlist
@@ -126,6 +128,44 @@ function CollectionDetailView({
     };
   }, [collection.id]);
 
+  // Background, silent refetches when this tab regains focus - covers
+  // "saved a wishlist item / prepared a cutout / saved an illustration
+  // via another tab or the Chrome extension while this one sat open."
+  // No loading state toggled here on purpose: this should feel like the
+  // data was just already there, not like the page reloaded. Reads
+  // collection.id fresh via closure each render (useRefetchOnFocus
+  // always calls the latest callback it was given), so switching
+  // collections doesn't need to be handled specially here - the
+  // isCurrent-guarded mount effects above still own the "first load for
+  // this collection" case untouched.
+  useRefetchOnFocus(async () => {
+    try {
+      const items = await getCollectionItems(collection.id);
+      setProducts(items);
+    } catch {
+      // Quiet failures here just mean the background refresh didn't
+      // happen - the visible list stays whatever it already was,
+      // rather than surfacing an error for something the user didn't
+      // explicitly ask for.
+    }
+  });
+
+  useRefetchOnFocus(async () => {
+    try {
+      const items = await getLooksForCollection(collection.id);
+      setLooks(items);
+      // Keeps an already-open Look Studio view in sync too - covers
+      // saving an illustration (or an arrangement) via another tab
+      // while this one sat open on the same Look in the background.
+      setSelectedLook((current) =>
+        current ? items.find((look) => look.id === current.id) ?? current : current,
+      );
+    } catch {
+      // Same reasoning as above - fail quietly, keep showing what's
+      // already there.
+    }
+  });
+
   // Same idea for edits: the real update still goes through App.jsx's
   // existing handler; this just mirrors the result into the local copy.
   async function handleUpdate(id, updates) {
@@ -203,10 +243,16 @@ function CollectionDetailView({
 
   // Uploads through wishlist.js (the only place that ever touches
   // Supabase Storage), then mirrors the new cutoutImageUrl into every
-  // spot this wishitem currently appears - the open Look and (in case
-  // the same piece is in more than one Look in this Collection) every
-  // entry in `looks` too. Global wishlist state (All Saves) is
-  // deliberately left untouched - Prepare Piece only affects Looks.
+  // spot this wishitem currently appears - `products` (this
+  // Collection's own piece list, what Look Studio's catalog panel
+  // actually renders from - and what Edit Mode's bed reads from too,
+  // see LookDetailView's bedPieces), the open Look, and (in case the
+  // same piece is in more than one Look in this Collection) every
+  // entry in `looks`. Global wishlist state (All Saves) is deliberately
+  // left untouched - Prepare Piece only affects this Collection's own
+  // views. products was previously missed here, which is exactly why
+  // a freshly-prepared cutout wouldn't show up in the catalog (or the
+  // bed while actively editing) until a full page reload re-fetched it.
   async function handlePrepareCutoutSaved(wishitemId, blob) {
     try {
       const uploadResult = await uploadPieceCutout(wishitemId, blob);
@@ -230,6 +276,11 @@ function CollectionDetailView({
         };
       }
 
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === wishitemId ? { ...product, cutoutImageUrl } : product,
+        ),
+      );
       setSelectedLook((current) => (current ? withUpdatedCutout(current) : current));
       setLooks((current) => current.map(withUpdatedCutout));
 
@@ -237,6 +288,30 @@ function CollectionDetailView({
     } catch {
       return { success: false, error: "Could not save this piece. Please try again." };
     }
+  }
+
+  // Saves Illustrate Look's generated result as this Look's one saved
+  // illustration (Milestone 3 - zero or one per Look, no history).
+  // Mirrors handleSaveLookLayout's own shape: call the data-layer
+  // function, mirror the result into both selectedLook and the looks
+  // list, return a plain {success, error} the modal can render.
+  async function handleSaveIllustration(imageDataUrl) {
+    const result = await saveLookIllustration(selectedLook.id, imageDataUrl);
+
+    if (!result.success) {
+      return result;
+    }
+
+    function withIllustration(look) {
+      return look.id === selectedLook.id
+        ? { ...look, illustrationUrl: result.illustrationUrl }
+        : look;
+    }
+
+    setSelectedLook((current) => (current ? withIllustration(current) : current));
+    setLooks((current) => current.map(withIllustration));
+
+    return { success: true };
   }
 
   function handleEnterSelectMode() {
@@ -310,6 +385,7 @@ function CollectionDetailView({
         collectionPieces={products}
         onSaveLayout={handleSaveLookLayout}
         onPrepareCutout={handlePrepareCutoutSaved}
+        onSaveIllustration={handleSaveIllustration}
       />
     );
   }

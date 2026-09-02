@@ -5,7 +5,7 @@ const CATEGORY_KEYWORDS = {
   Tops: [
     "shirt", "tee", "t-shirt", "top", "blouse", "tank", "camisole", "cami",
     "bodysuit", "sweater", "hoodie", "cardigan", "crop", "jacket", "jackets",
-    "zip up", "zip-up", "zipup",
+    "zip up", "zip-up", "zipup", "jersey"
   ],
   Bottoms: [
     "pant", "pants", "jean", "jeans", "trouser", "trousers", "legging",
@@ -15,7 +15,7 @@ const CATEGORY_KEYWORDS = {
   Shoes: [
     "shoe", "shoes", "sandal", "sandals", "wedge", "wedges", "heel", "heels",
     "sneaker", "sneakers", "boot", "boots", "flat", "flats", "loafer",
-    "loafers", "mule", "mules", "slipper", "slippers", "pump", "pumps",
+    "loafers", "mule", "mules", "slipper", "slippers", "pump", "pumps", "cow", "cowhide"
   ],
   Bags: [
     "bag", "purse", "tote", "clutch", "backpack", "handbag", "satchel", "crossbody",

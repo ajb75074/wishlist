@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { deleteWishlistItem, getWishlistItems, updateWishlistItem } from "./wishlist";
+import { useRefetchOnFocus } from "../../lib/useRefetchOnFocus";
 
 // Owns the wishlist product list and the two mutations that touch it
 // directly (delete, edit). Anything that just needs to read/filter the
@@ -25,6 +26,23 @@ export function useWishlist() {
 
     loadWishlist();
   }, []);
+
+  // Quiet background refetch when this tab regains focus - covers the
+  // Chrome extension case directly: save a product there, switch back
+  // to this tab, and it's already in the grid, no manual reload
+  // needed. No loading state toggled and failures are swallowed - this
+  // should feel like the data was just already there, not like a
+  // visible reload, and a background check silently not working is
+  // better than surfacing an error for something the user didn't
+  // explicitly ask for.
+  useRefetchOnFocus(async () => {
+    try {
+      const wishlistItems = await getWishlistItems();
+      setProducts(wishlistItems);
+    } catch {
+      // fail quietly
+    }
+  });
 
   // The actual delete call - both a direct single-item delete and the
   // Donate flow (which confirms via its own modal, not window.confirm)

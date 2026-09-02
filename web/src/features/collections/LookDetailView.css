@@ -118,44 +118,170 @@
   text-overflow: ellipsis;
 }
 
-/* Piece count - real, computed data, not decorative filler in the
-   header's remaining right-hand space. */
-.look-studio__meta {
-  justify-self: end;
-  margin: 0;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-
-/* BODY - bed/canvas on the left, catalog on the right, sharing whatever
-   height remains under the header. THE KEY FIX: grid-template-rows was
-   previously unset, leaving the single implicit row sized as `auto`
-   (content-based). A percentage height on a grid child (like the
-   canvas/panel's `height: 100%` below) can't resolve against an `auto`
-   row, so it was falling back to each child's own natural content
-   height instead of the actual remaining viewport space - the grid
-   equivalent of a flex child missing `min-height: 0`. `minmax(0, 1fr)`
-   gives the row a real, viewport-bounded height budget so every
-   height:100%/min-height:0 chain inside the canvas and panel actually
-   has something definite to shrink against, instead of overflowing
-   .look-detail's clip and rendering as a cut-off bottom. */
+/* BODY - three zones sharing whatever height remains under the header:
+   illustration (left) / bed (center, still the dominant workspace) /
+   catalog (right). grid-template-rows: minmax(0, 1fr) is the fix that
+   makes every height:100%/min-height:0 chain in the three columns
+   below actually resolve against real, viewport-bounded space instead
+   of each column's own content height - without it, a percentage
+   height on a grid child can't resolve against an implicit `auto` row
+   (the grid equivalent of a flex child missing `min-height: 0`), and
+   content silently overflows .look-detail's clip as a cut-off bottom.
+   minmax() on each column (not fixed percentages) lets the illustration
+   column shrink first on narrower desktops while the bed and catalog
+   keep their own floors - see the width guidance in each column's own
+   rules below. */
 .look-studio__body {
   flex: 1;
   min-height: 0;
 
   display: grid;
-  grid-template-columns: 63% 1fr;
+  /* The illustration column deliberately has NO fr growth - its own
+     frame caps at 220px (see .look-studio__illustration-frame), so
+     letting this track grow past ~210px would only waste space as
+     blank column padding around a fixed-size frame. All real extra
+     space flows to the bed (still weighted heaviest) and the catalog. */
+  grid-template-columns: minmax(160px, 210px) minmax(420px, 1.7fr) minmax(340px, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  gap: 24px;
+  gap: 20px;
 
   overflow: hidden;
   padding-bottom: 10px;
+}
+
+/* LEFT - illustration + fit total. Deliberately NOT a boxed sidebar:
+   no panel background/border wrapping the whole column, unlike the
+   catalog's own dimensional surface on the right - the illustration
+   sits directly in the workspace, with only the image itself getting
+   a subtle paper treatment. */
+.look-studio__illustration-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Portrait frame (matches Gemini's own 3:4 output) sized from the
+   column's WIDTH, not stretched to fill the column's height - at this
+   column's narrow share of the layout, that naturally keeps the
+   illustration smaller than the bed (which is height-driven instead)
+   without needing an explicit max-height fight between the two. The
+   slight rotation + warm paper tone is the only "material" cue this
+   column gets; no card border/shadow heavy enough to read as a sidebar. */
+.look-studio__illustration-frame {
+  position: relative;
+  flex-shrink: 0;
+
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+
+  border: 1px solid rgba(245, 240, 232, 0.16);
+  border-radius: 8px;
+  background: #f2ead9;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
+  transform: rotate(-0.6deg);
+
+  overflow: hidden;
+  cursor: pointer;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.look-studio__illustration-frame:hover {
+  transform: rotate(-0.6deg) translateY(-2px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.4);
+  border-color: rgba(241, 123, 166, 0.4);
+}
+
+.look-studio__illustration-frame:focus-visible {
+  outline: 2px solid #f17ba6;
+  outline-offset: 3px;
+}
+
+.look-studio__illustration-image {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
+/* No saved illustration yet - the entry point is the dress/sparkle
+   artwork itself (already carries its own "Illustrate Look" lettering
+   and sparkle), not a card. Chrome-free on purpose: no paper
+   background, border, shadow, or rotation, since the artwork already
+   reads as a complete piece against the dark workspace - a frame
+   around it would compete with it rather than presenting it. Sized to
+   the asset's own real proportions (1550:2200) rather than the 3:4
+   ratio the saved-illustration frame uses. */
+.look-studio__illustration-frame--empty {
+  aspect-ratio: 1550 / 2200;
+
+  border: none;
+  background: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.look-studio__illustration-frame--empty:hover {
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+.look-studio__illustration-empty-asset {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  opacity: 0.92;
+
+  transition: opacity 0.2s ease;
+}
+
+.look-studio__illustration-frame--empty:hover .look-studio__illustration-empty-asset {
+  opacity: 1;
+}
+
+.look-studio__fit-total {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 220px;
+  padding-top: 10px;
+
+  border-top: 1px solid rgba(245, 240, 232, 0.12);
+
+  text-align: center;
+}
+
+.look-studio__fit-total-label {
+  margin: 0 0 4px;
+
+  color: rgba(245, 240, 232, 0.5);
+  font-family: var(--sans);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: help;
+}
+
+.look-studio__fit-total-value {
+  margin: 0;
+
+  color: #f2a3c4;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 1.15rem;
 }
 
 .look-detail__canvas {
@@ -191,51 +317,6 @@
   padding-top: 12px;
 
   border-top: 1px solid rgba(241, 123, 166, 0.35);
-}
-
-/* Dark 3D secondary button, same beveled language as the header/filter
-   circles - sized to its own content (not full-width) since it now
-   sits alone under the bed rather than paired with another button. */
-.look-studio__illustrate-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  padding: 10px 20px;
-
-  border: 1px solid rgba(241, 123, 166, 0.4);
-  border-radius: 14px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.18));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.2);
-
-  color: #f5f0e8;
-  font-family: var(--sans);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-
-  cursor: pointer;
-
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-}
-
-.look-studio__illustrate-cta:hover:not(:disabled) {
-  border-color: #f17ba6;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 2px 6px rgba(0, 0, 0, 0.2),
-    0 0 0 3px rgba(241, 123, 166, 0.14);
-}
-
-.look-studio__illustrate-cta:focus-visible {
-  outline: 2px solid #f17ba6;
-  outline-offset: 2px;
-}
-
-.look-studio__illustrate-cta:disabled {
-  opacity: 0.45;
-  cursor: default;
 }
 
 .look-studio__style-cta {
@@ -291,6 +372,8 @@
    the pillows in the photo itself). No CSS-drawn shapes anymore. */
 
 .look-bed {
+  container-type: size;
+
   flex: 1;
   min-height: 0;
 
@@ -304,15 +387,23 @@
    whatever vertical room the viewport actually leaves, capped at 700px
    on tall/roomy screens. No frame/background of our own - the photo
    (with its own hand-drawn sticker outline) is the whole visual. */
+/* Guaranteed square regardless of which axis the surrounding grid
+   column constrains tighter - container query units (cqw/cqh, measured
+   against .look-bed's own box, see container-type: size above) let
+   width and height both resolve from whichever of the container's own
+   width/height is smaller, capped at 700px. This replaces an earlier
+   height:100%/max-width:min(700px,100%)/aspect-ratio:1/1 combination
+   that could silently stop being square: aspect-ratio can't reconcile
+   an explicit height against a separately-clamped max-width when a
+   narrower container makes width the tighter constraint, and pieces
+   positioned by percentage against that logically-still-square element
+   would then render outside the visually letterboxed bed photo.  */
 .look-bed__surface {
   position: relative;
   overflow: hidden;
 
-  width: auto;
-  height: 100%;
-  max-width: min(700px, 100%);
-
-  aspect-ratio: 1 / 1;
+  width: min(100cqw, 100cqh, 700px);
+  height: min(100cqw, 100cqh, 700px);
 }
 
 /* Shown while a piece is picked up, so the bed itself hints "click

@@ -247,7 +247,10 @@ function PreparePieceModal({ product, onClose, onSave }) {
         </p>
 
         {phase === "loading" && (
-          <p className="prepare-piece-modal__status">getting your piece ready…</p>
+          <div className="prepare-piece-modal__loading">
+            <span className="prepare-piece-modal__spinner" aria-hidden="true" />
+            <p className="prepare-piece-modal__status">getting your piece ready…</p>
+          </div>
         )}
 
         {phase === "error" && (

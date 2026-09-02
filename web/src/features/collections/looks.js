@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabase";
 
 const LOOKS_TABLE = "looks";
 const LOOK_ITEMS_TABLE = "look_items";
+const LOOK_ILLUSTRATION_BUCKET = "look-illustrations";
 
 // The one avatar image the app has - lives here (rather than on
 // LookDetailView or IllustrateLookModal directly) so both can import
@@ -29,6 +30,7 @@ function databaseRowToLook(row) {
     name: row.name,
     collectionId: row.collection_id,
     createdAt: row.created_at,
+    illustrationUrl: row.illustration_url,
     wishitems: (row.look_items || [])
       .filter((item) => item.wishitems)
       .map((item) => ({
@@ -151,6 +153,54 @@ export async function updateLookLayout(lookId, positions) {
   }
 
   return getLookById(lookId);
+}
+
+// Persists a Milestone 2 generation result (a temporary data: URL held
+// only in IllustrateLookModal's own state) as this Look's one saved
+// illustration - Milestone 3 deliberately supports zero-or-one per
+// Look, no history/versions. Mirrors wishlist.js's uploadPieceCutout +
+// updateWishitemCutoutImage pair (upload, then point the row at the
+// result), the only other place this app touches Supabase Storage:
+// same stable-path-plus-upsert approach (re-saving overwrites the same
+// object rather than accumulating orphans) and the same cache-busting
+// `?v=` suffix so the browser doesn't keep showing a stale image after
+// a re-save.
+export async function saveLookIllustration(lookId, imageDataUrl) {
+  let blob;
+  try {
+    blob = await (await fetch(imageDataUrl)).blob();
+  } catch {
+    return { success: false, error: "Couldn't process the generated image. Please try again." };
+  }
+
+  const extension = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+  const path = `${lookId}/illustration.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(LOOK_ILLUSTRATION_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: blob.type });
+
+  if (uploadError) {
+    return { success: false, error: "Couldn't upload the illustration. Please try again." };
+  }
+
+  const { data } = supabase.storage.from(LOOK_ILLUSTRATION_BUCKET).getPublicUrl(path);
+  const illustrationUrl = `${data.publicUrl}?v=${Date.now()}`;
+
+  const { error: dbError } = await supabase
+    .from(LOOKS_TABLE)
+    .update({ illustration_url: illustrationUrl })
+    .eq("id", lookId);
+
+  if (dbError) {
+    // The upload succeeded but the Look was never pointed at it - clean
+    // up the now-orphaned object rather than leaving dangling state in
+    // Storage that nothing references.
+    await supabase.storage.from(LOOK_ILLUSTRATION_BUCKET).remove([path]);
+    return { success: false, error: "Couldn't save the illustration to this Look. Please try again." };
+  }
+
+  return { success: true, illustrationUrl };
 }
 
 // Deletes a Look. The database's ON DELETE CASCADE removes its
