@@ -76,6 +76,12 @@
   color: #d6455f;
 }
 
+.sign-in-screen__success {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #2f9e5c;
+}
+
 .sign-in-screen__submit {
   margin-top: 18px;
   padding: 9px;
@@ -90,9 +96,25 @@
   cursor: pointer;
 }
 
+.sign-in-screen__switch {
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
 .sign-in-screen__submit:disabled,
 .sign-in-screen__form input:disabled,
-.sign-in-screen__toggle:disabled {
+.sign-in-screen__toggle:disabled,
+.sign-in-screen__switch:disabled {
   opacity: 0.6;
   cursor: default;
 }
