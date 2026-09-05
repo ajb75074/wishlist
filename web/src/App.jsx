@@ -18,6 +18,7 @@ import DeleteCollectionModal from "./features/collections/DeleteCollectionModal"
 import { useCollections } from "./features/collections/useCollections";
 import SelectModeBar from "./components/SelectModeBar";
 import ActionTray from "./components/ActionTray";
+import ProfileView from "./features/profile/ProfileView";
 
 function App() {
   const { products, loading, error, updatingId, performDelete, handleUpdate } = useWishlist();
@@ -392,6 +393,8 @@ function App() {
               />
             }
           />
+
+          <Route path="/profile" element={<ProfileView />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

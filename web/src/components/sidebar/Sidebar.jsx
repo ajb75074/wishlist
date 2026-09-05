@@ -1,3 +1,4 @@
+import { useLocation, useNavigate } from "react-router-dom";
 import CollectionThumbnail from "../../features/collections/CollectionThumbnail";
 import { useAuth } from "../../lib/AuthContext";
 import "./Sidebar.css";
@@ -11,6 +12,8 @@ function Sidebar({
   selectedCollectionId,
 }) {
   const { signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <aside className="sidebar">
@@ -27,6 +30,16 @@ function Sidebar({
           onClick={() => onViewChange("collections")}
         >
           Collections
+        </button>
+
+        {/* Its own active check (not activeView) - Profile isn't part
+            of the All Saves/Collections drill-down App.jsx already
+            tracks, so it doesn't need to flow through onViewChange. */}
+        <button
+          className={location.pathname === "/profile" ? "active" : ""}
+          onClick={() => navigate("/profile")}
+        >
+          Profile
         </button>
       </nav>
 
