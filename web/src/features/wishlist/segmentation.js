@@ -1,3 +1,9 @@
+import {
+  SamModel,
+  AutoProcessor,
+  RawImage,
+  env,
+} from "@huggingface/transformers";
 // Interactive product-cutout segmentation - adapted from the proven
 // standalone prototype at tools/interactive-cutout-test/app.js. Same
 // model, same CDN-loading approach, same encode-once/decode-per-point
@@ -13,8 +19,14 @@
 // invisible to Vite's bundler, so nothing extra ships in the app; the
 // ~14MB model is fetched once by the browser and cached there, and is
 // never committed to this repo.
-const TRANSFORMERS_CDN_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
 const MODEL_ID = "Xenova/slimsam-77-uniform";
+
+const ONNX_RUNTIME_BASE_URL = new URL("onnx/", document.baseURI).href;
+
+env.backends.onnx.wasm.wasmPaths = {
+  mjs: `${ONNX_RUNTIME_BASE_URL}ort-wasm-simd-threaded.asyncify.mjs`,
+  wasm: `${ONNX_RUNTIME_BASE_URL}ort-wasm-simd-threaded.asyncify.wasm`,
+};
 
 let modelPromise = null;
 
@@ -24,7 +36,6 @@ let modelPromise = null;
 export function loadSegmentationModel() {
   if (!modelPromise) {
     modelPromise = (async () => {
-      const { SamModel, AutoProcessor } = await import(TRANSFORMERS_CDN_URL);
       const model = await SamModel.from_pretrained(MODEL_ID, { dtype: "quantized" });
       const processor = await AutoProcessor.from_pretrained(MODEL_ID);
       return { model, processor };
@@ -38,7 +49,6 @@ export function loadSegmentationModel() {
 // calls - kept separate from the plain HTMLImageElement used for
 // on-screen drawing and the final export.
 export async function loadRawImage(url) {
-  const { RawImage } = await import(TRANSFORMERS_CDN_URL);
   return RawImage.fromURL(url);
 }
 

@@ -1,8 +1,8 @@
 // Illustrate Look, Milestone 2 - the server-side boundary between the
 // app-level generation payload IllustrateLookModal builds and Gemini's
 // image-generation API. Mirrors image-proxy's own pattern (same repo,
-// same Deno edge runtime, same anon-key auth) rather than introducing
-// a new runtime for this one feature.
+// same Deno edge runtime) rather than introducing a new runtime for
+// this one feature.
 //
 // GEMINI_API_KEY lives only here (Deno.env / Supabase Function secrets)
 // - it is never read by, or shipped to, the Vite client bundle.
@@ -12,12 +12,23 @@
 // disk - the web app's own public/ folder has no stable network URL a
 // remote edge function could fetch (this project has no public web
 // hosting), so those two assets exist here as their own copies rather
-// than being fetched. Per-Look product images (cutoutImageUrl ??
-// imageUrl) are real Supabase Storage / retailer URLs and ARE fetched
-// here, per spec.
+// than being fetched.
+//
+// AUTH + OWNERSHIP: this now requires a real authenticated user
+// (requireUser) and loads the Look + its currently placed pieces
+// directly from the database using the CALLER's own JWT - table RLS on
+// looks/look_items/wishitems does the ownership enforcement, the same
+// way it already does everywhere else in this app. The client is no
+// longer trusted for piece identity or image URLs at all; only lookId,
+// style, and an optional cosmetic category hint are ever read from the
+// request body. Per-Look product images (cutout_image_url ??
+// image_url) are real Supabase Storage / retailer URLs and are fetched
+// here through the SSRF-guarded safeFetch helper, per spec.
 import { GoogleGenAI } from "npm:@google/genai@^2.20.0";
 import { Buffer } from "node:buffer";
 import { buildIllustrationPrompt, sortPiecesForPrompt, type Piece } from "./prompt.ts";
+import { requireUser } from "../_shared/auth.ts";
+import { safeFetch, readBodyWithLimit } from "../_shared/urlSafety.ts";
 
 interface InlineImage {
   data: string;
@@ -30,10 +41,17 @@ interface StyleDefinition {
   assetFile: string;
 }
 
+// Only style + an optional per-piece category hint come from the
+// client now - id/name/imageUrl for every piece are derived from the
+// authenticated user's own Look in the database, never trusted from
+// the request body. A client can at most mislabel one of their OWN
+// pieces' category (cosmetic prompt wording, not a security boundary)
+// - it can no longer supply an arbitrary URL or claim a piece/Look it
+// doesn't own.
 interface RequestPayload {
   lookId: string;
-  pieces: Piece[];
   style: string;
+  pieces?: Array<{ id?: string; category?: string }>;
 }
 
 const CORS_HEADERS = {
@@ -50,6 +68,11 @@ const CORS_HEADERS = {
 // reference-image count. Keep this in sync with the client constant -
 // otherwise a fully-styled Look could fail Illustrate Look outright.
 const MAX_PIECES = 8;
+
+// The request body is now small ({lookId, style, an optional short
+// pieces hint array}) - a large Content-Length is itself suspicious,
+// and this is checked before req.json() is ever called.
+const MAX_REQUEST_BYTES = 64 * 1024;
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
@@ -87,14 +110,19 @@ async function readLocalAsset(fileName: string): Promise<InlineImage> {
   return { data: Buffer.from(bytes).toString("base64"), mimeType: "image/png" };
 }
 
-// Server-side fetch, per spec - keeps the Gemini key and request
-// construction centralized, and the client payload is just a URL.
+// Now routed through safeFetch/readBodyWithLimit (SSRF guard, redirect
+// rejection, fetch timeout, response size cap) instead of a bare
+// fetch() trusting whatever URL is supplied - the URL itself is now
+// always DB-derived (cutout_image_url ?? image_url from the
+// authenticated user's own Look), never client-supplied, but it's
+// still an external retailer/Storage URL fetched at request time, so
+// the same guard applies regardless of where the URL came from.
 async function fetchImageAsInlineData(url: string, label: string): Promise<InlineImage> {
   let response: Response;
   try {
-    response = await fetch(url);
-  } catch {
-    throw new Error(`Could not fetch the image for "${label}".`);
+    response = await safeFetch(url);
+  } catch (error) {
+    throw new Error(`Could not fetch the image for "${label}": ${errorMessage(error)}`);
   }
 
   if (!response.ok) {
@@ -107,13 +135,15 @@ async function fetchImageAsInlineData(url: string, label: string): Promise<Inlin
     throw new Error(`The image for "${label}" isn't a supported type (png/jpeg/webp).`);
   }
 
-  const bytes = new Uint8Array(await response.arrayBuffer());
+  const bytes = await readBodyWithLimit(response);
   return { data: Buffer.from(bytes).toString("base64"), mimeType };
 }
 
 // Returns an error string, or null when the payload is valid. Doesn't
 // mutate/coerce `body` - callers still need to narrow its type after a
-// null result (see the cast where this is called).
+// null result (see the cast where this is called). Only lookId and
+// style are required now - piece identity/URLs come from the database
+// (see the handler below), not the request body.
 function validatePayload(body: unknown): string | null {
   if (!body || typeof body !== "object") {
     return "Request body must be a JSON object.";
@@ -123,26 +153,6 @@ function validatePayload(body: unknown): string | null {
 
   if (typeof candidate.lookId !== "string" || !candidate.lookId) {
     return "lookId is required.";
-  }
-
-  if (!Array.isArray(candidate.pieces) || candidate.pieces.length === 0) {
-    return "At least one styled piece is required.";
-  }
-
-  if (candidate.pieces.length > MAX_PIECES) {
-    return `A Look can include at most ${MAX_PIECES} pieces.`;
-  }
-
-  for (const piece of candidate.pieces) {
-    if (
-      !piece ||
-      typeof piece !== "object" ||
-      typeof (piece as Record<string, unknown>).id !== "string" ||
-      typeof (piece as Record<string, unknown>).imageUrl !== "string" ||
-      !(piece as Record<string, unknown>).imageUrl
-    ) {
-      return "Each piece needs an id and imageUrl.";
-    }
   }
 
   if (typeof candidate.style !== "string" || !STYLES[candidate.style]) {
@@ -169,6 +179,19 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Illustration generation isn't configured yet." }, 500);
   }
 
+  // Rejected before req.json() is ever called - this payload is small,
+  // so a large Content-Length is itself suspicious.
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_REQUEST_BYTES) {
+    return jsonResponse({ error: "Request body is too large." }, 413);
+  }
+
+  const authResult = await requireUser(req);
+  if (authResult instanceof Response) {
+    return authResult;
+  }
+  const { supabase } = authResult;
+
   let rawBody: unknown;
   try {
     rawBody = await req.json();
@@ -183,6 +206,72 @@ Deno.serve(async (req) => {
 
   const body = rawBody as RequestPayload;
   const style = STYLES[body.style];
+
+  // Fetched with the CALLER's own JWT (via requireUser's client above),
+  // so table RLS on looks/look_items/wishitems does the ownership
+  // enforcement - a lookId belonging to someone else, or that doesn't
+  // exist at all, both resolve identically to "not found" below,
+  // never distinguishing the two.
+  const { data: look, error: lookError } = await supabase
+    .from("looks")
+    .select("id, look_items(is_placed, wishitems(id, name, image_url, cutout_image_url))")
+    .eq("id", body.lookId)
+    .maybeSingle();
+
+  if (lookError) {
+    console.error("illustrate-look: failed to load look -", lookError);
+    return jsonResponse({ error: "Could not load this Look. Please try again." }, 500);
+  }
+
+  if (!look) {
+    return jsonResponse({ error: "Look not found." }, 404);
+  }
+
+  interface LookItemRow {
+    is_placed: boolean;
+    wishitems: { id: string; name: string; image_url: string; cutout_image_url: string | null } | null;
+  }
+
+  // supabase-js infers embedded relations generically as arrays without
+  // generated DB types (which this project doesn't have) - at runtime
+  // this is actually one object per row, matching look_items' own
+  // UNIQUE(look_id, wishitem_id) constraint and wishitem_id's many-to-one
+  // FK. The cast through `unknown` is intentional, not a type-safety
+  // shortcut - deno check flagged the mismatch and this is the fix it
+  // suggested for exactly this situation.
+  const placedItems = ((look.look_items ?? []) as unknown as LookItemRow[]).filter(
+    (item) => item.is_placed && item.wishitems,
+  );
+
+  if (placedItems.length === 0) {
+    return jsonResponse({ error: "This Look has no styled pieces yet." }, 400);
+  }
+
+  if (placedItems.length > MAX_PIECES) {
+    return jsonResponse({ error: `A Look can include at most ${MAX_PIECES} pieces.` }, 400);
+  }
+
+  // category is the one field still allowed from the client - purely
+  // cosmetic prompt-wording (prompt.ts already falls back to a generic
+  // "PIECE" label for anything missing/unmatched), matched by id
+  // against the DB-derived pieces below. A client can only ever
+  // mislabel their OWN piece this way, never affect another user or
+  // supply a URL/identity.
+  const categoryById = new Map(
+    (body.pieces ?? [])
+      .filter(
+        (piece): piece is { id: string; category: string } =>
+          typeof piece?.id === "string" && typeof piece?.category === "string",
+      )
+      .map((piece) => [piece.id, piece.category]),
+  );
+
+  const pieces: Piece[] = placedItems.map((item) => ({
+    id: item.wishitems!.id,
+    name: item.wishitems!.name,
+    category: categoryById.get(item.wishitems!.id),
+    imageUrl: item.wishitems!.cutout_image_url ?? item.wishitems!.image_url,
+  }));
 
   // Local, server-owned assets - never fetched over the network, never
   // supplied by the client (see the file header comment).
@@ -205,7 +294,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  const sortedPieces = sortPiecesForPrompt(body.pieces);
+  const sortedPieces = sortPiecesForPrompt(pieces);
 
   let pieceAssets: InlineImage[];
   try {

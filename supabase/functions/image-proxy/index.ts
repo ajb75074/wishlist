@@ -7,13 +7,17 @@
 // CORS headers attached, so the browser can read them regardless of
 // what the original host does or doesn't send.
 //
-// Auth: left at the default (verify_jwt = true), so this is invoked the
-// same way every other Supabase call in this app already is - with the
-// project's anon/publishable key as the Bearer token. No new, weaker
-// security posture; no service-role key involved.
+// AUTH: requires a real authenticated user (requireUser) - the
+// project's anon/publishable key alone is no longer sufficient, since
+// this function fetches arbitrary client-supplied URLs server-side and
+// was otherwise effectively an open proxy to anyone holding the public
+// anon key. No service-role key involved.
 //
 // This never redraws/regenerates image content - it's a byte-for-byte
-// passthrough of whatever the source server returns.
+// passthrough of whatever the source server returns, still gated to
+// image/* responses only (never a generic authenticated file proxy).
+import { requireUser } from "../_shared/auth.ts";
+import { assertSafeUrl, readBodyWithLimit } from "../_shared/urlSafety.ts";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +25,20 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
+const FETCH_TIMEOUT_MS = 8000;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  if (req.method !== "GET") {
+    return new Response("Method not allowed.", { status: 405, headers: CORS_HEADERS });
+  }
+
+  const authResult = await requireUser(req);
+  if (authResult instanceof Response) {
+    return authResult;
   }
 
   const targetUrl = new URL(req.url).searchParams.get("url");
@@ -35,29 +50,34 @@ Deno.serve(async (req) => {
     });
   }
 
-  let parsedUrl;
+  let safeUrl: URL;
   try {
-    parsedUrl = new URL(targetUrl);
-  } catch {
-    return new Response("Invalid 'url' query parameter.", {
+    safeUrl = await assertSafeUrl(targetUrl);
+  } catch (error) {
+    return new Response(error instanceof Error ? error.message : "Invalid URL.", {
       status: 400,
       headers: CORS_HEADERS,
     });
   }
 
-  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-    return new Response("Only http/https URLs are allowed.", {
-      status: 400,
-      headers: CORS_HEADERS,
-    });
-  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  let upstreamResponse;
+  let upstreamResponse: Response;
   try {
-    upstreamResponse = await fetch(parsedUrl.toString());
+    upstreamResponse = await fetch(safeUrl, { redirect: "manual", signal: controller.signal });
   } catch {
     return new Response("Could not reach the source image.", {
       status: 502,
+      headers: CORS_HEADERS,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (upstreamResponse.status >= 300 && upstreamResponse.status < 400) {
+    return new Response("Redirects are not allowed.", {
+      status: 400,
       headers: CORS_HEADERS,
     });
   }
@@ -79,7 +99,21 @@ Deno.serve(async (req) => {
     });
   }
 
-  return new Response(upstreamResponse.body, {
+  let bytes: Uint8Array;
+  try {
+    bytes = await readBodyWithLimit(upstreamResponse);
+  } catch (error) {
+    return new Response(error instanceof Error ? error.message : "Image is too large.", {
+      status: 413,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  // Uint8Array is a fully valid Response body per the Fetch spec - this
+  // cast is purely a TS lib typing mismatch (BodyInit's declared type
+  // here doesn't structurally match Uint8Array's generic ArrayBuffer
+  // parameter), not a runtime concern.
+  return new Response(bytes as BodyInit, {
     status: 200,
     headers: {
       ...CORS_HEADERS,

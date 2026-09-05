@@ -101,15 +101,27 @@ export async function updateWishitemCutoutImage(id, cutoutImageUrl) {
 // image-proxy Edge Function, which fetches the image server-side (CORS
 // is a browser-only restriction, not a server-to-server one) and
 // re-serves the same bytes with permissive CORS headers attached.
-// Authenticated the same way every other Supabase call in this app
-// already is - the anon/publishable key - no new security posture, no
-// service-role key.
+//
+// Authorization is now the signed-in user's own access_token, not the
+// publishable key - the function requires a real authenticated user
+// (it fetches arbitrary URLs server-side, so the publishable key alone
+// is no longer sufficient). The publishable key stays in `apikey`,
+// which Supabase's gateway still expects on every request. No
+// service-role key involved.
 export async function fetchProductImageViaProxy(url) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw new Error("SIGN_IN_REQUIRED");
+  }
+
   const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/image-proxy?url=${encodeURIComponent(url)}`;
 
   const response = await fetch(proxyUrl, {
     headers: {
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${session.access_token}`,
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
   });
