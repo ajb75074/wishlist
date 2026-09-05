@@ -111,10 +111,27 @@
   align-self: center;
 }
 
+.sign-in-screen__forgot-password {
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-end;
+  opacity: 0.75;
+}
+
 .sign-in-screen__submit:disabled,
 .sign-in-screen__form input:disabled,
 .sign-in-screen__toggle:disabled,
-.sign-in-screen__switch:disabled {
+.sign-in-screen__switch:disabled,
+.sign-in-screen__forgot-password:disabled {
   opacity: 0.6;
   cursor: default;
 }

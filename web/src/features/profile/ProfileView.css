@@ -131,3 +131,34 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.profile-view__section-divider {
+  height: 1px;
+  margin: 28px 0 20px;
+  background: var(--border);
+}
+
+.profile-view__section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--text-h);
+}
+
+.profile-view__password-dots {
+  margin: 0;
+  letter-spacing: 0.1em;
+}
+
+.profile-view__change-password {
+  margin-top: 12px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}

@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import ForgotPasswordScreen from "./ForgotPasswordScreen";
 import "./SignInScreen.css";
 
 const MODE_SIGN_IN = "sign-in";
 const MODE_SIGN_UP = "sign-up";
+const MODE_FORGOT_PASSWORD = "forgot-password";
 
 // Deliberately minimal - the whole app is getting a visual redesign
 // later, so this is functional-only: email/password (+name on
-// sign-up), a trivial show/hide toggle, a mode switch. No social
-// auth, no password reset, no onboarding - those are separate tasks.
+// sign-up), a trivial show/hide toggle, a mode switch (including
+// forgot-password, which hands off to its own component entirely). No
+// social auth, no onboarding - those are separate tasks.
 function SignInScreen() {
   const [mode, setMode] = useState(MODE_SIGN_IN);
   const [name, setName] = useState("");
@@ -77,6 +80,10 @@ function SignInScreen() {
       setSuccessMessage("Check your email to confirm your account, then sign in.");
       setIsSubmitting(false);
     }
+  }
+
+  if (mode === MODE_FORGOT_PASSWORD) {
+    return <ForgotPasswordScreen onBackToSignIn={() => switchMode(MODE_SIGN_IN)} />;
   }
 
   async function handleSubmit(event) {
@@ -176,6 +183,17 @@ function SignInScreen() {
               required
             />
           </>
+        )}
+
+        {!isSignUp && (
+          <button
+            type="button"
+            className="sign-in-screen__forgot-password"
+            onClick={() => switchMode(MODE_FORGOT_PASSWORD)}
+            disabled={isSubmitting}
+          >
+            forgot password?
+          </button>
         )}
 
         {errorMessage && <p className="sign-in-screen__error">{errorMessage}</p>}

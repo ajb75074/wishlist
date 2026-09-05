@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import ChangePasswordModal from "./ChangePasswordModal";
 import { ALLOWED_PROFILE_IMAGE_TYPES } from "./profile";
 import { useProfile } from "./useProfile";
 import "./ProfileView.css";
@@ -34,6 +35,7 @@ function ProfileView() {
 
   const [nameDraft, setNameDraft] = useState("");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   // Same "resync on source change" trick CollectionThumbnail already
@@ -140,6 +142,27 @@ function ProfileView() {
           {isSavingName ? "saving..." : "save"}
         </button>
       </form>
+
+      <div className="profile-view__section-divider" />
+
+      <section className="profile-view__account">
+        <h2 className="profile-view__section-title">Account</h2>
+
+        <label className="profile-view__label">password</label>
+        <p className="profile-view__password-dots">••••••••••••</p>
+
+        <button
+          type="button"
+          className="profile-view__change-password"
+          onClick={() => setIsChangePasswordOpen(true)}
+        >
+          change password
+        </button>
+      </section>
+
+      {isChangePasswordOpen && (
+        <ChangePasswordModal onClose={() => setIsChangePasswordOpen(false)} />
+      )}
     </div>
   );
 }
