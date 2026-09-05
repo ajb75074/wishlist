@@ -1,0 +1,98 @@
+/* Minimal on purpose - functional placeholder ahead of a full visual
+   redesign, not a designed screen in its own right. */
+.sign-in-screen {
+  min-height: 100svh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sign-in-screen__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  width: 100%;
+  max-width: 280px;
+  padding: 32px;
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.sign-in-screen__title {
+  margin: 0 0 16px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.sign-in-screen__label {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  opacity: 0.8;
+}
+
+.sign-in-screen__form input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
+.sign-in-screen__password-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sign-in-screen__password-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sign-in-screen__toggle {
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.sign-in-screen__error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #d6455f;
+}
+
+.sign-in-screen__submit {
+  margin-top: 18px;
+  padding: 9px;
+  border: 1px solid #f17ba6;
+  border-radius: 4px;
+  background: #f17ba6;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.sign-in-screen__submit:disabled,
+.sign-in-screen__form input:disabled,
+.sign-in-screen__toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

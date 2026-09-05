@@ -1,4 +1,5 @@
 import CollectionThumbnail from "../../features/collections/CollectionThumbnail";
+import { useAuth } from "../../lib/AuthContext";
 import "./Sidebar.css";
 
 function Sidebar({
@@ -9,6 +10,8 @@ function Sidebar({
   onSelectCollection,
   selectedCollectionId,
 }) {
+  const { signOut } = useAuth();
+
   return (
     <aside className="sidebar">
       <nav className="sidebar-nav">
@@ -73,6 +76,14 @@ function Sidebar({
           />
         </button>
       </section>
+
+      <div className="sidebar-divider" />
+
+      {/* Functional-only, unobtrusive placement - real placement/styling
+          comes with the visual redesign. */}
+      <button type="button" className="sidebar-sign-out" onClick={signOut}>
+        sign out
+      </button>
     </aside>
   );
 }

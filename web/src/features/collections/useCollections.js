@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createCollection, deleteCollection, getCollections } from "./collections";
+import { createCollection, deleteCollection, getCollections, updateCollection } from "./collections";
 
 // Owns the collections list and its CRUD. Deliberately doesn't know
 // about `selectedCollection`/navigation - that's App-level concern.
@@ -7,10 +7,18 @@ import { createCollection, deleteCollection, getCollections } from "./collection
 // view) without this hook needing to understand navigation at all.
 export function useCollections({ onCollectionDeleted } = {}) {
   const [collections, setCollections] = useState([]);
+  // Lets routing tell "not found" (bad/stale URL) apart from "haven't
+  // fetched yet" (fresh page load/refresh straight into a collection or
+  // Look Studio URL, before this mount effect resolves).
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
   // Collection pending deletion confirmation, or null.
   const [collectionPendingDelete, setCollectionPendingDelete] = useState(null);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
   const [deleteCollectionError, setDeleteCollectionError] = useState("");
+  // The collection currently open in the edit modal, or null - doubles
+  // as both "is the modal open" and "which collection to pre-fill it
+  // with", same pattern LookDetailView's preparingPiece uses.
+  const [editingCollection, setEditingCollection] = useState(null);
 
   useEffect(() => {
     async function loadCollections() {
@@ -19,6 +27,8 @@ export function useCollections({ onCollectionDeleted } = {}) {
         setCollections(existingCollections);
       } catch (err) {
         console.error("Could not load collections.", err);
+      } finally {
+        setIsLoadingCollections(false);
       }
     }
 
@@ -29,6 +39,30 @@ export function useCollections({ onCollectionDeleted } = {}) {
     try {
       const collection = await createCollection({ name, imageUrl, color });
       setCollections((current) => [collection, ...current]);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }
+
+  function handleRequestEditCollection(collection) {
+    setEditingCollection(collection);
+  }
+
+  function handleCancelEditCollection() {
+    setEditingCollection(null);
+  }
+
+  // Same {name, imageUrl, color} shape handleCreateCollection takes, so
+  // EditCollectionModal can reuse CreateCollectionModal's own field
+  // handling almost verbatim.
+  async function handleUpdateCollection({ name, imageUrl, color }) {
+    try {
+      const updated = await updateCollection(editingCollection.id, { name, imageUrl, color });
+      setCollections((current) =>
+        current.map((collection) => (collection.id === updated.id ? updated : collection)),
+      );
+      setEditingCollection(null);
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -71,7 +105,12 @@ export function useCollections({ onCollectionDeleted } = {}) {
 
   return {
     collections,
+    isLoadingCollections,
     handleCreateCollection,
+    editingCollection,
+    handleRequestEditCollection,
+    handleCancelEditCollection,
+    handleUpdateCollection,
     collectionPendingDelete,
     isDeletingCollection,
     deleteCollectionError,

@@ -158,3 +158,28 @@ button.sidebar-new-collection {
   width: 120px;
   height: auto;
 }
+
+/* Functional-only for now, same as the rest of this file's controls -
+   real styling/placement comes with the visual redesign. */
+.sidebar-sign-out {
+  display: block;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--text);
+  opacity: 0.6;
+
+  cursor: pointer;
+
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-sign-out:hover,
+.sidebar-sign-out:focus-visible {
+  opacity: 1;
+}

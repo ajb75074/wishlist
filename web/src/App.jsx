@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 import ProductGrid from "./features/wishlist/ProductGrid";
 import FilterBar from "./features/wishlist/FilterBar";
@@ -9,8 +10,9 @@ import { categorizeProduct } from "./lib/categorize";
 import { basicColor } from "./lib/basicColor";
 import Sidebar from "./components/sidebar/Sidebar";
 import CreateCollectionModal from "./features/collections/CreateCollectionModal";
+import EditCollectionModal from "./features/collections/EditCollectionModal";
 import CollectionsView from "./features/collections/CollectionsView";
-import CollectionDetailView from "./features/collections/CollectionDetailView";
+import CollectionRoute from "./features/collections/CollectionRoute";
 import CollectionSavePopover from "./features/collections/CollectionSavePopover";
 import DeleteCollectionModal from "./features/collections/DeleteCollectionModal";
 import { useCollections } from "./features/collections/useCollections";
@@ -19,15 +21,15 @@ import ActionTray from "./components/ActionTray";
 
 function App() {
   const { products, loading, error, updatingId, performDelete, handleUpdate } = useWishlist();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStore, setSelectedStore] = useState("All");
   const [selectedColor, setSelectedColor] = useState("All");
   const [sortOrder, setSortOrder] = useState("newest");
-  const [activeView, setActiveView] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState(null);
   // { product, anchorEl, rect } | null - which product's save popover is open
   const [savePopover, setSavePopover] = useState(null);
   // All Saves Select Mode - a separate, opt-in management state so
@@ -46,9 +48,24 @@ function App() {
   const [isDonating, setIsDonating] = useState(false);
   const [donateError, setDonateError] = useState("");
 
+  // The current collection (if any) is derived from the URL rather than
+  // kept as its own state - /collections/:collectionName is the single
+  // source of truth for which one is open, so the Sidebar's own
+  // highlight and the "collection just got deleted" check below both
+  // read off this instead of a parallel piece of state that could drift
+  // from the URL.
+  const collectionNameParam = decodeURIComponent(
+    location.pathname.match(/^\/collections\/([^/]+)/)?.[1] ?? "",
+  ) || null;
+
   const {
     collections,
+    isLoadingCollections,
     handleCreateCollection,
+    editingCollection,
+    handleRequestEditCollection,
+    handleCancelEditCollection,
+    handleUpdateCollection,
     collectionPendingDelete,
     isDeletingCollection,
     deleteCollectionError,
@@ -58,28 +75,29 @@ function App() {
   } = useCollections({
     // If the collection we're currently viewing gets deleted, back out
     // to the collections grid instead of leaving a dead detail view up.
-    onCollectionDeleted: (deletedId) =>
-      setSelectedCollection((current) => (current?.id === deletedId ? null : current)),
+    onCollectionDeleted: (deletedId) => {
+      if (currentCollection?.id === deletedId) {
+        navigate("/collections");
+      }
+    },
   });
+
+  const currentCollection = collectionNameParam
+    ? collections.find((c) => c.name.toLowerCase() === collectionNameParam.toLowerCase())
+    : null;
 
   // Drilling into a specific collection also makes the broader
   // "Collections" nav section read as active, regardless of whether
   // this was triggered from CollectionsView or the Sidebar list.
   function handleSelectCollection(collection) {
-    setActiveView("collections");
-    setSelectedCollection(collection);
+    navigate(`/collections/${encodeURIComponent(collection.name)}`);
   }
 
   // Any top-level nav change resets the drill-down, so re-clicking
   // "Collections" itself returns to the general grid rather than
   // staying on whichever collection was last open.
   function handleViewChange(view) {
-    setActiveView(view);
-    setSelectedCollection(null);
-  }
-
-  function handleBackToCollections() {
-    setSelectedCollection(null);
+    navigate(view === "all" ? "/" : "/collections");
   }
 
   // Clicking the trigger again toggles the same popover closed instead
@@ -214,12 +232,12 @@ function App() {
     <div className="app-layout">
 
       <Sidebar
-        activeView={activeView}
+        activeView={location.pathname.startsWith("/collections") ? "collections" : "all"}
         onViewChange={handleViewChange}
         collections={collections}
         onCreateCollection={() => setIsCreateModalOpen(true)}
         onSelectCollection={handleSelectCollection}
-        selectedCollectionId={selectedCollection?.id}
+        selectedCollectionId={currentCollection?.id}
       />
 
       <div className="app-content">
@@ -228,7 +246,7 @@ function App() {
             name), so the generic app Header would just be a redundant
             "Collections" banner on top of it - only shown on the
             collections grid itself. */}
-        {activeView === "collections" && !selectedCollection && (
+        {location.pathname === "/collections" && (
           <Header
             title="Collections"
             tagline="your saved pieces, grouped by vibe, trip, and moment ♡"
@@ -237,7 +255,7 @@ function App() {
           />
         )}
 
-        {activeView !== "collections" && (
+        {location.pathname === "/" && (
           <Header
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -248,8 +266,11 @@ function App() {
 
         {error && <p>{error}</p>}
 
-        {activeView === "all" && (
-          <>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
             {!loading && !error && products.length === 0 && (
               <p>No saved items yet.</p>
             )}
@@ -331,26 +352,49 @@ function App() {
                 onConfirm={handleConfirmDonate}
               />
             )}
-          </>
-        )}
-
-        {activeView === "collections" && selectedCollection && (
-          <CollectionDetailView
-            collection={selectedCollection}
-            onBack={handleBackToCollections}
-            onUpdate={handleUpdate}
-            updatingId={updatingId}
+              </>
+            }
           />
-        )}
 
-        {activeView === "collections" && !selectedCollection && (
-          <CollectionsView
-            collections={collections}
-            onCreateCollection={() => setIsCreateModalOpen(true)}
-            onSelectCollection={handleSelectCollection}
-            onDeleteCollection={handleRequestDeleteCollection}
+          <Route
+            path="/collections"
+            element={
+              <CollectionsView
+                collections={collections}
+                onCreateCollection={() => setIsCreateModalOpen(true)}
+                onSelectCollection={handleSelectCollection}
+                onEditCollection={handleRequestEditCollection}
+                onDeleteCollection={handleRequestDeleteCollection}
+              />
+            }
           />
-        )}
+
+          <Route
+            path="/collections/:collectionName"
+            element={
+              <CollectionRoute
+                collections={collections}
+                isLoadingCollections={isLoadingCollections}
+                onUpdate={handleUpdate}
+                updatingId={updatingId}
+              />
+            }
+          />
+
+          <Route
+            path="/collections/:collectionName/looks/:lookName"
+            element={
+              <CollectionRoute
+                collections={collections}
+                isLoadingCollections={isLoadingCollections}
+                onUpdate={handleUpdate}
+                updatingId={updatingId}
+              />
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
       </div>
 
@@ -358,6 +402,14 @@ function App() {
         <CreateCollectionModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleCreateCollection}
+        />
+      )}
+
+      {editingCollection && (
+        <EditCollectionModal
+          collection={editingCollection}
+          onClose={handleCancelEditCollection}
+          onSave={handleUpdateCollection}
         />
       )}
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import CollectionThumbnail from "./CollectionThumbnail";
 import ProductGrid from "../wishlist/ProductGrid";
 import SelectModeBar from "../../components/SelectModeBar";
@@ -26,10 +27,15 @@ import "./CollectionDetailView.css";
 // Saves' select state which App.jsx owns.
 function CollectionDetailView({
   collection,
-  onBack,
   onUpdate,
   updatingId,
 }) {
+  const navigate = useNavigate();
+  // lookName is only present when this route matched the nested
+  // "/looks/:lookName" pattern - undefined on the plain
+  // "/collections/:collectionName" route, which is how Look Studio
+  // being open is distinguished from the Pieces/Looks tabs view.
+  const { lookName } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +51,6 @@ function CollectionDetailView({
   const [looks, setLooks] = useState([]);
   const [isLooksLoading, setIsLooksLoading] = useState(true);
   const [isCreateLookModalOpen, setIsCreateLookModalOpen] = useState(false);
-  const [selectedLook, setSelectedLook] = useState(null);
   const [lookPendingRemoval, setLookPendingRemoval] = useState(null);
   const [isRemovingLook, setIsRemovingLook] = useState(false);
   const [removeLookError, setRemoveLookError] = useState("");
@@ -62,8 +67,15 @@ function CollectionDetailView({
     setRemoveError("");
     setSuccessMessage("");
     setActiveTab("pieces");
-    setSelectedLook(null);
   }
+
+  // Derived from the URL + the already-loaded looks list, rather than
+  // its own local state, so a direct link/refresh straight into
+  // Look Studio resolves correctly instead of always landing back on
+  // the Pieces/Looks tabs.
+  const selectedLook = lookName
+    ? looks.find((look) => look.name.toLowerCase() === lookName.toLowerCase()) ?? null
+    : null;
 
   useEffect(() => {
     return () => clearTimeout(successTimeoutRef.current);
@@ -152,14 +164,13 @@ function CollectionDetailView({
 
   useRefetchOnFocus(async () => {
     try {
-      const items = await getLooksForCollection(collection.id);
-      setLooks(items);
-      // Keeps an already-open Look Studio view in sync too - covers
+      // Also keeps an already-open Look Studio view in sync - covers
       // saving an illustration (or an arrangement) via another tab
       // while this one sat open on the same Look in the background.
-      setSelectedLook((current) =>
-        current ? items.find((look) => look.id === current.id) ?? current : current,
-      );
+      // No separate mirroring needed here: selectedLook is derived from
+      // this same looks list on every render, so updating it is enough.
+      const items = await getLooksForCollection(collection.id);
+      setLooks(items);
     } catch {
       // Same reasoning as above - fail quietly, keep showing what's
       // already there.
@@ -190,7 +201,7 @@ function CollectionDetailView({
     try {
       const look = await createLook(collection.id, name, wishitemIds);
       setLooks((current) => [look, ...current]);
-      setSelectedLook(look);
+      navigate(`/collections/${encodeURIComponent(collection.name)}/looks/${encodeURIComponent(look.name)}`);
       return { success: true };
     } catch {
       return { success: false, error: "Could not create this look. Please try again." };
@@ -231,7 +242,6 @@ function CollectionDetailView({
   async function handleSaveLookLayout(positions) {
     try {
       const updatedLook = await updateLookLayout(selectedLook.id, positions);
-      setSelectedLook(updatedLook);
       setLooks((current) =>
         current.map((look) => (look.id === updatedLook.id ? updatedLook : look)),
       );
@@ -281,7 +291,6 @@ function CollectionDetailView({
           product.id === wishitemId ? { ...product, cutoutImageUrl } : product,
         ),
       );
-      setSelectedLook((current) => (current ? withUpdatedCutout(current) : current));
       setLooks((current) => current.map(withUpdatedCutout));
 
       return { success: true };
@@ -308,7 +317,6 @@ function CollectionDetailView({
         : look;
     }
 
-    setSelectedLook((current) => (current ? withIllustration(current) : current));
     setLooks((current) => current.map(withIllustration));
 
     return { success: true };
@@ -373,6 +381,19 @@ function CollectionDetailView({
     }
   }
 
+  // lookName present but not (yet) resolvable: while looks are still
+  // loading (a fresh page load/refresh straight into this URL), show a
+  // loading state rather than flashing the Pieces/Looks tabs first; once
+  // loaded, a lookName that still matches nothing is a stale/bad URL,
+  // so fall back to this collection's own tabs view.
+  if (lookName && isLooksLoading) {
+    return <p className="collection-detail__status">Loading...</p>;
+  }
+
+  if (lookName && !selectedLook) {
+    return <Navigate to={`/collections/${encodeURIComponent(collection.name)}`} replace />;
+  }
+
   // A Look's own detail replaces this whole view (same drill-down
   // pattern App.jsx uses for CollectionsView -> CollectionDetailView),
   // rather than nesting inside the Pieces/Looks tabs.
@@ -381,7 +402,7 @@ function CollectionDetailView({
       <LookDetailView
         look={selectedLook}
         collectionName={collection.name}
-        onBack={() => setSelectedLook(null)}
+        onBack={() => navigate(`/collections/${encodeURIComponent(collection.name)}`)}
         collectionPieces={products}
         onSaveLayout={handleSaveLookLayout}
         onPrepareCutout={handlePrepareCutoutSaved}
@@ -395,7 +416,7 @@ function CollectionDetailView({
       <button
         type="button"
         className="collection-detail__back"
-        onClick={onBack}
+        onClick={() => navigate("/collections")}
       >
         ← Collections
       </button>
@@ -525,7 +546,11 @@ function CollectionDetailView({
                   <LookCard
                     key={look.id}
                     look={look}
-                    onClick={() => setSelectedLook(look)}
+                    onClick={() =>
+                      navigate(
+                        `/collections/${encodeURIComponent(collection.name)}/looks/${encodeURIComponent(look.name)}`,
+                      )
+                    }
                     onRequestRemove={handleRequestRemoveLook}
                   />
                 ))}

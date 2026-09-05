@@ -71,8 +71,11 @@ export async function createCollection({ name, imageUrl, color }) {
   return databaseRowToCollection(data);
 }
 
-// Renames an existing collection. Throws if the new name is blank after trimming.
-export async function renameCollection(collectionId, name) {
+// Updates an existing collection's name/cover - same shape as
+// createCollection's own arguments, so the edit and create modals can
+// share the exact same field handling. Throws if the new name is blank
+// after trimming.
+export async function updateCollection(collectionId, { name, imageUrl, color }) {
   const trimmedName = name.trim();
 
   if (!trimmedName) {
@@ -81,7 +84,11 @@ export async function renameCollection(collectionId, name) {
 
   const { data, error } = await supabase
     .from(COLLECTIONS_TABLE)
-    .update({ name: trimmedName })
+    .update({
+      name: trimmedName,
+      image_url: imageUrl?.trim() || null,
+      color: color || undefined,
+    })
     .eq("id", collectionId)
     .select()
     .single();
