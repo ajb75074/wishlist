@@ -41,7 +41,6 @@ function ProductCard({
 
   // Stores temporary edit values
   const [colorInput, setColorInput] = useState("");
-  const [sizeInput, setSizeInput] = useState("");
 
   // Focus the color input whenever editing begins, from either trigger
   // below - a real DOM side effect, so this belongs in an effect.
@@ -65,7 +64,6 @@ function ProductCard({
   if (startEditSignal && startEditSignal !== lastEditSignal) {
     setLastEditSignal(startEditSignal);
     setColorInput(product.color || "");
-    setSizeInput(product.size || "");
     setIsEditing(true);
   }
 
@@ -74,11 +72,10 @@ function ProductCard({
     setIsEditing(false);
   }
 
-  // Save updated color and size
+  // Save updated color
   async function saveEditing() {
     const result = await onUpdate(product.id, {
       color: colorInput.trim() || null,
-      size: sizeInput.trim() || null,
     });
 
     if (result.success) {
@@ -150,23 +147,6 @@ function ProductCard({
                   />
                 ) : (
                   <strong>{product.color || "—"}</strong>
-                )}
-              </div>
-
-              <div>
-                <span>SIZE</span>
-                {isEditing ? (
-                  <input
-                    className="product-card__meta-input"
-                    type="text"
-                    value={sizeInput}
-                    onChange={(event) =>
-                      setSizeInput(event.target.value)
-                    }
-                    disabled={isUpdating}
-                  />
-                ) : (
-                  <strong>{product.size || "—"}</strong>
                 )}
               </div>
             </div>

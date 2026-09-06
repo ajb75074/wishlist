@@ -5,6 +5,24 @@ const saveMessage = document.getElementById("saveMessage");
 const productContainer = document.getElementById("product");
 const wishlistButton = document.getElementById("wishlistButton");
 
+// Sends the typed GET_PRODUCT request to the active tab's content
+// script and normalizes chrome.runtime's own failure mode (no receiving
+// end, e.g. a chrome:// page or a not-yet-injected content script) into
+// the same {success:false, reason} shape content.js itself returns -
+// so every caller only ever has to handle one typed contract, never a
+// raw undefined.
+function requestProduct(tabId) {
+    return new Promise((resolve) => {
+        chrome.tabs.sendMessage(tabId, { type: "GET_PRODUCT" }, (response) => {
+            if (chrome.runtime.lastError || !response) {
+                resolve({ success: false, reason: "EXTRACTION_ERROR" });
+                return;
+            }
+            resolve(response);
+        });
+    });
+}
+
 // Same action "View Wishlist" already performs - reused, not
 // duplicated, as the one way to sign in (the wishlist page is the only
 // login UI; the popup never gets its own email/password fields).
@@ -79,48 +97,52 @@ saveButton.addEventListener("click", async () => {
         currentWindow: true
     });
 
-    chrome.tabs.sendMessage(
-        tab.id,
-        { action: "extractProduct" },
-        async (product) => {
+    // A fresh extraction, independent of whatever loadProduct() showed
+    // when the popup opened - preserved deliberately, this is what
+    // already gives Save its up-to-date variant state today.
+    const extraction = await requestProduct(tab.id);
 
-            if (!product || !product.name || !product.imageUrl) {
-                saveMessage.textContent = "Product not found.";
-                return;
-            }
+    if (!extraction.success) {
+        // Full "Couldn't find this item" / Try Again error UX is a
+        // later popup-redesign phase - for now this just maps onto the
+        // existing single-line message area, never showing a raw
+        // reason code or missing-fields list to the user.
+        saveMessage.textContent = "Product not found.";
+        return;
+    }
 
-            const result = await WishlistService.saveWishlistItem(product);
+    const product = extraction.product;
 
-            if (result.duplicate) {
-                saveMessage.textContent = "Item already saved.";
-                return;
-            }
+    const result = await WishlistService.saveWishlistItem(product);
 
-            if (result.authRequired) {
-                // Covers both "turned out to have no/expired session
-                // after all" and "Supabase itself rejected the token" -
-                // either way, re-run the upfront check so the button
-                // correctly reflects the real state on the next click
-                // instead of staying stuck offering "Save Item".
-                saveMessage.textContent =
-                    result.sessionStatus === "expired"
-                        ? "Session expired. Open your wishlist to sign in again."
-                        : "Sign in to save. Open your wishlist to sign in.";
-                await refreshAuthState();
-                return;
-            }
+    if (result.duplicate) {
+        saveMessage.textContent = "Item already saved.";
+        return;
+    }
 
-            if (!result.success) {
-                saveMessage.textContent = result.savedLocally
-                    ? "Saved locally. Supabase unavailable."
-                    : "Could not save item.";
-                return;
-            }
+    if (result.authRequired) {
+        // Covers both "turned out to have no/expired session
+        // after all" and "Supabase itself rejected the token" -
+        // either way, re-run the upfront check so the button
+        // correctly reflects the real state on the next click
+        // instead of staying stuck offering "Save Item".
+        saveMessage.textContent =
+            result.sessionStatus === "expired"
+                ? "Session expired. Open your wishlist to sign in again."
+                : "Sign in to save. Open your wishlist to sign in.";
+        await refreshAuthState();
+        return;
+    }
 
-            displayProduct(product);
-            saveMessage.textContent = "✓ Item Saved!";
-        }
-    );
+    if (!result.success) {
+        saveMessage.textContent = result.savedLocally
+            ? "Saved locally. Supabase unavailable."
+            : "Could not save item.";
+        return;
+    }
+
+    displayProduct(product);
+    saveMessage.textContent = "✓ Item Saved!";
 });
 
 
@@ -132,14 +154,10 @@ async function loadProduct() {
         currentWindow: true
     });
 
-    chrome.tabs.sendMessage(
-        tab.id,
-        { action: "extractProduct" },
-        (product) => {
-            if (!product) return;
-            displayProduct(product);
-        }
-    );
+    const extraction = await requestProduct(tab.id);
+    if (!extraction.success) return;
+
+    displayProduct(extraction.product);
 }
 
 loadProduct();

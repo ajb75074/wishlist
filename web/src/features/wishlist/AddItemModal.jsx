@@ -79,7 +79,6 @@ function AddItemModal({ onClose, onCreated }) {
   const [price, setPrice] = useState("");
   const [productUrl, setProductUrl] = useState("");
   const [color, setColor] = useState("");
-  const [size, setSize] = useState("");
   const [isOwned, setIsOwned] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,7 +196,6 @@ function AddItemModal({ onClose, onCreated }) {
         productUrl: productUrlResult.value,
         store: store.trim() || null,
         color: color.trim() || null,
-        size: size.trim() || null,
         isOwned,
         itemImagePath: uploadResult.path,
         imageUrl: null,
@@ -335,17 +333,6 @@ function AddItemModal({ onClose, onCreated }) {
             type="text"
             value={color}
             onChange={(event) => setColor(event.target.value)}
-            disabled={isSubmitting}
-          />
-
-          <label className="add-item-modal__label" htmlFor="add-item-size">
-            size
-          </label>
-          <input
-            id="add-item-size"
-            type="text"
-            value={size}
-            onChange={(event) => setSize(event.target.value)}
             disabled={isSubmitting}
           />
 

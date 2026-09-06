@@ -14,7 +14,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": [
+        "scraping/textUtils.js",
+        "scraping/extractStructuredData.js",
+        "scraping/extractGenericProduct.js",
+        "scraping/extractProduct.js",
+        "content.js"
+      ]
     }
   ],
   "host_permissions": [
