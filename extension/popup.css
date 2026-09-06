@@ -1,0 +1,664 @@
+/* Wishlist popup - warm editorial redesign. All popup styling lives
+   here rather than an inline <style> block, per the redesign brief. */
+
+:root {
+  --wl-cream: #faf6ee;
+  --wl-cream-deep: #f2e9db;
+  --wl-charcoal: #2a2622;
+  --wl-charcoal-soft: #746a5f;
+  --wl-blush: #f6dfe6;
+  --wl-blush-deep: #edc7d0;
+  --wl-neutral-circle: #ece6db;
+  --wl-pink: #e2637f;
+  --wl-pink-hover: #ea7690;
+  --wl-pink-ink: #ffffff;
+  --wl-border: rgba(42, 38, 34, 0.1);
+  --wl-shadow-sm: 0 1px 3px rgba(42, 38, 34, 0.06);
+  --wl-shadow-md: 0 6px 18px rgba(42, 38, 34, 0.08);
+  --wl-radius-lg: 18px;
+  --wl-radius-md: 12px;
+  --wl-radius-sm: 8px;
+  --wl-serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  --wl-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* A Chrome extension popup has no browser chrome of its own - the HTML
+   page IS the window - so rounding html/body and clipping overflow is
+   what makes the popup box itself read as rounded, rather than just
+   rounding some inner content block. */
+html {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+body {
+  width: 372px;
+  background: var(--wl-cream);
+  color: var(--wl-charcoal);
+  font-family: var(--wl-sans);
+  -webkit-font-smoothing: antialiased;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px 22px;
+}
+
+button {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--wl-pink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* HEADER - persistent across every state. The heart is a navigation
+   icon to the existing wishlist page, not a per-item favorite toggle
+   (it never changes state, always does the same thing). */
+
+.wl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.wl-wordmark {
+  font-family: var(--wl-serif);
+  font-size: 23px;
+  font-weight: 400;
+  color: var(--wl-charcoal);
+}
+
+.wl-header__wishlist-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wl-pink);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 120ms ease;
+}
+
+.wl-header__wishlist-btn:hover {
+  transform: scale(1.08);
+}
+
+.wl-header__wishlist-btn:active {
+  transform: scale(0.95);
+}
+
+/* SHARED BUTTONS */
+
+.wl-btn {
+  width: 100%;
+  border: none;
+  border-radius: var(--wl-radius-md);
+  padding: 14px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 120ms ease, filter 150ms ease, background 150ms ease, opacity 150ms ease;
+}
+
+.wl-btn:disabled {
+  cursor: default;
+}
+
+.wl-btn--primary {
+  background: var(--wl-pink);
+  color: var(--wl-pink-ink);
+  box-shadow: var(--wl-shadow-sm);
+}
+
+.wl-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.wl-btn--primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.wl-btn--primary.is-saving {
+  opacity: 0.92;
+}
+
+.wl-btn--primary.is-saving .wl-btn__heart {
+  display: none;
+}
+
+.wl-btn__heart {
+  flex-shrink: 0;
+}
+
+.wl-btn__spinner {
+  display: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  flex-shrink: 0;
+}
+
+.wl-btn.is-saving .wl-btn__spinner {
+  display: inline-block;
+  animation: wl-spin 700ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-btn.is-saving .wl-btn__spinner {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+.wl-btn--text {
+  background: none;
+  border: none;
+  color: var(--wl-charcoal-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.wl-btn--text:hover {
+  color: var(--wl-pink);
+  text-decoration: underline;
+}
+
+/* INLINE STATUS NOTE (below the Save button) */
+
+.wl-inline-note {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-inline-note--error {
+  color: #b1435c;
+}
+
+/* SKELETON / LOADING */
+
+.wl-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wl-skeleton__image {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--wl-radius-lg);
+  background: var(--wl-cream-deep);
+}
+
+.wl-skeleton__line {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--wl-cream-deep);
+}
+
+.wl-skeleton__line--sm {
+  height: 10px;
+}
+
+.wl-skeleton__button {
+  margin-top: 10px;
+  height: 46px;
+  border-radius: var(--wl-radius-md);
+  background: var(--wl-cream-deep);
+}
+
+.wl-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.wl-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-shimmer::after {
+    animation: wl-shimmer-sweep 1.4s ease-in-out infinite;
+  }
+}
+
+/* PRODUCT SCREEN */
+
+.wl-product {
+  display: flex;
+  flex-direction: column;
+}
+
+/* No fixed height and no background here - a real photo should define
+   this area's size on its own (width-first, then capped by max-height
+   below), so it never sits inside a visibly-colored frame. The broken-
+   image placeholder is the one case that still needs a deliberate box,
+   handled separately on .wl-product__image-placeholder itself. */
+.wl-product__image-frame {
+  position: relative;
+  width: 100%;
+  border-radius: var(--wl-radius-lg);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.wl-product__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.wl-product__image-placeholder {
+  display: none;
+  width: 100%;
+  height: 220px;
+  align-items: center;
+  justify-content: center;
+  color: var(--wl-charcoal-soft);
+  opacity: 0.55;
+  background: var(--wl-cream-deep);
+  border-radius: var(--wl-radius-lg);
+}
+
+.wl-product__image-frame.is-broken .wl-product__image {
+  display: none;
+}
+
+.wl-product__image-frame.is-broken .wl-product__image-placeholder {
+  display: flex;
+}
+
+.wl-product__name {
+  margin: 18px 0 3px;
+  font-family: var(--wl-serif);
+  font-size: 19px;
+  line-height: 1.28;
+  font-weight: 400;
+  color: var(--wl-charcoal);
+}
+
+.wl-product__store {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wl-charcoal-soft);
+}
+
+/* Price / color shown as a small clean info list, matching the
+   reference layout - label left, value right, thin dividers. */
+
+.wl-product__rows {
+  margin: 16px 0 20px;
+  border-top: 1px solid var(--wl-border);
+}
+
+.wl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--wl-border);
+}
+
+.wl-row__label {
+  font-size: 12.5px;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-row__value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--wl-charcoal);
+}
+
+/* If there are no rows, keep the rhythm before the button */
+.wl-product__store + .wl-btn,
+.wl-product__name + .wl-btn {
+  margin-top: 20px;
+}
+
+/* EMPTY / EXTRACTION ERROR SCREEN */
+
+.wl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 2px 2px;
+}
+
+.wl-empty__icon {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--wl-neutral-circle);
+  color: var(--wl-charcoal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.wl-empty__title {
+  margin: 0 0 8px;
+  font-family: var(--wl-serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--wl-charcoal);
+}
+
+.wl-empty__body {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-empty__tips {
+  width: 100%;
+  background: var(--wl-blush);
+  border-radius: var(--wl-radius-md);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.wl-empty__tips-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wl-charcoal);
+}
+
+.wl-empty__tips-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--wl-charcoal);
+}
+
+.wl-empty__tips-list li + li {
+  margin-top: 4px;
+}
+
+/* SUCCESS SCREEN */
+
+.wl-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0 0;
+}
+
+.wl-success__badge {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: var(--wl-blush);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wl-success__title {
+  margin: 16px 0 2px;
+  font-family: var(--wl-serif);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--wl-charcoal);
+}
+
+.wl-success__subtitle {
+  margin: 0 0 20px;
+  font-size: 12.5px;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-success__summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--wl-cream-deep);
+  border-radius: var(--wl-radius-md);
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.wl-success__thumb-frame {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: var(--wl-radius-sm);
+  overflow: hidden;
+  background: var(--wl-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-success__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.wl-success__summary-text {
+  min-width: 0;
+}
+
+.wl-success__name {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wl-charcoal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-success__store {
+  margin: 0;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-success__price {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--wl-charcoal);
+}
+
+.wl-success__footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--wl-charcoal-soft);
+}
+
+.wl-success__footer svg {
+  color: var(--wl-pink);
+  flex-shrink: 0;
+}
+
+/* ANIMATION - entrance for whole screens */
+
+.wl-anim-in {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-anim-in {
+    opacity: 0;
+    animation: wl-fade-up 260ms ease forwards;
+  }
+}
+
+/* Product screen exit, played just before the success screen swaps in */
+
+.wl-product.wl-exit {
+  animation: wl-exit-shrink 200ms ease forwards;
+}
+
+/* Success screen staggered entrance */
+
+.wl-success__badge,
+.wl-success__check,
+.wl-success__title,
+.wl-success__subtitle,
+.wl-success__summary,
+.wl-success__cta,
+.wl-success__footer {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-success__badge {
+    opacity: 0;
+    animation: wl-scale-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1) 0ms forwards;
+  }
+
+  .wl-success__check {
+    opacity: 0;
+    animation: wl-pop 200ms ease 140ms forwards;
+  }
+
+  .wl-success__title {
+    opacity: 0;
+    animation: wl-fade-up 200ms ease 260ms forwards;
+  }
+
+  .wl-success__subtitle {
+    opacity: 0;
+    animation: wl-fade-up 200ms ease 320ms forwards;
+  }
+
+  .wl-success__summary {
+    opacity: 0;
+    animation: wl-fade-up 220ms ease 380ms forwards;
+  }
+
+  .wl-success__cta {
+    opacity: 0;
+    animation: wl-fade-up 200ms ease 440ms forwards;
+  }
+
+  .wl-success__footer {
+    opacity: 0;
+    animation: wl-fade-up 200ms ease 500ms forwards;
+  }
+}
+
+/* KEYFRAMES */
+
+@keyframes wl-shimmer-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes wl-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wl-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes wl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes wl-exit-shrink {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes wl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -3,16 +3,12 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Wishlist</title>
+        <link rel="stylesheet" href="popup.css">
     </head>
 
     <body>
-        <h1>Wishlist</h1>
-        <button id = "saveButton">
-            Save Item
-        </button>
-        <button id="wishlistButton">View Wishlist</button>
-        <p id="saveMessage"></p>
-         <div id="product"></div>
+        <div id="app" aria-live="polite"></div>
+
         <script src="config.local.js"></script>
         <script src="utils/productUtils.js"></script>
         <script src="services/authSession.js"></script>
