@@ -19,9 +19,10 @@ import { useCollections } from "./features/collections/useCollections";
 import SelectModeBar from "./components/SelectModeBar";
 import ActionTray from "./components/ActionTray";
 import ProfileView from "./features/profile/ProfileView";
+import AddItemModal from "./features/wishlist/AddItemModal";
 
 function App() {
-  const { products, loading, error, updatingId, performDelete, handleUpdate } = useWishlist();
+  const { products, loading, error, updatingId, performDelete, handleUpdate, handleCreate } = useWishlist();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -31,6 +32,13 @@ function App() {
   const [selectedColor, setSelectedColor] = useState("All");
   const [sortOrder, setSortOrder] = useState("newest");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  // All Saves' own Saved/Owned view - presentation only, never sent to
+  // Supabase and never touched by Collections/Looks, which keep
+  // reading every wishitem regardless of ownership. Saved-first is the
+  // product decision, so this is the default and the only two values -
+  // no "all" option unless a concrete need for one shows up later.
+  const [ownership, setOwnership] = useState("saved");
   // { product, anchorEl, rect } | null - which product's save popover is open
   const [savePopover, setSavePopover] = useState(null);
   // All Saves Select Mode - a separate, opt-in management state so
@@ -128,6 +136,18 @@ function App() {
     setSelectedProductIds(new Set());
   }
 
+  // A selected item can be hidden by the new ownership view the moment
+  // it changes (its id would linger in selectedProductIds pointing at
+  // a card that's no longer rendered) - clearing the selection here is
+  // the smallest safe fix, without leaving/re-entering Select Mode
+  // itself. A no-op guard avoids clearing an in-progress selection for
+  // a click that didn't actually change anything.
+  function handleOwnershipChange(nextOwnership) {
+    if (nextOwnership === ownership) return;
+    setOwnership(nextOwnership);
+    setSelectedProductIds(new Set());
+  }
+
   function handleToggleProductSelected(id) {
     setSelectedProductIds((current) => {
       const next = new Set(current);
@@ -191,15 +211,26 @@ function App() {
     }
   }
 
+  // Presentation-only split of the SAME wishlist state useWishlist
+  // already owns - nothing is removed/mutated, a product just moves
+  // in or out of this derived list as `ownership` or the product's own
+  // isOwned changes. !product.isOwned (rather than === false) is
+  // deliberate: any pre-feature/defensive row without a real isOwned
+  // value already normalizes to false at the data layer, and this
+  // stays correct even if that ever isn't the case.
+  const ownershipFilteredProducts = products.filter((product) =>
+    ownership === "saved" ? !product.isOwned : product.isOwned,
+  );
+
   const query = searchTerm.trim().toLowerCase();
 
   let filteredProducts = query
-    ? products.filter((product) =>
+    ? ownershipFilteredProducts.filter((product) =>
       [product.name, product.store, product.color].some((field) =>
         field?.toLowerCase().includes(query),
       ),
     )
-    : products;
+    : ownershipFilteredProducts;
 
   if (selectedCategory !== "All") {
     filteredProducts = filteredProducts.filter(
@@ -272,38 +303,82 @@ function App() {
             path="/"
             element={
               <>
-            {!loading && !error && products.length === 0 && (
-              <p>No saved items yet.</p>
-            )}
-
-            {!loading && !error && products.length > 0 && (
+            {!loading && !error && (
               <div className="toolbar-row">
-                <SelectModeBar
-                  isActive={isSelectMode}
-                  selectedCount={selectedProductIds.size}
-                  onEnter={handleEnterSelectMode}
-                  onCancel={handleCancelSelectMode}
-                />
+                {/* Always visible (even with zero items in the current
+                    view, and even in Select Mode) - unlike + Add Item/
+                    SelectModeBar/FilterBar below, switching views needs
+                    to work from an empty view too, and a selection made
+                    before switching still needs a way to be cleared. */}
+                <div className="ownership-toggle" role="group" aria-label="Ownership view">
+                  <button
+                    type="button"
+                    className={`ownership-toggle__btn${ownership === "saved" ? " is-active" : ""}`}
+                    aria-pressed={ownership === "saved"}
+                    onClick={() => handleOwnershipChange("saved")}
+                  >
+                    saved
+                  </button>
+                  <button
+                    type="button"
+                    className={`ownership-toggle__btn${ownership === "owned" ? " is-active" : ""}`}
+                    aria-pressed={ownership === "owned"}
+                    onClick={() => handleOwnershipChange("owned")}
+                  >
+                    owned
+                  </button>
+                </div>
 
+                {/* Phase 3's one entry point for manual item creation -
+                    visible with zero items in the current view too
+                    (unlike SelectModeBar/FilterBar below, which need
+                    existing products), hidden during Select Mode
+                    alongside FilterBar so it doesn't compete with the
+                    bulk-action bar. */}
                 {!isSelectMode && (
-                  <FilterBar
-                    products={products}
-                    category={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    store={selectedStore}
-                    onStoreChange={setSelectedStore}
-                    color={selectedColor}
-                    onColorChange={setSelectedColor}
-                    sortOrder={sortOrder}
-                    onSortChange={setSortOrder}
-                  />
+                  <button
+                    type="button"
+                    className="add-item-button"
+                    onClick={() => setIsAddItemModalOpen(true)}
+                  >
+                    + add item
+                  </button>
+                )}
+
+                {ownershipFilteredProducts.length > 0 && (
+                  <>
+                    <SelectModeBar
+                      isActive={isSelectMode}
+                      selectedCount={selectedProductIds.size}
+                      onEnter={handleEnterSelectMode}
+                      onCancel={handleCancelSelectMode}
+                    />
+
+                    {!isSelectMode && (
+                      <FilterBar
+                        products={ownershipFilteredProducts}
+                        category={selectedCategory}
+                        onCategoryChange={setSelectedCategory}
+                        store={selectedStore}
+                        onStoreChange={setSelectedStore}
+                        color={selectedColor}
+                        onColorChange={setSelectedColor}
+                        sortOrder={sortOrder}
+                        onSortChange={setSortOrder}
+                      />
+                    )}
+                  </>
                 )}
               </div>
             )}
 
+            {!loading && !error && ownershipFilteredProducts.length === 0 && (
+              <p>{ownership === "saved" ? "No saved items yet." : "No owned items yet."}</p>
+            )}
+
             {!loading &&
               !error &&
-              products.length > 0 &&
+              ownershipFilteredProducts.length > 0 &&
               filteredProducts.length === 0 && (
                 <p>No items match your filters.</p>
               )}
@@ -405,6 +480,13 @@ function App() {
         <CreateCollectionModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleCreateCollection}
+        />
+      )}
+
+      {isAddItemModalOpen && (
+        <AddItemModal
+          onClose={() => setIsAddItemModalOpen(false)}
+          onCreated={handleCreate}
         />
       )}
 

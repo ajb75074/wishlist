@@ -1,0 +1,131 @@
+/* Container base/typography/buttons come from ../../components/modal.css -
+   this file only holds what's specific to this modal's form. */
+.add-item-modal {
+  width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.add-item-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.add-item-modal__label {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: rgba(245, 240, 232, 0.65);
+}
+
+.add-item-modal__form input[type="text"] {
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 240, 232, 0.22);
+  border-radius: 6px;
+  background: transparent;
+  color: #f5f0e8;
+  font: inherit;
+  font-size: 14px;
+}
+
+.add-item-modal__form input:disabled {
+  opacity: 0.6;
+}
+
+.add-item-modal__photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.add-item-modal__photo-preview {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(245, 240, 232, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-item-modal__photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.add-item-modal__photo-placeholder {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(245, 240, 232, 0.4);
+  text-transform: lowercase;
+}
+
+.add-item-modal__photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.add-item-modal__photo-actions .add-item-modal__label {
+  margin-top: 0;
+}
+
+.add-item-modal__photo-button {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border: 1px solid #f17ba6;
+  border-radius: 4px;
+  background: transparent;
+  color: #f17ba6;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.add-item-modal__photo-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.add-item-modal__ownership-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.add-item-modal__ownership-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid rgba(245, 240, 232, 0.22);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(245, 240, 232, 0.7);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.add-item-modal__ownership-btn.is-active {
+  background: #f17ba6;
+  border-color: #f17ba6;
+  color: #fff;
+}
+
+.add-item-modal__ownership-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -1,4 +1,5 @@
 import { databaseRowToProduct } from "../../lib/productUtils";
+import { resolveItemImages } from "../../lib/itemImages";
 import { supabase } from "../../lib/supabase";
 
 const COLLECTIONS_TABLE = "collections";
@@ -164,10 +165,12 @@ export async function getCollectionItems(collectionId) {
     throw error;
   }
 
-  return data
+  const products = data
     .map((row) => row.wishitems)
     .filter(Boolean)
     .map(databaseRowToProduct);
+
+  return resolveItemImages(products);
 }
 
 // Returns the collections a given wishlist item currently belongs to.

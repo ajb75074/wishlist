@@ -25,10 +25,11 @@
 // image_url) are real Supabase Storage / retailer URLs and are fetched
 // here through the SSRF-guarded safeFetch helper, per spec.
 import { GoogleGenAI } from "npm:@google/genai@^2.20.0";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@^2";
 import { Buffer } from "node:buffer";
 import { buildIllustrationPrompt, sortPiecesForPrompt, type Piece } from "./prompt.ts";
 import { requireUser } from "../_shared/auth.ts";
-import { safeFetch, readBodyWithLimit } from "../_shared/urlSafety.ts";
+import { MAX_RESPONSE_BYTES, safeFetch, readBodyWithLimit } from "../_shared/urlSafety.ts";
 
 interface InlineImage {
   data: string;
@@ -75,6 +76,11 @@ const MAX_PIECES = 8;
 const MAX_REQUEST_BYTES = 64 * 1024;
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+// Manual items' user-uploaded photos live here (private bucket) -
+// distinct from product-cutouts/look-illustrations, which this
+// function never touches.
+const ITEM_IMAGES_BUCKET = "item-images";
 
 // The one style Milestone 1 shipped in the modal - keyed by the same
 // `style` id the client already sends. Adding a second style later is
@@ -136,6 +142,45 @@ async function fetchImageAsInlineData(url: string, label: string): Promise<Inlin
   }
 
   const bytes = await readBodyWithLimit(response);
+  return { data: Buffer.from(bytes).toString("base64"), mimeType };
+}
+
+// A manual item's photo lives in the PRIVATE item-images bucket as a
+// Storage object path, not a fetchable URL - so unlike the external
+// retailer/cutout case above, there's no URL here for safeFetch's
+// SSRF guards to apply to in the first place. Rather than generating a
+// signed URL and routing it back through safeFetch anyway (safeFetch
+// exists specifically to guard fetches to arbitrary, potentially
+// attacker-influenced hosts - a concern that doesn't apply to this
+// project's own Storage), this downloads the object directly through
+// `supabase`, the SAME caller-scoped client requireUser already
+// produced. Storage RLS (bucket_id = 'item-images' AND the first path
+// segment = auth.uid()) is what actually enforces that this only ever
+// succeeds for the caller's own objects - the identical ownership
+// model this whole function already relies on for looks/wishitems, no
+// service_role involved.
+async function fetchPrivateItemImageAsInlineData(
+  supabase: SupabaseClient,
+  path: string,
+  label: string,
+): Promise<InlineImage> {
+  const { data, error } = await supabase.storage.from(ITEM_IMAGES_BUCKET).download(path);
+
+  if (error || !data) {
+    throw new Error(`Could not load the photo for "${label}".`);
+  }
+
+  if (data.size > MAX_RESPONSE_BYTES) {
+    throw new Error(`The photo for "${label}" is too large.`);
+  }
+
+  const mimeType = normalizeMimeType(data.type || "");
+
+  if (!SUPPORTED_IMAGE_MIME_TYPES.has(mimeType)) {
+    throw new Error(`The photo for "${label}" isn't a supported type (png/jpeg/webp).`);
+  }
+
+  const bytes = new Uint8Array(await data.arrayBuffer());
   return { data: Buffer.from(bytes).toString("base64"), mimeType };
 }
 
@@ -214,7 +259,7 @@ Deno.serve(async (req) => {
   // never distinguishing the two.
   const { data: look, error: lookError } = await supabase
     .from("looks")
-    .select("id, look_items(is_placed, wishitems(id, name, image_url, cutout_image_url))")
+    .select("id, look_items(is_placed, wishitems(id, name, image_url, cutout_image_url, item_image_path))")
     .eq("id", body.lookId)
     .maybeSingle();
 
@@ -229,7 +274,13 @@ Deno.serve(async (req) => {
 
   interface LookItemRow {
     is_placed: boolean;
-    wishitems: { id: string; name: string; image_url: string; cutout_image_url: string | null } | null;
+    wishitems: {
+      id: string;
+      name: string;
+      image_url: string | null;
+      cutout_image_url: string | null;
+      item_image_path: string | null;
+    } | null;
   }
 
   // supabase-js infers embedded relations generically as arrays without
@@ -266,12 +317,32 @@ Deno.serve(async (req) => {
       .map((piece) => [piece.id, piece.category]),
   );
 
-  const pieces: Piece[] = placedItems.map((item) => ({
-    id: item.wishitems!.id,
-    name: item.wishitems!.name,
-    category: categoryById.get(item.wishitems!.id),
-    imageUrl: item.wishitems!.cutout_image_url ?? item.wishitems!.image_url,
-  }));
+  // Piece (prompt.ts) declares imageUrl as a plain required string -
+  // it's only ever used there for prompt text, never fetched, so this
+  // carries itemImagePath alongside it as this file's own addition:
+  // the fetch step below needs to tell "private manual photo" apart
+  // from "a real image_url/cutout_image_url" without prompt.ts needing
+  // to know anything about Storage paths at all.
+  type PieceWithImageSource = Piece & { itemImagePath?: string };
+
+  const pieces: PieceWithImageSource[] = placedItems.map((item) => {
+    const wishitem = item.wishitems!;
+    const remoteImageUrl = wishitem.cutout_image_url ?? wishitem.image_url ?? undefined;
+
+    return {
+      id: wishitem.id,
+      name: wishitem.name,
+      category: categoryById.get(wishitem.id),
+      // Never actually fetched when itemImagePath is set below (see
+      // the fetch step) - Piece just requires a string, not used for
+      // anything but prompt text either way.
+      imageUrl: remoteImageUrl ?? "",
+      // cutout_image_url (public, already resolved) or a real
+      // image_url both take priority exactly as before; the private
+      // manual photo is only used when neither exists.
+      itemImagePath: remoteImageUrl ? undefined : (wishitem.item_image_path ?? undefined),
+    };
+  });
 
   // Local, server-owned assets - never fetched over the network, never
   // supplied by the client (see the file header comment).
@@ -294,12 +365,22 @@ Deno.serve(async (req) => {
     );
   }
 
-  const sortedPieces = sortPiecesForPrompt(pieces);
+  // sortPiecesForPrompt's declared return type is Piece[] (it only
+  // ever filters/sorts, never reconstructs objects), so the actual
+  // PieceWithImageSource instances - and their itemImagePath - are
+  // still there at runtime; this cast just tells the type checker
+  // what's already true, same intentional-cast pattern already used
+  // above for the look_items embed.
+  const sortedPieces = sortPiecesForPrompt(pieces) as PieceWithImageSource[];
 
   let pieceAssets: InlineImage[];
   try {
     pieceAssets = await Promise.all(
-      sortedPieces.map((piece) => fetchImageAsInlineData(piece.imageUrl, piece.name || piece.id)),
+      sortedPieces.map((piece) =>
+        piece.itemImagePath
+          ? fetchPrivateItemImageAsInlineData(supabase, piece.itemImagePath, piece.name || piece.id)
+          : fetchImageAsInlineData(piece.imageUrl, piece.name || piece.id),
+      ),
     );
   } catch (error) {
     return jsonResponse({ error: errorMessage(error) }, 502);

@@ -96,5 +96,16 @@ export function useWishlist() {
     }
   }
 
-  return { products, loading, error, updatingId, performDelete, handleUpdate };
+  // Called after AddItemModal's own orchestration (upload -> insert)
+  // already succeeded - `product` is the already-normalized/enriched
+  // object wishlist.js's saveWishlistItem returned (signed imageUrl
+  // included for a manual photo), so this only ever updates local
+  // state, never touches Supabase itself. Prepended rather than
+  // appended to match getWishlistItems()'s own newest-first ordering
+  // (date_saved defaults to now()) without a full refetch.
+  function handleCreate(product) {
+    setProducts((currentProducts) => [product, ...currentProducts]);
+  }
+
+  return { products, loading, error, updatingId, performDelete, handleUpdate, handleCreate };
 }

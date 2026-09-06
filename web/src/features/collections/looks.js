@@ -1,4 +1,5 @@
 import { databaseRowToProduct } from "../../lib/productUtils";
+import { resolveLookImages } from "../../lib/itemImages";
 import { supabase } from "../../lib/supabase";
 
 const LOOKS_TABLE = "looks";
@@ -56,7 +57,7 @@ export async function getLooksForCollection(collectionId) {
     throw error;
   }
 
-  return data.map(databaseRowToLook);
+  return resolveLookImages(data.map(databaseRowToLook));
 }
 
 // Returns one Look by id, or null if it doesn't exist.
@@ -71,7 +72,12 @@ export async function getLookById(lookId) {
     throw error;
   }
 
-  return data ? databaseRowToLook(data) : null;
+  if (!data) {
+    return null;
+  }
+
+  const [look] = await resolveLookImages([databaseRowToLook(data)]);
+  return look;
 }
 
 // Creates a Look and its look_items in two client-side calls, since this

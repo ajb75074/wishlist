@@ -196,15 +196,21 @@ function ProductCard({
               </>
             ) : (
               // Browse Mode only shows View Item - editing now only
-              // happens via the Select Mode action tray's "edit".
-              <a
-                className="product-card__action product-card__action--primary product-card__action--full"
-                href={product.productUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                View Item ↗
-              </a>
+              // happens via the Select Mode action tray's "edit". A
+              // manual item may have no link at all (something the
+              // user already owns, nothing to view online) - rather
+              // than rendering an inert <a> with no href, the action
+              // is simply omitted for those items.
+              product.productUrl && (
+                <a
+                  className="product-card__action product-card__action--primary product-card__action--full"
+                  href={product.productUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View Item ↗
+                </a>
+              )
             )}
           </div>
         </div>
