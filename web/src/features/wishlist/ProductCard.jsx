@@ -11,20 +11,6 @@ function AddToCollectionIcon() {
   );
 }
 
-// Pixel-style heart, purely decorative for now (no favorite state/logic yet).
-function HeartIcon() {
-  return (
-    <svg viewBox="0 0 32 32" width="14" height="14" aria-hidden="true">
-      <path d="M29.71 2.28h1.53v22.86h-1.53Z" fill="currentColor" />
-      <path d="m25.14 31.24 0 -1.53 1.52 0 0 -3.05 3.05 0 0 -1.52 -22.86 0 0 1.52 1.53 0 0 1.53 1.52 0 0 -1.53 3.05 0 0 1.53 1.52 0 0 -1.53 3.05 0 0 1.53 1.52 0 0 -1.53 3.05 0 0 1.53 1.53 0 0 -1.53 1.52 0 0 1.53 -1.52 0 0 1.52 -3.05 0 0 -1.52 -1.53 0 0 1.52 -3.04 0 0 -1.52 -1.53 0 0 1.52 -3.04 0 0 -1.52 -1.53 0 0 1.52 -3.05 0 0 -1.52 -1.52 0 0 1.52 -3.05 0 0 1.53 22.86 0z" fill="currentColor" />
-      <path d="m12.95 16 1.52 0 0 1.52 1.53 0 0 1.53 1.52 0 0 1.52 1.52 0 0 -1.52 1.53 0 0 -1.53 1.52 0 0 -1.52 1.53 0 0 -1.53 1.52 0 0 -4.57 -1.52 0 0 -1.52 -4.58 0 0 1.52 -1.52 0 0 -1.52 -4.57 0 0 1.52 -1.52 0 0 4.57 1.52 0 0 1.53z" fill="currentColor" />
-      <path d="M6.85 0.76h22.86v1.52H6.85Z" fill="currentColor" />
-      <path d="M3.81 26.66h1.52v1.53H3.81Z" fill="currentColor" />
-      <path d="m3.81 26.66 0 -1.52 -1.53 0 0 -3.05 1.53 0 0 -1.52 -1.53 0 0 -3.05 1.53 0 0 -1.52 -1.53 0 0 -3.05 1.53 0 0 -1.52 -1.53 0 0 -3.05 1.53 0 0 -1.53 1.52 0 0 1.53 -1.52 0 0 1.52 1.52 0 0 3.05 -1.52 0 0 1.52 1.52 0 0 3.05 -1.52 0 0 1.53 1.52 0 0 3.04 -1.52 0 0 1.53 1.52 0 0 1.52 1.52 0 0 -22.86 -1.52 0 0 3.05 -3.05 0 0 1.52 -1.52 0 0 22.86 1.52 0 0 -3.05 1.53 0z" fill="currentColor" />
-    </svg>
-  );
-}
-
 function ProductCard({
   product,
   onUpdate,
@@ -92,12 +78,6 @@ function ProductCard({
           src={product.imageUrl}
           alt={product.name}
         />
-
-        {/* Decorative for now, no favorite behavior yet - moved to the
-            top-left so it doesn't collide with the save button below */}
-        <span className="product-card__favorite">
-          <HeartIcon />
-        </span>
 
         {/* Browse Mode only - hidden while editing or selecting so it
             never competes with those other actions */}

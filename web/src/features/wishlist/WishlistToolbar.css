@@ -1,0 +1,159 @@
+.wishlist-toolbar {
+  margin-bottom: 28px;
+}
+
+/* VIEW - text tabs, not a segmented control. Centered under the hero,
+   close together, reading as archive sections rather than a settings
+   toggle. */
+.wishlist-toolbar__tabs {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+
+  margin-bottom: 18px;
+}
+
+/* Sits between the Saved/Owned tabs and the actions row below - the
+   box itself stays a fixed, small height (so it never pushes Add Item/
+   Filter further down than that), while the image inside it renders
+   bigger and simply overflows the box (overflow: visible + centered),
+   rather than the box growing to fit it. */
+.wishlist-toolbar__accent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+
+  height: 20px;
+  margin-bottom: 18px;
+}
+
+.wishlist-toolbar__accent img {
+  height: 56px;
+  width: auto;
+}
+
+.wishlist-toolbar__tabs button {
+  padding: 0 0 6px;
+
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--muted-ink);
+
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.wishlist-toolbar__tabs button:hover,
+.wishlist-toolbar__tabs button:focus-visible {
+  color: var(--cocoa-ink);
+}
+
+.wishlist-toolbar__tabs button.is-active {
+  font-weight: 600;
+  color: var(--strawberry);
+  border-bottom-color: var(--strawberry);
+}
+
+/* ACTIONS - creation on the left, browsing/management on the right.
+   space-between rather than hardcoded positions, so it stays correct
+   at any width. */
+.wishlist-toolbar__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.wishlist-toolbar__add {
+  flex-shrink: 0;
+  padding: 11px 20px;
+
+  border: 1px solid var(--strawberry);
+  border-radius: 8px;
+  background: var(--strawberry);
+
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--surface);
+
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.wishlist-toolbar__add:hover,
+.wishlist-toolbar__add:focus-visible {
+  background: var(--strawberry-hover);
+  border-color: var(--strawberry-hover);
+}
+
+.wishlist-toolbar__management {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wishlist-toolbar__filter-anchor {
+  position: relative;
+}
+
+.wishlist-toolbar__filter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  height: 34px;
+  padding: 0 14px;
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--cream);
+
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.82rem;
+  color: var(--cocoa-ink);
+
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.wishlist-toolbar__filter:hover,
+.wishlist-toolbar__filter:focus-visible,
+.wishlist-toolbar__filter.is-open {
+  border-color: var(--strawberry);
+}
+
+/* Same height/visual family as Filter, narrower and icon-only - the
+   component itself (SelectModeBar) already renders exactly that. */
+.wishlist-toolbar__management .select-mode-bar__enter {
+  width: 34px;
+  height: 34px;
+}
+
+.wishlist-toolbar__count-row {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wishlist-toolbar__count {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--muted-ink);
+}
+
+@media (max-width: 640px) {
+  .wishlist-toolbar__tabs {
+    gap: 20px;
+  }
+}

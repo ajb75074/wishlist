@@ -1,0 +1,162 @@
+.wishlist-hero {
+  padding-top: 28px;
+}
+
+/* Global row - search recedes to the left, profile stays compact on
+   the right. Nothing here competes with the hero below it. */
+.wishlist-hero__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Medium width, not page-spanning - search is useful here, not the
+   focal point. */
+.wishlist-hero__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  padding: 10px 16px;
+
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  color: var(--muted-ink);
+}
+
+.wishlist-hero__search input {
+  flex: 1;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.wishlist-hero__search input::placeholder {
+  color: var(--muted-ink);
+}
+
+/* A plain control, not a pill/card - the personal, understated
+   treatment the brief asks for over an "enterprise account menu". */
+.wishlist-hero__profile {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  border: 0;
+  background: transparent;
+  padding: 4px 6px;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.wishlist-hero__profile:hover,
+.wishlist-hero__profile:focus-visible {
+  background: var(--powder-pink);
+}
+
+.wishlist-hero__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--blush);
+}
+
+.wishlist-hero__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wishlist-hero__avatar-fallback {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--cherry-ink);
+}
+
+.wishlist-hero__greeting {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--cocoa-ink);
+  white-space: nowrap;
+}
+
+.wishlist-hero__chevron {
+  color: var(--muted-ink);
+  font-size: 0.7rem;
+}
+
+/* Editorial and airy, on purpose: no card, no background fill.
+   Whitespace (the margins here) is doing most of the work. */
+.wishlist-hero__identity {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin: 56px 0 40px;
+  text-align: center;
+}
+
+.wishlist-hero__title {
+  margin: 0;
+
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 5vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  color: var(--cherry-ink);
+}
+
+.wishlist-hero__subtitle {
+  margin: 14px 0 0;
+
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  color: var(--muted-ink);
+}
+
+@media (max-width: 720px) {
+  .wishlist-hero__bar {
+    gap: 10px;
+  }
+
+  .wishlist-hero__search {
+    max-width: none;
+  }
+
+  .wishlist-hero__greeting {
+    display: none;
+  }
+
+  .wishlist-hero__identity {
+    margin: 40px 0 28px;
+  }
+}
