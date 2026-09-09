@@ -14,32 +14,32 @@
 
   padding: 10px 14px;
 
-  background: #1c1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(60, 32, 40, 0.2);
 }
 
 .action-tray__button {
   padding: 8px 16px;
 
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: transparent;
 
-  color: #f5f0e8;
-  font-family: monospace;
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.68rem;
   text-transform: lowercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
 
   cursor: pointer;
 }
 
 .action-tray__button--primary {
-  background: #f17ba6;
-  border-color: #f17ba6;
-  color: #fff;
+  background: var(--strawberry);
+  border-color: var(--strawberry);
+  color: var(--surface);
 }
 
 .action-tray__button:disabled {

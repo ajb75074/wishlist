@@ -1,5 +1,6 @@
-/* Row shared by both features that use SelectModeBar - All Saves (with
-   FilterBar alongside it) and Collection Detail (on its own). */
+/* Collection Detail's own simple toolbar row (just this kebab menu,
+   no tabs/filter/count) - All Saves has its own richer toolbar now
+   (WishlistToolbar.css) built on a different layout. */
 .toolbar-row {
   display: flex;
   align-items: center;
@@ -8,8 +9,7 @@
   margin: 22px 0 20px;
 }
 
-/* Icon-only, sized to match FilterBar's own toggle button (30x30) so
-   the toolbar row's controls stay visually aligned. */
+/* Icon-only, 30x30 square. */
 .select-mode-bar__enter {
   flex-shrink: 0;
 
@@ -25,7 +25,7 @@
   border-radius: 4px;
   background: transparent;
 
-  color: var(--text-h);
+  color: var(--cocoa-ink);
 
   cursor: pointer;
 
@@ -33,7 +33,7 @@
 }
 
 .select-mode-bar__enter:hover {
-  border-color: #f17ba6;
+  border-color: var(--strawberry);
 }
 
 .select-mode-bar {
@@ -49,82 +49,22 @@
   border-radius: 4px;
   background: transparent;
 
-  color: var(--text-h);
-  font-family: var(--mono, monospace);
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
 
   cursor: pointer;
 }
 
 .select-mode-bar__cancel:hover {
-  border-color: #f17ba6;
+  border-color: var(--strawberry);
 }
 
 .select-mode-bar__count {
-  font-family: var(--mono, monospace);
+  font-family: var(--font-ui);
   font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
 
-  color: #f3a6c0;
-}
-
-/* All Saves' one Phase 3 entry point - same visual language as
-   select-mode-bar__cancel, the closest sibling control in this row. */
-.add-item-button {
-  flex-shrink: 0;
-  padding: 6px 10px;
-
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
-
-  color: var(--text-h);
-  font-family: var(--mono, monospace);
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-.add-item-button:hover {
-  border-color: #f17ba6;
-}
-
-/* Phase 4's Saved/Owned view switch - a simple two-button segmented
-   control, same sizing/font language as the rest of this row rather
-   than a new visual system. */
-.ownership-toggle {
-  display: flex;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.ownership-toggle__btn {
-  padding: 6px 10px;
-
-  border: none;
-  background: transparent;
-
-  color: var(--text-h);
-  font-family: var(--mono, monospace);
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-.ownership-toggle__btn + .ownership-toggle__btn {
-  border-left: 1px solid var(--border);
-}
-
-.ownership-toggle__btn.is-active {
-  background: #f17ba6;
-  color: #fff;
+  color: var(--strawberry);
 }

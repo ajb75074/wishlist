@@ -3,8 +3,8 @@
    the scrapbook/jewel-frame personality of the page behind it. Each
    modal's own CSS file only needs its width and any content-specific
    layout (form controls, toggles, etc.); this file owns the backdrop,
-   container base, typography scale, and buttons so the three modals
-   read as one system instead of three hand-copied ones. */
+   container base, typography scale, form-field system, and buttons so
+   every modal reads as one system instead of hand-copied ones. */
 
 .modal-backdrop {
   position: fixed;
@@ -15,63 +15,122 @@
   align-items: center;
   justify-content: center;
 
-  background: rgba(10, 9, 9, 0.6);
+  /* Translucent and warm, not a heavy black/purple scrim - the page
+     behind should still read as itself, just clearly inactive. */
+  background: rgba(60, 32, 40, 0.4);
 }
 
+/* Stationery-card moment: a slightly larger, uneven radius on the top
+   two corners only (vs. a uniform radius) reads as a die-cut/deckle-
+   edge card without fighting the translucent backdrop scrim the way a
+   literal scallop mask would - the one restrained decorative touch
+   for every modal built on this shared shell. Kept subtle (not the
+   exaggerated 28px/16px split this used to be) so it registers as a
+   detail, not a shape statement. */
 .modal {
   box-sizing: border-box;
   max-width: calc(100vw - 32px);
 
   padding: 28px;
 
-  background: #1c191a;
-  border: 1px solid rgba(245, 240, 232, 0.12);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 14px 14px;
+  box-shadow: 0 12px 32px rgba(60, 32, 40, 0.14);
 
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
   text-align: center;
 }
 
 /* Serif carries the emotional weight - titles/questions only, nothing
-   else in the modal competes with it. */
+   else in the modal competes with it. Centered by default (the simple
+   confirmation dialogs - Donate, Delete - read best that way); form
+   modals override to left-aligned via their own header, below. */
 .modal__title {
   margin: 0 0 10px;
 
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.2rem;
   font-weight: 400;
   line-height: 1.35;
   /* Explicit, not inherited from .modal - a bare global `h2` rule
      elsewhere would otherwise win (direct rules beat inherited ones)
      and tie this to the visitor's OS light/dark preference instead of
-     this app's fixed dark theme. */
-  color: #f5f0e8;
+     this app's fixed light theme. */
+  color: var(--cherry-ink);
 
   overflow-wrap: anywhere;
 }
 
-/* Everything else is clean sans-serif - reusing the app's own --sans
-   stack (index.css) rather than introducing another display font. */
+/* Title row for the form modals (Add Item, Create/Edit Collection):
+   title on the left, close button on the right, left-aligned - the
+   editorial anchor the brief asks for, instead of every modal being
+   centered. No subtitle row anymore - titles are confident enough on
+   their own (see the copy audit that removed "save the things you
+   love"-style descriptions). */
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.modal__header .modal__title {
+  margin: 0;
+}
+
+/* Consistent close affordance across every modal - a plain "×", not a
+   filled circle, with padding rather than a bigger glyph so the hit
+   area is comfortable without looking heavy. */
+.modal__close {
+  flex-shrink: 0;
+  margin: -6px -6px 0 0;
+  padding: 6px;
+
+  border: 0;
+  background: transparent;
+
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--muted-ink);
+
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.modal__close:hover,
+.modal__close:focus-visible {
+  color: var(--strawberry);
+}
+
+/* Everything else is quiet editorial body copy, sharing the app's
+   --font-ui stack rather than introducing another display font. */
 .modal__body {
   margin: 0;
 
-  font-family: var(--sans);
+  font-family: var(--font-ui);
   font-size: 0.82rem;
   line-height: 1.55;
 
-  color: rgba(245, 240, 232, 0.65);
+  color: rgba(73, 60, 62, 0.65);
 }
 
 .modal__error {
   margin: 12px 0 0;
 
-  font-family: var(--sans);
+  font-family: var(--font-ui);
   font-size: 0.78rem;
 
-  color: #f17ba6;
+  color: var(--error);
 }
 
+/* Centered by default - matches the simple, centered confirmation
+   dialogs (Donate, Delete) this shell also serves. The three form
+   modals in this redesign override to flex-end in their own CSS,
+   pairing with their now-left-aligned header. */
 .modal__actions {
   display: flex;
   justify-content: center;
@@ -80,15 +139,20 @@
   margin-top: 22px;
 }
 
+/* Base button is the shared "cream/pistachio secondary action" -
+   --pistachio is documented in index.css as the secondary-button
+   token, so the default (Cancel, etc.) reads as a soft secondary
+   pill against the card; .modal__button--primary below overrides it
+   for the one strawberry call-to-action per modal. */
 .modal__button {
   padding: 10px 18px;
 
-  border: 1px solid rgba(245, 240, 232, 0.22);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: transparent;
+  background: var(--pistachio);
 
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.82rem;
 
   cursor: pointer;
@@ -96,21 +160,115 @@
 }
 
 .modal__button:hover:not(:disabled) {
-  border-color: rgba(245, 240, 232, 0.4);
+  border-color: var(--matcha);
 }
 
 .modal__button--primary {
-  background: #f17ba6;
-  border-color: #f17ba6;
-  color: #fff;
+  background: var(--strawberry);
+  border-color: var(--strawberry);
+  color: var(--surface);
 }
 
 .modal__button--primary:hover:not(:disabled) {
-  background: #ee6a9b;
-  border-color: #ee6a9b;
+  background: var(--strawberry-hover);
+  border-color: var(--strawberry-hover);
+}
+
+/* Quieter alternative to the base (pistachio-filled) button, for the
+   three form modals in this redesign - Cancel shouldn't visually
+   compete with the primary action next to it. Plain outline at rest,
+   a soft matcha wash on hover/focus. Additive rather than a change to
+   .modal__button itself, so Donate/Delete's existing Cancel buttons
+   elsewhere keep their current look. */
+.modal__button--secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--cocoa-ink);
+}
+
+.modal__button--secondary:hover:not(:disabled) {
+  background: var(--pistachio);
+  border-color: var(--pistachio);
 }
 
 .modal__button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* ============================================================
+   Shared form-field system - Add Item and Create/Edit Collection all
+   build their forms from these instead of each hand-rolling its own
+   input/label styling, so they can't drift into separate visual
+   systems again.
+   ============================================================ */
+
+.modal-field-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.modal-field-group:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Two columns on desktop (e.g. Price + Color), one on narrow screens -
+   see each modal's own responsive rules for the exact breakpoint. */
+.modal-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal-field-label {
+  display: block;
+  margin-bottom: 8px;
+
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.76rem;
+  color: var(--cocoa-ink);
+}
+
+/* Appended to an optional field's label text, not a separate element -
+   only genuinely required fields get a "*"; everything else says so
+   plainly instead of leaving it ambiguous. */
+.modal-field-label__hint {
+  font-weight: 500;
+  color: var(--muted-ink);
+}
+
+.modal-field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 13px 14px;
+
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+
+.modal-field::placeholder {
+  color: var(--muted-ink);
+}
+
+.modal-field:focus {
+  outline: none;
+  border-color: var(--strawberry);
+}
+
+.modal-field:disabled {
+  opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .modal-field-grid {
+    grid-template-columns: 1fr;
+  }
 }
