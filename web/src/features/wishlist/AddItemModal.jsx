@@ -51,6 +51,18 @@ function parseProductUrlInput(rawValue) {
   }
 }
 
+// Simple picture-frame glyph, matching the app's existing blocky/
+// geometric icon style (see ProductCard's AddToCollectionIcon).
+function PhotoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="8.5" cy="10" r="1.8" fill="currentColor" />
+      <path d="M3.5 18.5 9 12l4 4.5 3-3 4.5 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // App only renders this while the modal should be open, so each open
 // is a fresh mount - form state, the preview, and the one UUID this
 // creation lifecycle uses all start clean for free, same pattern as
@@ -71,6 +83,7 @@ function AddItemModal({ onClose, onCreated }) {
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   const previewUrlRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -118,11 +131,9 @@ function AddItemModal({ onClose, onCreated }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSubmitting]);
 
-  function handlePhotoChange(event) {
-    const file = event.target.files?.[0];
-    // Clears the input so re-selecting the same file still fires a
-    // change event.
-    event.target.value = "";
+  // Shared by the file input and drag-and-drop below, so both paths
+  // get identical validation/preview behavior.
+  function processFile(file) {
     if (!file) return;
 
     setErrorMessage("");
@@ -145,6 +156,32 @@ function AddItemModal({ onClose, onCreated }) {
     previewUrlRef.current = url;
     setPhotoFile(file);
     setPhotoPreviewUrl(url);
+  }
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0];
+    // Clears the input so re-selecting the same file still fires a
+    // change event.
+    event.target.value = "";
+    processFile(file);
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    if (isSubmitting) return;
+    setIsDraggingOver(true);
+  }
+
+  function handleDragLeave(event) {
+    event.preventDefault();
+    setIsDraggingOver(false);
+  }
+
+  function handleDrop(event) {
+    event.preventDefault();
+    setIsDraggingOver(false);
+    if (isSubmitting) return;
+    processFile(event.dataTransfer.files?.[0]);
   }
 
   async function handleSubmit(event) {
@@ -235,27 +272,24 @@ function AddItemModal({ onClose, onCreated }) {
         aria-labelledby="add-item-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 id="add-item-title" className="modal__title">
-          add item
-        </h2>
+        <div className="modal__header">
+          <h2 id="add-item-title" className="modal__title">
+            Add item
+          </h2>
+
+          <button type="button" className="modal__close" onClick={handleClose} aria-label="Close">
+            ×
+          </button>
+        </div>
 
         <form className="add-item-modal__form" onSubmit={handleSubmit}>
-          <div className="add-item-modal__photo-row">
-            <div className="add-item-modal__photo-preview">
-              {photoPreviewUrl ? (
-                <img src={photoPreviewUrl} alt="Selected item preview" />
-              ) : (
-                <span className="add-item-modal__photo-placeholder" aria-hidden="true">
-                  no photo
-                </span>
-              )}
-            </div>
-
-            <div className="add-item-modal__photo-actions">
-              <label className="add-item-modal__label" htmlFor="add-item-photo">
-                photo *
-              </label>
-
+          <div className="add-item-modal__top-row">
+            <div
+              className={`add-item-modal__photo-zone ${isDraggingOver ? "is-dragging" : ""}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <input
                 ref={fileInputRef}
                 id="add-item-photo"
@@ -266,106 +300,149 @@ function AddItemModal({ onClose, onCreated }) {
                 hidden
               />
 
-              <button
-                type="button"
-                className="add-item-modal__photo-button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting}
-              >
-                {photoFile ? "change photo" : "choose photo"}
-              </button>
+              {photoPreviewUrl ? (
+                <button
+                  type="button"
+                  className="add-item-modal__photo-preview"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                >
+                  <img src={photoPreviewUrl} alt="Selected item preview" />
+                  <span className="add-item-modal__photo-change">change photo</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="add-item-modal__photo-placeholder"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                >
+                  <PhotoIcon />
+                  <span className="add-item-modal__photo-label">add a photo *</span>
+                  <span className="add-item-modal__photo-hint">or drag and drop</span>
+                </button>
+              )}
+            </div>
+
+            <div className="add-item-modal__top-fields">
+              <div className="modal-field-group">
+                <label className="modal-field-label" htmlFor="add-item-name">
+                  Item name *
+                </label>
+                <input
+                  id="add-item-name"
+                  className="modal-field"
+                  type="text"
+                  placeholder="e.g. Bow Tank Top"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+
+              <div className="modal-field-group">
+                <label className="modal-field-label" htmlFor="add-item-store">
+                  Brand / store <span className="modal-field-label__hint">(optional)</span>
+                </label>
+                <input
+                  id="add-item-store"
+                  className="modal-field"
+                  type="text"
+                  placeholder="e.g. Aritzia"
+                  value={store}
+                  onChange={(event) => setStore(event.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
           </div>
 
-          <label className="add-item-modal__label" htmlFor="add-item-name">
-            item name *
-          </label>
-          <input
-            id="add-item-name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={isSubmitting}
-            required
-          />
+          <div className="modal-field-grid">
+            <div className="modal-field-group">
+              <label className="modal-field-label" htmlFor="add-item-price">
+                Price <span className="modal-field-label__hint">(optional)</span>
+              </label>
+              <input
+                id="add-item-price"
+                className="modal-field"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g. 128.00"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <label className="add-item-modal__label" htmlFor="add-item-store">
-            brand / store
-          </label>
-          <input
-            id="add-item-store"
-            type="text"
-            value={store}
-            onChange={(event) => setStore(event.target.value)}
-            disabled={isSubmitting}
-          />
+            <div className="modal-field-group">
+              <label className="modal-field-label" htmlFor="add-item-color">
+                Color <span className="modal-field-label__hint">(optional)</span>
+              </label>
+              <input
+                id="add-item-color"
+                className="modal-field"
+                type="text"
+                placeholder="e.g. Blush pink"
+                value={color}
+                onChange={(event) => setColor(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
 
-          <label className="add-item-modal__label" htmlFor="add-item-price">
-            price
-          </label>
-          <input
-            id="add-item-price"
-            type="text"
-            inputMode="decimal"
-            placeholder="e.g. 128.00"
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-            disabled={isSubmitting}
-          />
-
-          <label className="add-item-modal__label" htmlFor="add-item-product-url">
-            product link
-          </label>
-          <input
-            id="add-item-product-url"
-            type="text"
-            placeholder="https://..."
-            value={productUrl}
-            onChange={(event) => setProductUrl(event.target.value)}
-            disabled={isSubmitting}
-          />
-
-          <label className="add-item-modal__label" htmlFor="add-item-color">
-            color
-          </label>
-          <input
-            id="add-item-color"
-            type="text"
-            value={color}
-            onChange={(event) => setColor(event.target.value)}
-            disabled={isSubmitting}
-          />
-
-          <span className="add-item-modal__label">ownership</span>
-          <div className="add-item-modal__ownership-toggle" role="group" aria-label="Ownership">
-            <button
-              type="button"
-              className={`add-item-modal__ownership-btn${!isOwned ? " is-active" : ""}`}
-              aria-pressed={!isOwned}
-              onClick={() => setIsOwned(false)}
+          <div className="modal-field-group">
+            <label className="modal-field-label" htmlFor="add-item-product-url">
+              Product link <span className="modal-field-label__hint">(optional)</span>
+            </label>
+            <input
+              id="add-item-product-url"
+              className="modal-field"
+              type="text"
+              placeholder="https://..."
+              value={productUrl}
+              onChange={(event) => setProductUrl(event.target.value)}
               disabled={isSubmitting}
-            >
-              saved
-            </button>
-            <button
-              type="button"
-              className={`add-item-modal__ownership-btn${isOwned ? " is-active" : ""}`}
-              aria-pressed={isOwned}
-              onClick={() => setIsOwned(true)}
-              disabled={isSubmitting}
-            >
-              owned
-            </button>
+            />
+          </div>
+
+          <div className="modal-field-group">
+            <span className="modal-field-label">Ownership</span>
+            <div className="add-item-modal__ownership-toggle" role="group" aria-label="Ownership">
+              <button
+                type="button"
+                className={`add-item-modal__ownership-btn${!isOwned ? " is-active" : ""}`}
+                aria-pressed={!isOwned}
+                onClick={() => setIsOwned(false)}
+                disabled={isSubmitting}
+              >
+                Saved ♡
+              </button>
+              <button
+                type="button"
+                className={`add-item-modal__ownership-btn${isOwned ? " is-active" : ""}`}
+                aria-pressed={isOwned}
+                onClick={() => setIsOwned(true)}
+                disabled={isSubmitting}
+              >
+                Owned
+              </button>
+            </div>
           </div>
 
           {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
           <div className="modal__actions">
-            <button type="button" className="modal__button" onClick={handleClose} disabled={isSubmitting}>
-              cancel
+            <button
+              type="button"
+              className="modal__button modal__button--secondary"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Cancel
             </button>
             <button type="submit" className="modal__button modal__button--primary" disabled={isSubmitting}>
-              {isSubmitting ? "adding..." : "add item"}
+              {isSubmitting ? "Adding..." : "Add item"}
             </button>
           </div>
         </form>

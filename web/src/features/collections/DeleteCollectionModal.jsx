@@ -40,19 +40,19 @@ function DeleteCollectionModal({
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="delete-collection-title" className="modal__title">
-          delete &ldquo;{collectionName}&rdquo;?
+          Delete &ldquo;{collectionName}&rdquo;?
         </h2>
 
         <p className="modal__body">
-          the collection will disappear, but your saved pieces won&rsquo;t go
-          anywhere ♡
+          The collection will disappear, but your saved items won&rsquo;t go
+          anywhere.
         </p>
 
         {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
         <div className="modal__actions">
           <button type="button" className="modal__button" onClick={onCancel} disabled={isSubmitting}>
-            keep it
+            Keep it
           </button>
 
           <button
@@ -61,7 +61,7 @@ function DeleteCollectionModal({
             onClick={onConfirm}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "deleting..." : "delete"}
+            {isSubmitting ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>

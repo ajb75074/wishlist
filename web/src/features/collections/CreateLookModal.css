@@ -38,9 +38,9 @@
 
   margin-bottom: 8px;
 
-  font-family: var(--sans);
+  font-family: var(--font-ui);
   font-size: 0.84rem;
-  color: rgba(245, 240, 232, 0.8);
+  color: var(--cocoa-ink);
 }
 
 .create-look-modal input[type="text"] {
@@ -50,29 +50,21 @@
   padding: 10px 12px;
 
   background: transparent;
-  border: 1px solid rgba(245, 240, 232, 0.25);
+  border: 1px solid rgba(73, 60, 62, 0.25);
   border-radius: 8px;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.9rem;
 }
 
 .create-look-modal input[type="text"]::placeholder {
-  color: rgba(245, 240, 232, 0.35);
+  color: var(--muted-ink);
 }
 
 .create-look-modal input[type="text"]:focus {
   outline: none;
-  border-color: #f17ba6;
-}
-
-.create-look-modal__hint {
-  margin: 10px 0 0;
-
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
-  font-size: 0.76rem;
+  border-color: var(--strawberry);
 }
 
 .create-look-modal .modal__actions {

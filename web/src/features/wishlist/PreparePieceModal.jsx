@@ -17,7 +17,7 @@ const ERROR_MESSAGES = {
   CANVAS_TAINTED: "this photo can't be prepared here - try a different photo for this item.",
   SEGMENT_FAILED: "couldn't update the selection - try clicking again.",
   NOTHING_SELECTED: "add at least one point first.",
-  SAVE_FAILED: "couldn't save this piece - try again.",
+  SAVE_FAILED: "couldn't save this item - try again.",
 };
 
 // App only renders this while a piece is being prepared, so each open
@@ -239,7 +239,7 @@ function PreparePieceModal({ product, onClose, onSave }) {
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="prepare-piece-title" className="modal__title">
-          prepare this piece ♡
+          Prepare item
         </h2>
 
         <p className="modal__body">
@@ -249,7 +249,7 @@ function PreparePieceModal({ product, onClose, onSave }) {
         {phase === "loading" && (
           <div className="prepare-piece-modal__loading">
             <span className="prepare-piece-modal__spinner" aria-hidden="true" />
-            <p className="prepare-piece-modal__status">getting your piece ready…</p>
+            <p className="prepare-piece-modal__status">getting your item ready…</p>
           </div>
         )}
 
@@ -333,7 +333,7 @@ function PreparePieceModal({ product, onClose, onSave }) {
               onClick={handleSave}
               disabled={isSaving || !mask}
             >
-              {isSaving ? "saving..." : "use this piece ♡"}
+              {isSaving ? "saving..." : "Use item"}
             </button>
           )}
         </div>

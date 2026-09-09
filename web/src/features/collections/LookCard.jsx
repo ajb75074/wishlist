@@ -129,7 +129,7 @@ function LookCard({ look, onClick, onRequestRemove }) {
                 onRequestRemove(look);
               }}
             >
-              remove look ♡
+              Remove outfit
             </button>
           </div>
         )}

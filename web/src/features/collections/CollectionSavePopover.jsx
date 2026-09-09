@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import CollectionThumbnail from "./CollectionThumbnail";
 import { addItemToCollection, getCollectionsForItem } from "./collections";
+import "../../components/modal.css";
 import "./CollectionSavePopover.css";
 
 const POPOVER_WIDTH = 260;
@@ -134,6 +135,8 @@ function CollectionSavePopover({
       )
     : collections;
 
+  const trimmedQuery = searchTerm.trim();
+
   return (
     <div
       ref={popoverRef}
@@ -142,17 +145,25 @@ function CollectionSavePopover({
       role="dialog"
       aria-label={`Save "${product.name}" to a collection`}
     >
-      <p className="collection-save-popover__title">save to collection ♡</p>
+      <div className="collection-save-popover__header">
+        <p className="collection-save-popover__title">Save to collection</p>
+
+        <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+      </div>
 
       {collections.length > 0 && (
-        <input
-          type="text"
-          className="collection-save-popover__search"
-          placeholder="search collections..."
-          aria-label="Search collections"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-        />
+        <label className="collection-save-popover__search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="text"
+            placeholder="Search collections..."
+            aria-label="Search collections"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </label>
       )}
 
       {successMessage && (
@@ -182,27 +193,25 @@ function CollectionSavePopover({
                   className="collection-save-popover__row"
                   onClick={() => handleAddToCollection(collection)}
                   disabled={isMember || isAdding}
+                  aria-pressed={isMember}
                 >
                   <CollectionThumbnail
                     imageUrl={collection.imageUrl}
                     color={collection.color}
-                    size={26}
+                    size={30}
                   />
 
                   <span className="collection-save-popover__row-name">
                     {collection.name}
                   </span>
 
-                  {isMember && (
-                    <span className="collection-save-popover__badge">
-                      ✓ added
-                    </span>
-                  )}
-
-                  {isAdding && (
-                    <span className="collection-save-popover__badge">
-                      adding...
-                    </span>
+                  {isAdding ? (
+                    <span className="collection-save-popover__adding">adding...</span>
+                  ) : (
+                    <span
+                      className={`collection-save-popover__indicator ${isMember ? "is-member" : ""}`}
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               </li>
@@ -210,7 +219,19 @@ function CollectionSavePopover({
           })}
 
           {visibleCollections.length === 0 && (
-            <li className="collection-save-popover__no-matches">no matches</li>
+            <li className="collection-save-popover__no-matches">
+              <p>no collections found ♡</p>
+
+              {trimmedQuery && (
+                <button
+                  type="button"
+                  className="collection-save-popover__create-suggestion"
+                  onClick={() => onCreateCollection(trimmedQuery)}
+                >
+                  + create &ldquo;{trimmedQuery}&rdquo;
+                </button>
+              )}
+            </li>
           )}
         </ul>
       )}
@@ -218,9 +239,9 @@ function CollectionSavePopover({
       <button
         type="button"
         className="collection-save-popover__create"
-        onClick={onCreateCollection}
+        onClick={() => onCreateCollection(trimmedQuery)}
       >
-        + create collection
+        + New collection
       </button>
     </div>
   );

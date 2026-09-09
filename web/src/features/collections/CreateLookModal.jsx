@@ -46,7 +46,7 @@ function CreateLookModal({ onClose, onCreate }) {
     if (result.success) {
       onClose();
     } else {
-      setErrorMessage(result.error || "Could not create this look.");
+      setErrorMessage(result.error || "Could not create this outfit.");
       setIsSubmitting(false);
     }
   }
@@ -62,7 +62,7 @@ function CreateLookModal({ onClose, onCreate }) {
       >
         <div className="create-look-modal__header">
           <h2 id="create-look-title" className="modal__title">
-            create a look ♡
+            New outfit
           </h2>
 
           <button
@@ -77,7 +77,7 @@ function CreateLookModal({ onClose, onCreate }) {
 
         <form onSubmit={handleSubmit}>
           <label className="create-look-modal__label" htmlFor="look-name">
-            give it a name
+            Name
           </label>
 
           <input
@@ -90,15 +90,11 @@ function CreateLookModal({ onClose, onCreate }) {
             disabled={isSubmitting}
           />
 
-          <p className="create-look-modal__hint">
-            you&rsquo;ll pick pieces for it next, in look studio ♡
-          </p>
-
           {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
           <div className="modal__actions">
             <button type="button" className="modal__button" onClick={onClose} disabled={isSubmitting}>
-              cancel
+              Cancel
             </button>
 
             <button
@@ -106,7 +102,7 @@ function CreateLookModal({ onClose, onCreate }) {
               className="modal__button modal__button--primary"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "creating..." : "create look ♡"}
+              {isSubmitting ? "Creating..." : "Create outfit"}
             </button>
           </div>
         </form>

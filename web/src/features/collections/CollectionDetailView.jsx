@@ -204,7 +204,7 @@ function CollectionDetailView({
       navigate(`/collections/${encodeURIComponent(collection.name)}/looks/${encodeURIComponent(look.name)}`);
       return { success: true };
     } catch {
-      return { success: false, error: "Could not create this look. Please try again." };
+      return { success: false, error: "Could not create this outfit. Please try again." };
     }
   }
 
@@ -267,12 +267,12 @@ function CollectionDetailView({
     try {
       const uploadResult = await uploadPieceCutout(wishitemId, blob);
       if (!uploadResult.success) {
-        return { success: false, error: "Could not save this piece. Please try again." };
+        return { success: false, error: "Could not save this item. Please try again." };
       }
 
       const updateResult = await updateWishitemCutoutImage(wishitemId, uploadResult.url);
       if (!updateResult.success) {
-        return { success: false, error: "Could not save this piece. Please try again." };
+        return { success: false, error: "Could not save this item. Please try again." };
       }
 
       const { cutoutImageUrl } = updateResult.product;
@@ -295,7 +295,7 @@ function CollectionDetailView({
 
       return { success: true };
     } catch {
-      return { success: false, error: "Could not save this piece. Please try again." };
+      return { success: false, error: "Could not save this item. Please try again." };
     }
   }
 
@@ -401,7 +401,6 @@ function CollectionDetailView({
     return (
       <LookDetailView
         look={selectedLook}
-        collectionName={collection.name}
         onBack={() => navigate(`/collections/${encodeURIComponent(collection.name)}`)}
         collectionPieces={products}
         onSaveLayout={handleSaveLookLayout}
@@ -431,7 +430,7 @@ function CollectionDetailView({
 
         <div>
           <h2>{collection.name}</h2>
-          <p>pieces saved for this collection ♡</p>
+          <p>items saved for this collection ♡</p>
         </div>
       </div>
 
@@ -441,14 +440,14 @@ function CollectionDetailView({
           className={`collection-tabs__tab${activeTab === "pieces" ? " is-active" : ""}`}
           onClick={() => setActiveTab("pieces")}
         >
-          Pieces
+          Items
         </button>
         <button
           type="button"
           className={`collection-tabs__tab${activeTab === "looks" ? " is-active" : ""}`}
           onClick={() => setActiveTab("looks")}
         >
-          Looks
+          Outfits
         </button>
       </div>
 
@@ -489,7 +488,7 @@ function CollectionDetailView({
             <div className="collection-detail__empty">
               <p className="collection-detail__empty-title">nothing here yet ♡</p>
               <p className="collection-detail__empty-subtitle">
-                add saved pieces to this collection to start building the mood
+                add saved items to this collection to start building the mood
               </p>
             </div>
           )}
@@ -530,14 +529,14 @@ function CollectionDetailView({
           {!isLooksLoading && looks.length > 0 && (
             <>
               <div className="looks-header">
-                <p className="looks-header__title">planned looks ♡</p>
+                <p className="looks-header__title">Your outfits</p>
 
                 <button
                   type="button"
                   className="collection-detail__create-look"
                   onClick={() => setIsCreateLookModalOpen(true)}
                 >
-                  + create a look
+                  + New outfit
                 </button>
               </div>
 
@@ -561,7 +560,7 @@ function CollectionDetailView({
           {!isLooksLoading && looks.length === 0 && (
             <div className="collection-detail__looks-empty">
               <p className="collection-detail__looks-heart">♡</p>
-              <p className="collection-detail__looks-title">no looks planned yet</p>
+              <p className="collection-detail__looks-title">no outfits planned yet</p>
               <p className="collection-detail__looks-subtitle">
                 start putting together outfits
                 <br />
@@ -572,7 +571,7 @@ function CollectionDetailView({
                 className="collection-detail__create-look"
                 onClick={() => setIsCreateLookModalOpen(true)}
               >
-                + create a look
+                + New outfit
               </button>
             </div>
           )}

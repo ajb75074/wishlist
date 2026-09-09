@@ -40,19 +40,19 @@ function DeleteLookModal({
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="delete-look-title" className="modal__title">
-          remove &ldquo;{lookName}&rdquo;? ♡
+          Remove &ldquo;{lookName}&rdquo;?
         </h2>
 
         <p className="modal__body">
-          this look will disappear, but your saved pieces will stay in{" "}
-          {collectionName} and All Saves ♡
+          This outfit will disappear, but your saved items will stay in{" "}
+          {collectionName} and Home.
         </p>
 
         {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
         <div className="modal__actions">
           <button type="button" className="modal__button" onClick={onCancel} disabled={isSubmitting}>
-            keep it
+            Keep it
           </button>
 
           <button
@@ -61,7 +61,7 @@ function DeleteLookModal({
             onClick={onConfirm}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "removing..." : "remove look ♡"}
+            {isSubmitting ? "Removing..." : "Remove outfit"}
           </button>
         </div>
       </div>

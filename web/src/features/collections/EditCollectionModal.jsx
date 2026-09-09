@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import CollectionThumbnail from "./CollectionThumbnail";
 import "../../components/modal.css";
 import "./CreateCollectionModal.css";
 
@@ -6,12 +7,12 @@ import "./CreateCollectionModal.css";
 // manually rather than shared/exported, matching this app's existing
 // convention of small per-file constants over premature sharing.
 const COLOR_PALETTE = [
-  { name: "soft pink", value: "#f3a6c0" },
-  { name: "muted lavender", value: "#c9b8e8" },
-  { name: "pale blue", value: "#a9c9e0" },
-  { name: "cream", value: "#e8dcc8" },
-  { name: "muted green", value: "#b8d4b0" },
-  { name: "peach", value: "#f0b8a0" },
+  { name: "blush", value: "#fadadd" },
+  { name: "strawberry", value: "#e95d75" },
+  { name: "pistachio", value: "#dde8d4" },
+  { name: "butter", value: "#f5e6b8" },
+  { name: "powder blue", value: "#c3d9e8" },
+  { name: "peach", value: "#f5c9a8" },
 ];
 
 // App only renders this while a collection is being edited, so each
@@ -75,111 +76,119 @@ function EditCollectionModal({ collection, onClose, onSave }) {
         aria-labelledby="edit-collection-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="create-collection-modal__header">
+        <div className="modal__header">
           <h2 id="edit-collection-title" className="modal__title">
-            edit collection
+            Edit collection
           </h2>
 
-          <button
-            type="button"
-            className="create-collection-modal__close"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button type="button" className="modal__close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <label
-            className="create-collection-modal__label"
-            htmlFor="edit-collection-name"
-          >
-            name
-          </label>
+          <div className="modal-field-group">
+            <label className="modal-field-label" htmlFor="edit-collection-name">
+              Name *
+            </label>
 
-          <input
-            id="edit-collection-name"
-            ref={inputRef}
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Jamaica Trip"
-            disabled={isSubmitting}
-          />
+            <input
+              id="edit-collection-name"
+              ref={inputRef}
+              className="modal-field"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="e.g. Jamaica Trip"
+              disabled={isSubmitting}
+            />
+          </div>
 
-          <div className="create-collection-modal__thumbnail-section">
-            <span className="create-collection-modal__label">cover</span>
+          <div className="create-collection-modal__cover">
+            <div className="create-collection-modal__cover-main">
+              <span className="modal-field-label">Cover</span>
 
-            <div className="cover-toggle" role="group" aria-label="Cover type">
-              <button
-                type="button"
-                className={thumbnailMode === "image" ? "active" : ""}
-                onClick={() => setThumbnailMode("image")}
-                disabled={isSubmitting}
-              >
-                image
-              </button>
-
-              <button
-                type="button"
-                className={thumbnailMode === "color" ? "active" : ""}
-                onClick={() => setThumbnailMode("color")}
-                disabled={isSubmitting}
-              >
-                color
-              </button>
-            </div>
-
-            {thumbnailMode === "image" ? (
-              <>
-                <label
-                  className="create-collection-modal__label"
-                  htmlFor="edit-collection-image-url"
-                >
-                  image url
-                </label>
-
-                <input
-                  id="edit-collection-image-url"
-                  type="url"
-                  value={imageUrl}
-                  onChange={(event) => setImageUrl(event.target.value)}
-                  placeholder="https://example.com/image.jpg"
+              <div className="cover-toggle" role="group" aria-label="Cover type">
+                <button
+                  type="button"
+                  className={thumbnailMode === "image" ? "active" : ""}
+                  onClick={() => setThumbnailMode("image")}
                   disabled={isSubmitting}
-                />
-              </>
-            ) : (
-              <div
-                className="color-palette"
-                role="group"
-                aria-label="Choose a color"
-              >
-                {COLOR_PALETTE.map((swatch) => (
-                  <button
-                    key={swatch.value}
-                    type="button"
-                    className={`color-swatch ${color === swatch.value ? "active" : ""}`}
-                    style={{ backgroundColor: swatch.value }}
-                    onClick={() => setColor(swatch.value)}
-                    aria-label={swatch.name}
-                    aria-pressed={color === swatch.value}
+                >
+                  Image
+                </button>
+
+                <button
+                  type="button"
+                  className={thumbnailMode === "color" ? "active" : ""}
+                  onClick={() => setThumbnailMode("color")}
+                  disabled={isSubmitting}
+                >
+                  Color
+                </button>
+              </div>
+
+              {thumbnailMode === "image" ? (
+                <div className="modal-field-group">
+                  <label className="modal-field-label" htmlFor="edit-collection-image-url">
+                    Image URL
+                  </label>
+
+                  <input
+                    id="edit-collection-image-url"
+                    className="modal-field"
+                    type="url"
+                    value={imageUrl}
+                    onChange={(event) => setImageUrl(event.target.value)}
+                    placeholder="https://example.com/image.jpg"
                     disabled={isSubmitting}
                   />
-                ))}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="color-palette" role="group" aria-label="Choose a color">
+                  {COLOR_PALETTE.map((swatch) => (
+                    <button
+                      key={swatch.value}
+                      type="button"
+                      className={`color-swatch ${color === swatch.value ? "active" : ""}`}
+                      style={{ backgroundColor: swatch.value }}
+                      onClick={() => setColor(swatch.value)}
+                      aria-label={swatch.name}
+                      title={swatch.name}
+                      aria-pressed={color === swatch.value}
+                      disabled={isSubmitting}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="create-collection-modal__preview">
+              <CollectionThumbnail
+                imageUrl={thumbnailMode === "image" ? imageUrl : ""}
+                color={color}
+                size={72}
+              />
+              <span className="create-collection-modal__preview-name">
+                {name.trim() || "your collection"}
+              </span>
+            </div>
           </div>
 
           {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
           <div className="modal__actions">
-            <button type="button" className="modal__button" onClick={onClose} disabled={isSubmitting}>
-              cancel
+            <button
+              type="button"
+              className="modal__button modal__button--secondary"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              Cancel
             </button>
 
             <button type="submit" className="modal__button modal__button--primary" disabled={isSubmitting}>
-              {isSubmitting ? "saving..." : "save changes"}
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

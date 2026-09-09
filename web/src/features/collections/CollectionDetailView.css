@@ -5,10 +5,10 @@
   background: transparent;
   padding: 4px 0;
 
-  color: var(--text);
-  font-family: monospace;
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 
   cursor: pointer;
 
@@ -16,7 +16,7 @@
 }
 
 .collection-detail__back:hover {
-  color: #f5f0e8;
+  color: var(--strawberry);
 }
 
 .collection-detail__heading {
@@ -34,20 +34,20 @@
 .collection-detail__heading h2 {
   margin: 0 0 4px;
 
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.3rem;
   text-transform: lowercase;
-  color: #f5f0e8;
+  color: var(--cherry-ink);
 }
 
 .collection-detail__heading p {
   margin: 0;
 
-  font-family: monospace;
+  font-family: var(--font-ui);
   font-size: 0.68rem;
-  letter-spacing: 0.03em;
-  opacity: 0.65;
+  letter-spacing: 0.02em;
+  color: var(--muted-ink);
 }
 
 /* Editorial, not SaaS-pill - just a muted/active label pair over a
@@ -58,7 +58,7 @@
 
   margin-bottom: 24px;
 
-  border-bottom: 1px solid rgba(245, 240, 232, 0.15);
+  border-bottom: 1px solid rgba(73, 60, 62, 0.15);
 }
 
 .collection-tabs__tab {
@@ -68,8 +68,8 @@
   border-bottom: 2px solid transparent;
   background: transparent;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
 
@@ -79,23 +79,22 @@
 }
 
 .collection-tabs__tab:hover {
-  color: rgba(245, 240, 232, 0.8);
+  color: var(--cocoa-ink);
 }
 
 .collection-tabs__tab.is-active {
-  color: #f5f0e8;
-  border-bottom-color: #f17ba6;
+  color: var(--cherry-ink);
+  border-bottom-color: var(--strawberry);
 }
 
 .collection-detail__status {
-  font-family: monospace;
+  font-family: var(--font-ui);
   font-size: 0.75rem;
-  opacity: 0.7;
+  color: var(--muted-ink);
 }
 
 .collection-detail__status--error {
-  color: #f17ba6;
-  opacity: 1;
+  color: var(--error);
 }
 
 /* Same pink success-banner treatment as CollectionSavePopover's
@@ -104,12 +103,12 @@
   margin: 0 0 16px;
   padding: 6px 8px;
 
-  background: rgba(241, 123, 166, 0.15);
+  background: var(--powder-pink);
   border-radius: 4px;
 
-  color: #f3a6c0;
-  font-family: monospace;
-  font-size: 0.68rem;
+  color: var(--cherry-ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
 }
 
 .collection-detail__empty {
@@ -124,17 +123,17 @@
 .collection-detail__empty-title {
   margin: 0;
 
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
-  color: #f5f0e8;
+  color: var(--cherry-ink);
 }
 
 .collection-detail__empty-subtitle {
   margin: 0;
 
-  font-family: monospace;
-  font-size: 0.72rem;
-  opacity: 0.65;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--muted-ink);
 }
 
 .collection-detail__looks-empty {
@@ -152,25 +151,26 @@
 .collection-detail__looks-heart {
   margin: 0;
 
-  color: #f17ba6;
+  color: var(--strawberry);
   font-size: 1.4rem;
 }
 
 .collection-detail__looks-title {
   margin: 0;
 
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1.05rem;
-  color: #f5f0e8;
+  color: var(--cherry-ink);
 }
 
 .collection-detail__looks-subtitle {
   margin: 0;
 
-  font-family: var(--sans);
-  font-size: 0.78rem;
+  /* Handwritten annotation, pairing with the heart + title above. */
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
   line-height: 1.5;
-  color: rgba(245, 240, 232, 0.65);
+  color: var(--muted-ink);
 }
 
 .looks-header {
@@ -182,13 +182,17 @@
   margin-bottom: 20px;
 }
 
+/* Short editorial section stamp, matching the sidebar's "MY
+   COLLECTIONS" treatment - not a sentence, so --font-accent (not
+   --font-ui) is right here. */
 .looks-header__title {
   margin: 0;
 
-  color: rgba(245, 240, 232, 0.75);
-  font-family: var(--sans);
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
+  color: var(--cocoa-ink);
+  font-family: var(--font-accent);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .looks-grid {
@@ -219,12 +223,12 @@
   margin-top: 14px;
   padding: 10px 18px;
 
-  border: 1px solid rgba(245, 240, 232, 0.22);
+  border: 1px solid rgba(73, 60, 62, 0.22);
   border-radius: 8px;
   background: transparent;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.82rem;
 
   cursor: pointer;
@@ -233,5 +237,5 @@
 }
 
 .collection-detail__create-look:hover {
-  border-color: #f17ba6;
+  border-color: var(--strawberry);
 }

@@ -31,8 +31,8 @@
   width: 34px;
   height: 34px;
 
-  border: 3px solid rgba(245, 240, 232, 0.18);
-  border-top-color: #f17ba6;
+  border: 3px solid rgba(73, 60, 62, 0.18);
+  border-top-color: var(--strawberry);
   border-radius: 50%;
 
   animation: prepare-piece-spin 0.8s linear infinite;
@@ -53,8 +53,8 @@
 .prepare-piece-modal__status {
   margin: 0;
 
-  color: rgba(245, 240, 232, 0.65);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.85rem;
 }
 
@@ -67,7 +67,7 @@
 
   margin: 18px 0 14px;
 
-  border-bottom: 1px solid rgba(245, 240, 232, 0.12);
+  border-bottom: 1px solid rgba(73, 60, 62, 0.12);
 }
 
 .prepare-piece-modal__mode-btn {
@@ -78,8 +78,8 @@
   border: 0;
   background: transparent;
 
-  color: rgba(245, 240, 232, 0.55);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.85rem;
 
   cursor: pointer;
@@ -88,11 +88,11 @@
 }
 
 .prepare-piece-modal__mode-btn:hover {
-  color: rgba(245, 240, 232, 0.8);
+  color: var(--cocoa-ink);
 }
 
 .prepare-piece-modal__mode-btn.is-active {
-  color: #f5f0e8;
+  color: var(--cherry-ink);
 }
 
 .prepare-piece-modal__mode-btn.is-active::after {
@@ -103,7 +103,7 @@
   bottom: -1px;
 
   height: 2px;
-  background: #f17ba6;
+  background: var(--strawberry);
 }
 
 .prepare-piece-modal__canvas-wrap {
@@ -123,9 +123,9 @@
   max-height: 55vh;
   overflow: auto;
 
-  border: 1px solid rgba(245, 240, 232, 0.12);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #141212;
+  background: var(--surface);
 }
 
 .prepare-piece-modal__canvas {
@@ -145,10 +145,10 @@
   padding: 4px 10px;
 
   border-radius: 10px;
-  background: rgba(20, 18, 18, 0.75);
+  background: rgba(60, 32, 40, 0.75);
 
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--surface);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
 }
 
@@ -163,12 +163,12 @@
 .prepare-piece-modal__point-actions button {
   padding: 8px 14px;
 
-  border: 1px solid rgba(245, 240, 232, 0.22);
+  border: 1px solid rgba(73, 60, 62, 0.22);
   border-radius: 8px;
   background: transparent;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 0.78rem;
 
   cursor: pointer;
@@ -177,7 +177,7 @@
 }
 
 .prepare-piece-modal__point-actions button:hover:not(:disabled) {
-  border-color: #f17ba6;
+  border-color: var(--strawberry);
 }
 
 .prepare-piece-modal__point-actions button:disabled {
@@ -192,13 +192,13 @@
   margin-top: 16px;
   padding: 16px;
 
-  border: 1px dashed rgba(245, 240, 232, 0.2);
+  border: 1px dashed rgba(73, 60, 62, 0.2);
   border-radius: 10px;
   background:
-    linear-gradient(45deg, #2a2426 25%, transparent 25%) -8px 0 / 16px 16px,
-    linear-gradient(-45deg, #2a2426 25%, transparent 25%) -8px 0 / 16px 16px,
-    linear-gradient(45deg, transparent 75%, #2a2426 75%) -8px 0 / 16px 16px,
-    linear-gradient(-45deg, transparent 75%, #2a2426 75%) -8px 0 / 16px 16px;
+    linear-gradient(45deg, var(--blush) 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, var(--blush) 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(45deg, transparent 75%, var(--blush) 75%) -8px 0 / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, var(--blush) 75%) -8px 0 / 16px 16px;
 }
 
 .prepare-piece-modal__preview img {

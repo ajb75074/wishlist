@@ -1,131 +1,183 @@
-/* Container base/typography/buttons come from ../../components/modal.css -
-   this file only holds what's specific to this modal's form. */
+/* Container base/typography/buttons/fields come from
+   ../../components/modal.css - this file only holds what's specific
+   to this modal's own layout. */
 .add-item-modal {
-  width: 360px;
-  max-height: 90vh;
+  width: 540px;
+  max-height: 88vh;
   overflow-y: auto;
+  text-align: left;
 }
 
 .add-item-modal__form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  text-align: left;
 }
 
-.add-item-modal__label {
-  margin-top: 10px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  color: rgba(245, 240, 232, 0.65);
-}
-
-.add-item-modal__form input[type="text"] {
-  padding: 8px 10px;
-  border: 1px solid rgba(245, 240, 232, 0.22);
-  border-radius: 6px;
-  background: transparent;
-  color: #f5f0e8;
-  font: inherit;
-  font-size: 14px;
-}
-
-.add-item-modal__form input:disabled {
-  opacity: 0.6;
-}
-
-.add-item-modal__photo-row {
+/* Photo zone sits beside the first two fields instead of stacked
+   above them - the single biggest reason the old modal felt overly
+   tall. align-items: stretch makes the photo zone match the fields
+   column's own height, whatever that ends up being. */
+.add-item-modal__top-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 6px;
+  align-items: stretch;
+  gap: 16px;
+
+  margin-bottom: 20px;
 }
 
-.add-item-modal__photo-preview {
-  width: 72px;
-  height: 72px;
+.add-item-modal__top-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-item-modal__photo-zone {
   flex-shrink: 0;
-  overflow: hidden;
-  border-radius: 8px;
-  background: rgba(245, 240, 232, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 148px;
 }
 
-.add-item-modal__photo-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.add-item-modal__photo-zone.is-dragging .add-item-modal__photo-placeholder,
+.add-item-modal__photo-zone.is-dragging .add-item-modal__photo-preview {
+  border-color: var(--strawberry);
+  background: var(--powder-pink);
 }
 
 .add-item-modal__photo-placeholder {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: rgba(245, 240, 232, 0.4);
-  text-transform: lowercase;
-}
+  width: 100%;
+  height: 100%;
+  min-height: 132px;
+  box-sizing: border-box;
 
-.add-item-modal__photo-actions {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  flex: 1;
+
+  padding: 12px;
+
+  background: var(--powder-pink);
+  border: 1px dashed rgba(233, 93, 117, 0.45);
+  border-radius: 12px;
+
+  color: var(--strawberry);
+
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.add-item-modal__photo-actions .add-item-modal__label {
-  margin-top: 0;
+.add-item-modal__photo-placeholder:hover:not(:disabled) {
+  background: var(--blush);
+  border-color: var(--strawberry);
 }
 
-.add-item-modal__photo-button {
-  align-self: flex-start;
-  padding: 7px 12px;
-  border: 1px solid #f17ba6;
-  border-radius: 4px;
-  background: transparent;
-  color: #f17ba6;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+.add-item-modal__photo-placeholder:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.add-item-modal__photo-label {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--strawberry);
+  text-align: center;
+}
+
+.add-item-modal__photo-hint {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: var(--muted-ink);
+  text-align: center;
+}
+
+.add-item-modal__photo-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 132px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  display: block;
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: none;
+
   cursor: pointer;
 }
 
-.add-item-modal__photo-button:disabled {
-  opacity: 0.5;
-  cursor: default;
+.add-item-modal__photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.add-item-modal__photo-change {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  padding: 6px 4px;
+
+  background: rgba(60, 32, 40, 0.55);
+
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  color: var(--surface);
+  text-align: center;
 }
 
 .add-item-modal__ownership-toggle {
   display: flex;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 8px;
 }
 
 .add-item-modal__ownership-btn {
   flex: 1;
-  padding: 8px;
-  border: 1px solid rgba(245, 240, 232, 0.22);
-  border-radius: 6px;
-  background: transparent;
-  color: rgba(245, 240, 232, 0.7);
-  font-family: var(--mono);
-  font-size: 12px;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+  padding: 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--cream);
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.82rem;
+
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .add-item-modal__ownership-btn.is-active {
-  background: #f17ba6;
-  border-color: #f17ba6;
-  color: #fff;
+  background: var(--strawberry);
+  border-color: var(--strawberry);
+  color: var(--surface);
 }
 
 .add-item-modal__ownership-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.add-item-modal .modal__actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+  .add-item-modal {
+    width: 100%;
+  }
+
+  .add-item-modal__top-row {
+    flex-direction: column;
+  }
+
+  .add-item-modal__photo-zone {
+    width: 100%;
+  }
 }

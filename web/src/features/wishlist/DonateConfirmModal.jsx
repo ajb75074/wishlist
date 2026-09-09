@@ -39,20 +39,20 @@ function DonateConfirmModal({ count, isSubmitting, errorMessage, onCancel, onCon
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="donate-confirm-title" className="modal__title">
-          {isPlural ? `donate these ${count} pieces? ♡` : "donate this piece? ♡"}
+          {isPlural ? `Donate these ${count} items?` : "Donate this item?"}
         </h2>
 
         <p className="modal__body">
           {isPlural
-            ? "they'll leave your wishlist and any collections they're saved in."
-            : "it'll leave your wishlist and any collections it's saved in."}
+            ? "They'll leave your wishlist and any collections they're saved in."
+            : "It'll leave your wishlist and any collections it's saved in."}
         </p>
 
         {errorMessage && <p className="modal__error">{errorMessage}</p>}
 
         <div className="modal__actions">
           <button type="button" className="modal__button" onClick={onCancel} disabled={isSubmitting}>
-            keep {isPlural ? "them" : "it"}
+            Keep {isPlural ? "them" : "it"}
           </button>
 
           <button
@@ -61,7 +61,7 @@ function DonateConfirmModal({ count, isSubmitting, errorMessage, onCancel, onCon
             onClick={onConfirm}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "donating..." : "donate ♡"}
+            {isSubmitting ? "Donating..." : "Donate"}
           </button>
         </div>
       </div>
