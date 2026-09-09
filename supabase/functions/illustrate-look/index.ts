@@ -82,6 +82,12 @@ const SUPPORTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/we
 // function never touches.
 const ITEM_IMAGES_BUCKET = "item-images";
 
+// A user's optional custom Look Studio model photo (profiles.bed_model_image_path)
+// - same private-bucket-plus-signed-ownership shape as item-images, own
+// bucket since it's a distinct concept from both item photos and the
+// account-level profile-images picture.
+const BED_MODEL_IMAGES_BUCKET = "bed-models";
+
 // The one style Milestone 1 shipped in the modal - keyed by the same
 // `style` id the client already sends. Adding a second style later is
 // just another entry here (asset + label + description); the client
@@ -145,26 +151,28 @@ async function fetchImageAsInlineData(url: string, label: string): Promise<Inlin
   return { data: Buffer.from(bytes).toString("base64"), mimeType };
 }
 
-// A manual item's photo lives in the PRIVATE item-images bucket as a
-// Storage object path, not a fetchable URL - so unlike the external
-// retailer/cutout case above, there's no URL here for safeFetch's
-// SSRF guards to apply to in the first place. Rather than generating a
-// signed URL and routing it back through safeFetch anyway (safeFetch
-// exists specifically to guard fetches to arbitrary, potentially
+// A manual item's photo (item-images) or a user's custom bed model
+// photo (bed-models) both live in a PRIVATE bucket as a Storage object
+// path, not a fetchable URL - so unlike the external retailer/cutout
+// case above, there's no URL here for safeFetch's SSRF guards to apply
+// to in the first place. Rather than generating a signed URL and
+// routing it back through safeFetch anyway (safeFetch exists
+// specifically to guard fetches to arbitrary, potentially
 // attacker-influenced hosts - a concern that doesn't apply to this
 // project's own Storage), this downloads the object directly through
 // `supabase`, the SAME caller-scoped client requireUser already
-// produced. Storage RLS (bucket_id = 'item-images' AND the first path
+// produced. Storage RLS (bucket_id = <bucket> AND the first path
 // segment = auth.uid()) is what actually enforces that this only ever
 // succeeds for the caller's own objects - the identical ownership
 // model this whole function already relies on for looks/wishitems, no
 // service_role involved.
-async function fetchPrivateItemImageAsInlineData(
+async function fetchPrivateImageAsInlineData(
   supabase: SupabaseClient,
+  bucket: string,
   path: string,
   label: string,
 ): Promise<InlineImage> {
-  const { data, error } = await supabase.storage.from(ITEM_IMAGES_BUCKET).download(path);
+  const { data, error } = await supabase.storage.from(bucket).download(path);
 
   if (error || !data) {
     throw new Error(`Could not load the photo for "${label}".`);
@@ -251,6 +259,24 @@ Deno.serve(async (req) => {
 
   const body = rawBody as RequestPayload;
   const style = STYLES[body.style];
+
+  // The model preferences (gender + an optional custom photo to use as
+  // the avatar) are read from the caller's OWN profile row, never from
+  // the request body - same "derive identity/ownership from the DB via
+  // the caller's own JWT, don't trust the client" rule this function
+  // already applies to every piece. profiles' own RLS (owner-only
+  // select) means this can only ever return the caller's own row; the
+  // explicit .eq is for clarity, not enforcement.
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("gender, bed_model_image_path")
+    .eq("user_id", authResult.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("illustrate-look: failed to load profile -", profileError);
+    return jsonResponse({ error: "Could not load your profile. Please try again." }, 500);
+  }
 
   // Fetched with the CALLER's own JWT (via requireUser's client above),
   // so table RLS on looks/look_items/wishitems does the ownership
@@ -344,17 +370,23 @@ Deno.serve(async (req) => {
     };
   });
 
-  // Local, server-owned assets - never fetched over the network, never
-  // supplied by the client (see the file header comment).
+  // The style reference is always the local, server-owned asset - never
+  // fetched over the network, never supplied by the client (see the
+  // file header comment). The avatar reference is the user's own
+  // uploaded photo when they've set one (profiles.bed_model_image_path),
+  // falling back to that same local bundled avatar.png otherwise -
+  // exactly today's behavior for anyone who hasn't uploaded a photo.
   let avatarAsset: InlineImage;
   let styleAsset: InlineImage;
   try {
     [avatarAsset, styleAsset] = await Promise.all([
-      readLocalAsset("avatar.png"),
+      profile?.bed_model_image_path
+        ? fetchPrivateImageAsInlineData(supabase, BED_MODEL_IMAGES_BUCKET, profile.bed_model_image_path, "your photo")
+        : readLocalAsset("avatar.png"),
       readLocalAsset(style.assetFile),
     ]);
   } catch (error) {
-    console.error("illustrate-look: missing local asset -", errorMessage(error));
+    console.error("illustrate-look: missing avatar/style asset -", errorMessage(error));
     return jsonResponse(
       {
         error:
@@ -378,7 +410,7 @@ Deno.serve(async (req) => {
     pieceAssets = await Promise.all(
       sortedPieces.map((piece) =>
         piece.itemImagePath
-          ? fetchPrivateItemImageAsInlineData(supabase, piece.itemImagePath, piece.name || piece.id)
+          ? fetchPrivateImageAsInlineData(supabase, ITEM_IMAGES_BUCKET, piece.itemImagePath, piece.name || piece.id)
           : fetchImageAsInlineData(piece.imageUrl, piece.name || piece.id),
       ),
     );
@@ -390,6 +422,7 @@ Deno.serve(async (req) => {
     pieces: sortedPieces,
     styleLabel: style.label,
     styleDescription: style.description,
+    genderPresentation: profile?.gender ?? undefined,
   });
 
   const contents = [
