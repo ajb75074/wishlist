@@ -11,12 +11,12 @@
 }
 
 
-/* HEADER - a floating dimensional bar (dark tinted "acrylic", not clear
-   glass), 3-column grid so the title stays centered regardless of the
-   Collection/Look name lengths, with a real piece count on the right
+/* HEADER - a floating dimensional bar (warm cream-tinted "acrylic", not
+   clear glass), 3-column grid so the title stays centered regardless of
+   the Collection/Look name lengths, with a real piece count on the right
    instead of decorative filler. backdrop-filter is progressively
    enhanced - the @supports fallback below raises the background's own
-   opacity so the bar still reads as a solid dark surface without blur
+   opacity so the bar still reads as a solid light surface without blur
    support, rather than looking see-through/broken. */
 .look-studio__header {
   position: relative;
@@ -31,17 +31,17 @@
   padding: 0 20px;
   height: 52px;
 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: rgba(20, 20, 24, 0.78);
+  background: rgba(255, 252, 248, 0.82);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 24px rgba(60, 32, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .look-studio__header {
-    background: rgba(18, 18, 22, 0.94);
+    background: rgba(255, 252, 248, 0.96);
   }
 }
 
@@ -55,8 +55,8 @@
   border: 0;
   background: transparent;
 
-  color: rgba(245, 240, 232, 0.65);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -69,13 +69,14 @@
 
 .look-studio__back:hover,
 .look-studio__back:focus-visible {
-  color: #f5f0e8;
+  color: var(--forest-ink);
 }
 
-/* Product/tool title, not an editorial heading - clean sans, uppercase,
-   wide letter-spacing. The Look's own name sits beside it in the same
-   group so the pair reads as one title, not three separately-centered
-   header pieces. */
+/* Product/tool title, sentence case now (per the "illustrate look"-style
+   softened label treatment) - the display font gives it a bit of editorial
+   presence instead of the old tracked-out uppercase sans. The Look's
+   own name sits beside it in the same group so the pair reads as one
+   title, not three separately-centered header pieces. */
 .look-studio__title-group {
   display: flex;
   align-items: baseline;
@@ -89,18 +90,17 @@
 .look-studio__title {
   overflow: hidden;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
-  font-weight: 500;
-  font-size: 0.9rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+  color: var(--forest-ink);
+  font-family: var(--font-accent);
+  font-weight: 400;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .look-studio__title-sep {
-  color: rgba(245, 240, 232, 0.25);
+  color: var(--border);
   font-size: 0.85rem;
   line-height: 1;
 }
@@ -109,10 +109,10 @@
   overflow: hidden;
   max-width: 220px;
 
-  color: #f2a3c4;
-  font-family: var(--sans);
-  font-weight: 500;
-  font-size: 0.85rem;
+  color: var(--strawberry-hover);
+  font-family: var(--font-accent);
+  font-weight: 400;
+  font-size: 0.95rem;
   letter-spacing: 0.01em;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -171,37 +171,40 @@
    column's narrow share of the layout, that naturally keeps the
    illustration smaller than the bed (which is height-driven instead)
    without needing an explicit max-height fight between the two. The
-   slight rotation + warm paper tone is the only "material" cue this
-   column gets; no card border/shadow heavy enough to read as a sidebar. */
+   slight rotation is the only other "material" cue this column gets;
+   no card shadow heavy enough to read as a sidebar.
+
+   A plain thick polaroid-style border (not the old gingham frame
+   image) - box-sizing: border-box so the border eats into the fixed
+   max-width/aspect-ratio box rather than growing past it. */
 .look-studio__illustration-frame {
+  box-sizing: border-box;
   position: relative;
   flex-shrink: 0;
+  overflow: hidden;
 
   width: 100%;
   max-width: 220px;
   aspect-ratio: 3 / 4;
   padding: 0;
 
-  border: 1px solid rgba(245, 240, 232, 0.16);
+  border: 10px solid var(--surface);
   border-radius: 8px;
-  background: #f2ead9;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
-  transform: rotate(-0.6deg);
+  background: var(--surface);
+  box-shadow: 0 8px 20px rgba(60, 32, 40, 0.14);
+  transform: rotate(-1deg);
 
-  overflow: hidden;
   cursor: pointer;
 
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .look-studio__illustration-frame:hover {
-  transform: rotate(-0.6deg) translateY(-2px);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.4);
-  border-color: rgba(241, 123, 166, 0.4);
+  transform: rotate(-1deg) translateY(-2px);
 }
 
 .look-studio__illustration-frame:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 3px;
 }
 
@@ -211,19 +214,22 @@
   width: 100%;
   height: 100%;
 
-  object-fit: contain;
+  object-fit: cover;
 }
 
 /* No saved illustration yet - the entry point is the dress/sparkle
    artwork itself (already carries its own "Illustrate Look" lettering
    and sparkle), not a card. Chrome-free on purpose: no paper
    background, border, shadow, or rotation, since the artwork already
-   reads as a complete piece against the dark workspace - a frame
+   reads as a complete piece against the light workspace - a frame
    around it would compete with it rather than presenting it. Sized to
    the asset's own real proportions (1550:2200) rather than the 3:4
    ratio the saved-illustration frame uses. */
 .look-studio__illustration-frame--empty {
   aspect-ratio: 1550 / 2200;
+  padding: 0;
+  overflow: visible;
+  border-radius: 0;
 
   border: none;
   background: none;
@@ -258,7 +264,7 @@
   max-width: 220px;
   padding-top: 10px;
 
-  border-top: 1px solid rgba(245, 240, 232, 0.12);
+  border-top: 1px solid var(--border);
 
   text-align: center;
 }
@@ -266,20 +272,19 @@
 .look-studio__fit-total-label {
   margin: 0 0 4px;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: help;
 }
 
 .look-studio__fit-total-value {
   margin: 0;
 
-  color: #f2a3c4;
-  font-family: var(--sans);
+  color: var(--forest-ink);
+  font-family: var(--font-ui);
   font-weight: 600;
   font-size: 1.15rem;
 }
@@ -316,9 +321,12 @@
   flex-shrink: 0;
   padding-top: 12px;
 
-  border-top: 1px solid rgba(241, 123, 166, 0.35);
+  border-top: 1px solid var(--border);
 }
 
+/* Look Studio's one matcha moment (see index.css/the redesign brief:
+   strawberry stays for hearts/accents/selection, matcha is reserved
+   for this and completion states) - flat color, no gradient, no glow. */
 .look-studio__style-cta {
   display: flex;
   align-items: center;
@@ -328,42 +336,42 @@
   width: 100%;
   padding: 12px;
 
-  border: 1px solid #f17ba6;
+  border: 1px solid var(--matcha);
   border-radius: 14px;
-  background: linear-gradient(160deg, #f699bb, #ee6a9b);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 20px rgba(241, 123, 166, 0.35);
+  background: var(--matcha);
+  box-shadow: none;
 
-  color: #fff;
-  font-family: var(--sans);
+  color: var(--surface);
+  font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 
   cursor: pointer;
 
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .look-studio__style-cta:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(160deg, #f7a9c5, #f17ba6);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 26px rgba(241, 123, 166, 0.45);
+  background: #5f7858;
+  border-color: #5f7858;
 }
 
 .look-studio__style-cta:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--surface);
   outline-offset: 2px;
 }
 
+/* Functional instructional copy (how Edit Mode works), not a
+   decorative annotation - plain and readable. */
 .look-studio__edit-hint {
   flex-shrink: 0;
   margin: 8px 0 0;
   text-align: center;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
-  font-size: 0.72rem;
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
 }
 
 
@@ -412,6 +420,12 @@
   cursor: crosshair;
 }
 
+/* The source photo (bed.png) is a saturated pink ruched comforter -
+   recolored here via filter (rather than a new asset, which would
+   need real photography/generation) to a warm ivory with a faint
+   blush undertone in its own shadows/folds, matching the "soft ivory
+   dressing-room surface" the redesign calls for without losing the
+   photo's texture/imperfection. */
 .look-bed__image {
   position: absolute;
   inset: 0;
@@ -422,12 +436,18 @@
 
   object-fit: contain;
   pointer-events: none;
+  filter: hue-rotate(65deg) saturate(0.45) brightness(1.08);
 }
 
 /* Sits on the pillow area of bed.png itself (roughly where the two
    pillows cross near the top-center), not floating above the photo.
    Oversized on purpose - a big head perched over the outfit reads as a
-   playful bobblehead rather than a realistic proportioned figure. */
+   playful bobblehead rather than a realistic proportioned figure.
+   Cropped into a circle (aspect-ratio: 1 + object-fit: cover) rather
+   than showing the uploaded photo's own rectangle - most user photos
+   won't have a transparent background like the old bundled avatar.png
+   did, so a circle crop reads as an intentional portrait frame
+   regardless of what's behind the person in the source photo. */
 .look-bed__avatar {
   position: absolute;
   top: 10%;
@@ -436,10 +456,88 @@
   transform: translateX(-50%);
 
   width: 30%;
-  height: auto;
+  aspect-ratio: 1;
 
-  object-fit: contain;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 2px 6px rgba(60, 32, 40, 0.18);
+
+  object-fit: cover;
   pointer-events: none;
+}
+
+/* Same slot/position as .look-bed__avatar above, shown instead of it
+   when the user hasn't uploaded a model photo yet - an invitation, not
+   a silent fallback image. Capped with min() so it stays a reasonable
+   circle rather than growing huge on a wide bed. */
+.look-bed__avatar-placeholder {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+
+  width: min(30%, 130px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.look-bed__avatar-upload {
+  width: 100%;
+  aspect-ratio: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border: 2px dashed var(--border);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+
+  color: var(--cocoa-ink);
+  cursor: pointer;
+
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.look-bed__avatar-upload:hover:not(:disabled),
+.look-bed__avatar-upload:focus-visible {
+  border-color: var(--strawberry);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.look-bed__avatar-upload:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.look-bed__avatar-upload-icon {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--strawberry);
+}
+
+.look-bed__avatar-upload-label {
+  padding: 0 6px;
+
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.look-bed__avatar-upload-error {
+  margin: 6px 0 0;
+
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  text-align: center;
+  color: var(--error);
 }
 
 .look-bed__pieces {
@@ -480,7 +578,7 @@
 }
 
 .look-bed__piece.is-editable:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
@@ -492,42 +590,9 @@
   cursor: url("../../assets/move.cur"), move;
   will-change: transform;
   transition: none;
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-}
-
-.look-bed__empty {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  margin: 0;
-  padding: 0 20%;
-
-  text-align: center;
-}
-
-.look-bed__empty-title {
-  margin: 0;
-
-  color: #f5f0e8;
-  font-family: Georgia, serif;
-  font-size: 1rem;
-}
-
-.look-bed__empty-subtitle {
-  margin: 0;
-
-  color: rgba(245, 240, 232, 0.55);
-  font-family: var(--sans);
-  font-size: 0.78rem;
+  box-shadow: 0 10px 24px rgba(60, 32, 40, 0.22);
 }
 
 /* Width/height/position/rotation/scale are all inline styles from
@@ -552,14 +617,14 @@
   margin-left: auto;
   margin-right: auto;
 
-  border: 1px solid rgba(245, 240, 232, 0.15);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: rgba(20, 18, 18, 0.4);
+  background: rgba(255, 252, 248, 0.9);
 }
 
 .look-detail__resize-toolbar span {
-  color: rgba(245, 240, 232, 0.55);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.72rem;
   letter-spacing: 0.02em;
 }
@@ -578,11 +643,11 @@
   height: 22px;
   padding: 0;
 
-  border: 1px solid rgba(245, 240, 232, 0.25);
+  border: 1px solid rgba(73, 60, 62, 0.25);
   border-radius: 50%;
   background: transparent;
 
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
   font-size: 0.8rem;
   line-height: 1;
 
@@ -592,45 +657,42 @@
 }
 
 .look-detail__resize-toolbar button:hover {
-  border-color: #f17ba6;
-  background: rgba(241, 123, 166, 0.12);
+  border-color: var(--strawberry);
+  background: rgba(233, 93, 117, 0.12);
 }
 
 .look-detail__resize-toolbar button:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
 
-/* Shared small dark 3D button - the base for the edit-toolbar's
-   cancel/save actions. Same beveled language as the header/filter
-   circles: a faint top highlight + bottom shadow via inset box-shadow,
-   not just a flat border. */
+/* Flat editorial button, no glossy bevel/gradient - the base for the
+   edit-toolbar's cancel/save actions. */
 .look-detail__button {
   padding: 8px 16px;
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.15));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: var(--surface);
+  box-shadow: none;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
 
   cursor: pointer;
 
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .look-detail__button:hover:not(:disabled) {
-  border-color: rgba(241, 123, 166, 0.5);
+  border-color: var(--strawberry);
 }
 
 .look-detail__button:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
@@ -640,15 +702,15 @@
 }
 
 .look-detail__button--primary {
-  border-color: #f17ba6;
-  background: linear-gradient(160deg, #f699bb, #ee6a9b);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 12px rgba(241, 123, 166, 0.35);
-  color: #fff;
+  border-color: var(--strawberry);
+  background: var(--strawberry);
+  box-shadow: none;
+  color: var(--surface);
 }
 
 .look-detail__button--primary:hover:not(:disabled) {
-  border-color: #ee6a9b;
-  background: linear-gradient(160deg, #f7a9c5, #f17ba6);
+  border-color: var(--strawberry-hover);
+  background: var(--strawberry-hover);
 }
 
 /* Cancel/reset - secondary actions, so they stay visually quiet next to
@@ -657,14 +719,14 @@
   border-color: transparent;
   background: transparent;
   box-shadow: none;
-  color: rgba(245, 240, 232, 0.6);
+  color: var(--muted-ink);
 }
 
 .look-detail__button--ghost:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  color: #f5f0e8;
+  border-color: var(--border);
+  background: var(--powder-pink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: var(--cocoa-ink);
 }
 
 .look-detail__edit-toolbar {
@@ -685,13 +747,13 @@
    inventory feel rather than boxed product cards. */
 
 /* LEVEL 2 of the page's depth hierarchy (page background is Level 1,
-   near-black; tiles below are Level 3, raised white). A dimensional
-   plum/charcoal drawer, not the same flat black as the page - two
-   restrained radial highlights suggest light glancing off the inside
-   of the panel, plus the diagonal tint gradient underneath. overflow:
-   hidden keeps those glows clipped to the rounded corners; the catalog
-   grid still scrolls internally via its own overflow-y (a child's
-   scroll isn't blocked by a parent's overflow: hidden). Now that the
+   cream; tiles below are Level 3, raised warm-white). Flat
+   --surface-secondary, a touch deeper than the cream page - no glow/
+   gradient, so the panel recedes behind the products instead of
+   competing with them. overflow: hidden keeps the scalloped notch
+   below clipped to the rounded corners; the catalog grid still
+   scrolls internally via its own overflow-y (a child's scroll isn't
+   blocked by a parent's overflow: hidden). Now that the
    panel is its own visible surface with real shadow/elevation, the old
    hard 1px vertical line between it and the bed was redundant - the
    gap + this panel's own edge is enough separation on its own. */
@@ -709,67 +771,133 @@
 
   padding: 16px;
 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
   border-radius: 26px 26px 34px 34px;
-  background: radial-gradient(circle at 100% 0%, rgba(236, 96, 147, 0.14), transparent 35%),
-    radial-gradient(circle at 0% 100%, rgba(236, 96, 147, 0.08), transparent 40%),
-    linear-gradient(145deg, rgba(77, 37, 58, 0.7), rgba(26, 24, 30, 0.96));
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  background: var(--surface-secondary);
+  box-shadow: 0 12px 32px rgba(60, 32, 40, 0.08);
+}
+
+/* Special surface of this screen - a die-cut scalloped notch along the
+   inside of the catalog drawer's top edge, like a paper inventory card
+   tucked into the workspace, the one "special" panel treatment this
+   view gets. Adapted from index.css's .motif-scalloped-top (reproduced
+   directly on this selector rather than requiring the class in the
+   JSX, which is out of scope here): the panel's own overflow: hidden
+   (needed to clip the radial highlights above to its rounded corners)
+   would crop that shared version's notch, which pokes above the box -
+   this variant sits flush at top: 0 instead so the whole cut stays
+   inside the clipped box. --scallop-bg matches the panel's own surface
+   tone immediately below the notch, since the mask punches through to
+   whatever sits behind it. */
+.look-detail__panel {
+  --scallop-r: 8px;
+  --scallop-bg: var(--surface-secondary);
+}
+
+.look-detail__panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--scallop-r);
+  z-index: 1;
+  background-image: radial-gradient(
+    circle at calc(var(--scallop-r)) 0,
+    transparent calc(var(--scallop-r) - 1px),
+    var(--scallop-bg) var(--scallop-r)
+  );
+  background-size: calc(var(--scallop-r) * 2) calc(var(--scallop-r) * 2);
+  background-repeat: repeat-x;
+  pointer-events: none;
+}
+
+/* Short editorial section stamp for the catalog panel - same role as
+   the sidebar's "MY COLLECTIONS" and the Outfits tab's "YOUR OUTFITS". */
+.look-studio__panel-label {
+  flex-shrink: 0;
+  margin: 0 0 10px;
+
+  color: var(--forest-ink);
+  font-family: var(--font-accent);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* space-between so the five category dials spread across the panel's
    full width instead of clustering to the left. */
 .look-studio__filters {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-shrink: 0;
 }
 
-/* Icon-only, circular, beveled - Y2K "inventory category" dial rather
-   than flat text pills. Depth comes from a top-highlight/bottom-shadow
-   inset pair (a small sphere-like bevel), not just a flat border.
-   aria-label + title on the button itself (see the JSX) keep these
-   understandable despite having no visible text. */
+/* Small line icon + label, stacked - replaces the old circular beveled
+   "Y2K dial" look. Flat and quiet at rest; the active state is a pale
+   blush circle behind the icon, not a strawberry block. aria-label +
+   title stay on the button for anyone relying on them, now backed by
+   the visible label too. */
 .look-studio__filter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  padding: 2px;
+  border: 0;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.look-studio__filter-icon {
   display: flex;
   align-items: center;
   justify-content: center;
 
-  width: 46px;
-  height: 46px;
-  padding: 0;
-
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.18));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), inset 0 -2px 4px rgba(0, 0, 0, 0.25),
-    0 2px 6px rgba(0, 0, 0, 0.25);
 
-  color: rgba(245, 240, 232, 0.75);
+  color: var(--forest-ink);
 
-  cursor: pointer;
-
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.look-studio__filter:hover {
-  border-color: rgba(241, 123, 166, 0.55);
-  color: #f5f0e8;
+.look-studio__filter:hover .look-studio__filter-icon {
+  background: rgba(36, 79, 67, 0.08);
 }
 
-.look-studio__filter:focus-visible {
-  outline: 2px solid #f17ba6;
+/* The four PNG category glyphs (top/bottom/shoes/other) - sized to
+   match the "all" SVG's own 32x32 so the row reads as one consistent
+   icon set despite mixing a vector icon with raster ones. */
+.look-studio__filter-glyph {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.look-studio__filter:focus-visible .look-studio__filter-icon {
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
-.look-studio__filter.is-active {
-  border-color: #f17ba6;
-  background: linear-gradient(160deg, #f699bb, #ee6a9b);
-  color: #fff;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), inset 0 -2px 5px rgba(150, 40, 80, 0.35),
-    0 0 0 3px rgba(241, 123, 166, 0.16), 0 0 18px rgba(241, 123, 166, 0.4);
+.look-studio__filter-label {
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  color: var(--muted-ink);
+}
+
+.look-studio__filter.is-active .look-studio__filter-icon {
+  background: var(--blush);
+  color: var(--strawberry);
+}
+
+.look-studio__filter.is-active .look-studio__filter-label {
+  color: var(--strawberry);
+  font-weight: 600;
 }
 
 /* Understated rule separating the category toolbar from the grid below
@@ -780,15 +908,55 @@
   height: 1px;
   margin: 2px 0 4px;
 
-  background: linear-gradient(90deg, transparent, rgba(241, 123, 166, 0.45), transparent);
+  background: var(--border);
+}
+
+/* Search - same recipe as the Wishlist page's own search (cream
+   surface, neutral border, icon on the left, no pink glow), scaled
+   down for this panel. */
+.look-studio__search {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 4px;
+  padding: 7px 10px;
+
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  color: var(--muted-ink);
+}
+
+.look-studio__search:focus-within {
+  border-color: var(--strawberry);
+}
+
+.look-studio__search input {
+  flex: 1;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+
+.look-studio__search input::placeholder {
+  color: var(--muted-ink);
 }
 
 .look-detail__panel-error {
   flex-shrink: 0;
   margin: 0;
 
-  color: #f17ba6;
-  font-family: var(--sans);
+  color: var(--error);
+  font-family: var(--font-ui);
   font-size: 0.74rem;
 }
 
@@ -796,17 +964,17 @@
   flex-shrink: 0;
   margin: 0;
 
-  color: #f17ba6;
-  font-family: var(--sans);
-  font-size: 0.72rem;
+  color: var(--strawberry-hover);
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
 }
 
 .look-detail__panel-empty {
   margin: 0;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
-  font-size: 0.78rem;
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
 }
 
 /* The catalog is the ONLY thing allowed to scroll internally - the
@@ -825,7 +993,7 @@
   padding: 2px 4px 2px 0;
 
   scrollbar-width: thin;
-  scrollbar-color: rgba(241, 123, 166, 0.35) transparent;
+  scrollbar-color: rgba(73, 60, 62, 0.2) transparent;
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar {
@@ -833,12 +1001,12 @@
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-thumb {
-  background: rgba(241, 123, 166, 0.35);
+  background: rgba(73, 60, 62, 0.2);
   border-radius: 999px;
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(241, 123, 166, 0.55);
+  background: rgba(73, 60, 62, 0.35);
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-track {
@@ -849,13 +1017,13 @@
   position: relative;
 }
 
-/* LEVEL 3 - raised, warm-white inventory tile against the panel's dark
-   plum surface. Depth comes from a real drop shadow + an inset top
-   highlight (a physical "resting on the panel" look) rather than a
-   glow-heavy treatment. object-fit: contain (below) keeps the whole
-   item visible regardless of the slot's own square shape, so a bag or
-   a pair of pants is never cropped - the frame is generous padding,
-   not a crop boundary. */
+/* LEVEL 3 - raised, warm-white inventory tile against the panel's own
+   secondary surface. A quiet neutral border by default (NOT strawberry
+   - a resting tile should never look selected); the only color this
+   tile ever gets is on hover/placed/focus, so it stays meaningful.
+   object-fit: contain (below) keeps the whole item visible regardless
+   of the slot's own square shape, so a bag or a pair of pants is
+   never cropped - the frame is generous padding, not a crop boundary. */
 .look-studio__tile {
   position: relative;
 
@@ -867,11 +1035,10 @@
   aspect-ratio: 1 / 1;
   padding: 10px;
 
-  border: 2px solid rgba(240, 112, 157, 0.75);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: linear-gradient(145deg, #fffafa, #f8eef2);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 1px rgba(240, 112, 157, 0.12);
+  background: var(--surface);
+  box-shadow: 0 3px 8px rgba(60, 32, 40, 0.06);
 
   cursor: pointer;
 
@@ -885,22 +1052,21 @@
 /* Lift + brighten only - never a dramatic scale-up, per spec. */
 .look-studio__tile:not(:disabled):hover {
   transform: translateY(-2px);
-  border-color: #f0709d;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 1px rgba(240, 112, 157, 0.22);
+  border-color: var(--strawberry);
+  box-shadow: 0 8px 16px rgba(60, 32, 40, 0.1);
 }
 
-/* "This is on the bed" state - a brighter border + a touch more lift,
-   the product itself stays fully visible (never darkened/obscured) so
-   the catalog is still scannable for what's currently styled. */
+/* "This is on the bed" state - the one place a resting tile is allowed
+   a strawberry border, the product itself stays fully visible (never
+   darkened/obscured) so the catalog is still scannable for what's
+   currently styled. */
 .look-studio__tile.is-placed {
-  border-color: #f0709d;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 2px rgba(240, 112, 157, 0.3);
+  border-color: var(--strawberry);
+  box-shadow: 0 6px 14px rgba(60, 32, 40, 0.08);
 }
 
 .look-studio__tile:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
@@ -919,7 +1085,7 @@
    a double shadow on those; a cutout, with nothing behind it, reads as
    a flat sticker without one. */
 .look-studio__tile-image.has-cutout {
-  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 5px 7px rgba(60, 32, 40, 0.15));
 }
 
 /* Plain indicator dot (not a heart) - communicates "on the bed" only,
@@ -933,8 +1099,8 @@
   height: 8px;
   border-radius: 50%;
 
-  background: #f0709d;
-  box-shadow: 0 0 4px rgba(240, 112, 157, 0.8);
+  background: var(--strawberry-hover);
+  box-shadow: 0 0 4px rgba(200, 68, 96, 0.8);
 }
 
 /* Prepare Piece - sibling of the tile button (not nested inside it, a
@@ -958,9 +1124,9 @@
 
   border: none;
   border-radius: 50%;
-  background: rgba(20, 18, 18, 0.55);
+  background: rgba(60, 32, 40, 0.55);
 
-  color: rgba(245, 240, 232, 0.85);
+  color: var(--surface);
   font-size: 0.62rem;
   line-height: 1;
 
@@ -970,8 +1136,8 @@
 }
 
 .look-studio__tile-prepare:hover:not(:disabled) {
-  background: #f17ba6;
-  color: #fff;
+  background: var(--strawberry);
+  color: var(--surface);
 }
 
 .look-studio__tile-prepare:disabled {
@@ -980,7 +1146,7 @@
 }
 
 .look-studio__tile-prepare:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 

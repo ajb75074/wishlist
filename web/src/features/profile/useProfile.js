@@ -3,10 +3,14 @@ import { useAuth } from "../../lib/AuthContext";
 import {
   ALLOWED_PROFILE_IMAGE_TYPES,
   MAX_PROFILE_IMAGE_BYTES,
+  getBedModelImageUrl,
   getProfile,
   getProfileImageUrl,
+  removeBedModelImage,
   removeProfileImage,
   updateDisplayName,
+  updateGender,
+  uploadBedModelImage,
   uploadProfileImage,
 } from "./profile";
 
@@ -20,9 +24,14 @@ export function useProfile() {
   const [displayName, setDisplayName] = useState("");
   const [profileImagePath, setProfileImagePath] = useState(null);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
+  const [gender, setGender] = useState(null);
+  const [bedModelImagePath, setBedModelImagePath] = useState(null);
+  const [bedModelImageUrl, setBedModelImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isSavingImage, setIsSavingImage] = useState(false);
+  const [isSavingGender, setIsSavingGender] = useState(false);
+  const [isSavingBedModelImage, setIsSavingBedModelImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -36,10 +45,16 @@ export function useProfile() {
 
         setDisplayName(profile.displayName);
         setProfileImagePath(profile.profileImagePath);
+        setGender(profile.gender);
+        setBedModelImagePath(profile.bedModelImagePath);
 
-        const url = await getProfileImageUrl(profile.profileImagePath);
+        const [profileUrl, bedModelUrl] = await Promise.all([
+          getProfileImageUrl(profile.profileImagePath),
+          getBedModelImageUrl(profile.bedModelImagePath),
+        ]);
         if (isCurrent) {
-          setProfileImageUrl(url);
+          setProfileImageUrl(profileUrl);
+          setBedModelImageUrl(bedModelUrl);
         }
       } catch {
         if (isCurrent) {
@@ -88,6 +103,102 @@ export function useProfile() {
       return { success: false };
     } finally {
       setIsSavingName(false);
+    }
+  }
+
+  // `nextGender` is one of GENDER_OPTIONS' values, or null to clear it
+  // ("prefer not to say") - both are handled identically here.
+  async function saveGender(nextGender) {
+    setIsSavingGender(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const result = await updateGender(user.id, nextGender);
+
+      if (!result.success) {
+        setErrorMessage("Could not save your model preference. Please try again.");
+        return { success: false };
+      }
+
+      setGender(nextGender);
+      setSuccessMessage("Saved.");
+      return { success: true };
+    } catch {
+      setErrorMessage("Could not save your model preference. Please try again.");
+      return { success: false };
+    } finally {
+      setIsSavingGender(false);
+    }
+  }
+
+  async function changeBedModelImage(file) {
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      setErrorMessage("Please choose a PNG, JPEG, or WebP image.");
+      setSuccessMessage("");
+      return { success: false };
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+      setErrorMessage("That image is too large - please choose one under 5MB.");
+      setSuccessMessage("");
+      return { success: false };
+    }
+
+    setIsSavingBedModelImage(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const result = await uploadBedModelImage(user.id, file);
+
+      if (!result.success) {
+        setErrorMessage("Could not upload your photo. Please try again.");
+        return { success: false };
+      }
+
+      setBedModelImagePath(result.path);
+      setBedModelImageUrl(await getBedModelImageUrl(result.path));
+      setSuccessMessage("Photo updated.");
+      return { success: true };
+    } catch {
+      setErrorMessage("Could not upload your photo. Please try again.");
+      return { success: false };
+    } finally {
+      setIsSavingBedModelImage(false);
+    }
+  }
+
+  async function clearBedModelImage() {
+    if (!bedModelImagePath) {
+      return { success: false };
+    }
+
+    setIsSavingBedModelImage(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const result = await removeBedModelImage(user.id, bedModelImagePath);
+
+      if (!result.success) {
+        setErrorMessage(
+          result.storageRemoved
+            ? "Your photo was removed but your profile didn't update - please try again."
+            : "Could not remove your photo. Please try again.",
+        );
+        return { success: false };
+      }
+
+      setBedModelImagePath(null);
+      setBedModelImageUrl(null);
+      setSuccessMessage("Photo removed.");
+      return { success: true };
+    } catch {
+      setErrorMessage("Could not remove your photo. Please try again.");
+      return { success: false };
+    } finally {
+      setIsSavingBedModelImage(false);
     }
   }
 
@@ -166,13 +277,21 @@ export function useProfile() {
     displayName,
     profileImageUrl,
     hasProfileImage: Boolean(profileImagePath),
+    gender,
+    bedModelImageUrl,
+    hasBedModelImage: Boolean(bedModelImagePath),
     isLoading,
     isSavingName,
     isSavingImage,
+    isSavingGender,
+    isSavingBedModelImage,
     errorMessage,
     successMessage,
     saveDisplayName,
     changeProfileImage,
     clearProfileImage,
+    saveGender,
+    changeBedModelImage,
+    clearBedModelImage,
   };
 }

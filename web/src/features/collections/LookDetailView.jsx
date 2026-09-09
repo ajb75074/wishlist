@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PreparePieceModal from "../wishlist/PreparePieceModal";
 import IllustrateLookModal from "./IllustrateLookModal";
-import { AVATAR_SRC } from "./looks";
+import { useBedModel } from "../profile/useBedModel";
+import { ALLOWED_PROFILE_IMAGE_TYPES } from "../profile/profile";
 import { categorizeProduct } from "../../lib/categorize";
+import shirtIcon from "../../assets/shirt.png";
+import pantsIcon from "../../assets/pants.png";
+import shoesIcon from "../../assets/shoes.png";
+import bagIcon from "../../assets/bag.png";
 import "./LookDetailView.css";
 
 // Detail preview caps at more pieces than LookCard's compact collage
@@ -206,17 +211,20 @@ const SCALE_STEP = 0.1;
 
 // Catalog filters reuse the app's existing name-keyword categorizer
 // (lib/categorize.js) - no persisted category data exists or is being
-// added here. "Dresses" folds into "top" and "Other" only shows under
-// "all", since the ask was four broad buckets, not one per raw category.
-// ariaLabel doubles as the button's accessible name and hover title -
-// the visible control is icon-only, so this is the only place the
-// human-readable category name lives.
+// added here. "Dresses" folds into "top". The key stays "bags"
+// internally (matchesFilter, state) - only the visible label/ariaLabel
+// changed to "Other" - and its match now folds in categorizeProduct's
+// own "Other" fallback too, so a tab literally labeled "Other" doesn't
+// silently exclude the one category that IS "other". ariaLabel doubles
+// as the button's accessible name and hover title - the visible
+// control is icon-only, so this is the only place the human-readable
+// category name lives.
 const CATALOG_FILTERS = [
-  { key: "all", ariaLabel: "All pieces" },
-  { key: "top", ariaLabel: "Tops" },
-  { key: "bottom", ariaLabel: "Bottoms" },
-  { key: "shoes", ariaLabel: "Shoes" },
-  { key: "bags", ariaLabel: "Bags and accessories" },
+  { key: "all", label: "All", ariaLabel: "All items" },
+  { key: "top", label: "Tops", ariaLabel: "Tops" },
+  { key: "bottom", label: "Bottoms", ariaLabel: "Bottoms" },
+  { key: "shoes", label: "Shoes", ariaLabel: "Shoes" },
+  { key: "bags", label: "Other", ariaLabel: "Bags, accessories, and other items" },
 ];
 
 function matchesFilter(piece, filterKey) {
@@ -226,57 +234,41 @@ function matchesFilter(piece, filterKey) {
   if (filterKey === "top") return category === "Tops" || category === "Dresses";
   if (filterKey === "bottom") return category === "Bottoms";
   if (filterKey === "shoes") return category === "Shoes";
-  if (filterKey === "bags") return category === "Bags" || category === "Accessories";
+  if (filterKey === "bags") return category === "Bags" || category === "Accessories" || category === "Other";
   return true;
 }
 
-// No icon library is installed in this project, so these are hand-rolled
-// inline SVGs (same "small local icon component" convention LookCard.jsx
-// already uses for its own kebab icon) rather than pulling in a whole
-// icon package for five glyphs. Simple stroke-based outlines, 20x20,
-// currentColor so the circular button's own text color drives them.
+// "All" stays a hand-rolled inline SVG (same "small local icon
+// component" convention LookCard.jsx already uses for its own kebab
+// icon) since no asset exists for it - currentColor so the circular
+// button's own text color drives it. The other four are the user's own
+// provided icon set (src/assets/{shirt,pants,shoes,bag}.png) instead of
+// hand-drawn outlines, so - unlike "all" - they don't tint via
+// currentColor; the filter pill's own background/label color still
+// carries the hover/active state (see .look-studio__filter.is-active
+// in LookDetailView.css).
 function CategoryIcon({ filterKey }) {
-  const common = { viewBox: "0 0 20 20", width: 18, height: 18, "aria-hidden": true };
-
   if (filterKey === "all") {
     return (
-      <svg {...common} fill="currentColor">
+      <svg viewBox="0 0 20 20" width={20} height={20} aria-hidden="true" fill="currentColor">
         <path d="M10 17.2 3.6 11c-2-1.9-2-5 0-6.9 1.9-1.8 4.9-1.7 6.7.2l.3.3.3-.3c1.8-1.9 4.8-2 6.7-.2 2 1.9 2 5 0 6.9L10 17.2Z" />
       </svg>
     );
   }
 
   if (filterKey === "top") {
-    return (
-      <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
-        <path d="M7 3 4 5.2 2.5 8.6l2.3 1.3L6 8v8.5c0 .3.2.5.5.5h7c.3 0 .5-.2.5-.5V8l1.2 1.9 2.3-1.3L16 5.2 13 3c-.6.9-1.7 1.5-3 1.5S7.6 3.9 7 3Z" />
-      </svg>
-    );
+    return <img className="look-studio__filter-glyph" src={shirtIcon} alt="" aria-hidden="true" />;
   }
 
   if (filterKey === "bottom") {
-    return (
-      <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
-        <path d="M6 3h8l.6 6.5.9 7a.5.5 0 0 1-.5.5h-2.3a.5.5 0 0 1-.5-.4L11 10l-1.2 6.6a.5.5 0 0 1-.5.4H7a.5.5 0 0 1-.5-.5l.9-7L6 3Z" />
-        <path d="M6 6.3h8" />
-      </svg>
-    );
+    return <img className="look-studio__filter-glyph" src={pantsIcon} alt="" aria-hidden="true" />;
   }
 
   if (filterKey === "shoes") {
-    return (
-      <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M3 15.5V11c1 .6 2 .3 2.6-.5L7.8 7c.5-.7 1.4-1 2.2-.7l2 .8v3.2c0 .8.5 1.5 1.2 1.8l3.3 1.4c.6.3 1 .9 1 1.5v.5H3Z" />
-      </svg>
-    );
+    return <img className="look-studio__filter-glyph" src={shoesIcon} alt="" aria-hidden="true" />;
   }
 
-  return (
-    <svg {...common} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
-      <path d="M6.5 7h7l.8 9a.8.8 0 0 1-.8.9H6.5a.8.8 0 0 1-.8-.9l.8-9Z" />
-      <path d="M8 7V5.5a2 2 0 0 1 4 0V7" />
-    </svg>
-  );
+  return <img className="look-studio__filter-glyph" src={bagIcon} alt="" aria-hidden="true" />;
 }
 
 // Deterministic, count-based placement over the real bed photo when no
@@ -292,12 +284,17 @@ function LookBed({
   onPieceClick,
   onCanvasClick,
   onKeyMove,
+  bedModelImageUrl,
+  isUploadingAvatar,
+  avatarUploadError,
+  onUploadAvatar,
 }) {
   const visiblePieces = pieces.slice(0, MAX_BED_PIECES);
   // naturalHeight/naturalWidth per piece, filled in as each image
   // finishes loading - until then, boxes use the deterministic
   // width/height guess from SIZES as a placeholder.
   const [aspectRatios, setAspectRatios] = useState({});
+  const avatarFileInputRef = useRef(null);
 
   function handleImageLoad(pieceId, event) {
     const { naturalWidth, naturalHeight } = event.target;
@@ -305,6 +302,18 @@ function LookBed({
 
     const ratio = naturalHeight / naturalWidth;
     setAspectRatios((current) => (current[pieceId] === ratio ? current : { ...current, [pieceId]: ratio }));
+  }
+
+  function handleChooseAvatarPhoto() {
+    avatarFileInputRef.current?.click();
+  }
+
+  async function handleAvatarFileSelected(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    await onUploadAvatar(file);
   }
 
   return (
@@ -315,7 +324,35 @@ function LookBed({
         onClick={isEditMode ? onCanvasClick : undefined}
       >
         <img className="look-bed__image" src="bed.png" alt="" aria-hidden="true" />
-        <img className="look-bed__avatar" src={AVATAR_SRC} alt="" aria-hidden="true" />
+
+        {bedModelImageUrl ? (
+          <img className="look-bed__avatar" src={bedModelImageUrl} alt="" aria-hidden="true" />
+        ) : (
+          <div className="look-bed__avatar-placeholder">
+            <input
+              ref={avatarFileInputRef}
+              type="file"
+              accept={ALLOWED_PROFILE_IMAGE_TYPES.join(",")}
+              onChange={handleAvatarFileSelected}
+              disabled={isUploadingAvatar}
+              hidden
+            />
+            <button
+              type="button"
+              className="look-bed__avatar-upload"
+              onClick={handleChooseAvatarPhoto}
+              disabled={isUploadingAvatar}
+            >
+              <span className="look-bed__avatar-upload-icon" aria-hidden="true">
+                +
+              </span>
+              <span className="look-bed__avatar-upload-label">
+                {isUploadingAvatar ? "uploading…" : "upload selfie"}
+              </span>
+            </button>
+            {avatarUploadError && <p className="look-bed__avatar-upload-error">{avatarUploadError}</p>}
+          </div>
+        )}
 
         {visiblePieces.length > 0 ? (
           <div className={`look-bed__pieces look-bed__pieces--${visiblePieces.length}`}>
@@ -366,12 +403,7 @@ function LookBed({
               );
             })}
           </div>
-        ) : (
-          <div className="look-bed__empty">
-            <p className="look-bed__empty-title">style your look ♡</p>
-            <p className="look-bed__empty-subtitle">pick something from my pieces →</p>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -420,7 +452,7 @@ function CatalogTile({ piece, isPlaced, isEditMode, onToggle, onPrepare }) {
         }}
         disabled={isEditMode}
         aria-label={hasCutout ? `Edit cutout for ${piece.name}` : `Prepare ${piece.name}`}
-        title={hasCutout ? "edit cutout" : "prepare piece"}
+        title={hasCutout ? "edit cutout" : "prepare item"}
       >
         ✎
       </button>
@@ -446,7 +478,7 @@ function IllustrationColumn({ illustrationUrl, fitTotal, onOpen }) {
         type="button"
         className={`look-studio__illustration-frame${illustrationUrl ? "" : " look-studio__illustration-frame--empty"}`}
         onClick={onOpen}
-        aria-label={illustrationUrl ? "View saved fashion illustration" : "Illustrate this look"}
+        aria-label={illustrationUrl ? "View saved fashion illustration" : "Illustrate this outfit"}
       >
         {illustrationUrl ? (
           <img className="look-studio__illustration-image" src={illustrationUrl} alt="" />
@@ -458,9 +490,9 @@ function IllustrationColumn({ illustrationUrl, fitTotal, onOpen }) {
       <div className="look-studio__fit-total">
         <p
           className="look-studio__fit-total-label"
-          title="Based on saved prices for pieces currently in this look."
+          title="Based on saved prices for items currently in this outfit."
         >
-          est. fit total
+          estimated outfit total
         </p>
         <p className="look-studio__fit-total-value">{formattedTotal}</p>
       </div>
@@ -470,14 +502,22 @@ function IllustrationColumn({ illustrationUrl, fitTotal, onOpen }) {
 
 function LookDetailView({
   look,
-  collectionName,
   onBack,
   collectionPieces,
   onSaveLayout,
   onPrepareCutout,
   onSaveIllustration,
 }) {
+  // Raw and nullable (no AVATAR_SRC fallback) - both the bed itself and
+  // Illustrate Look's own preview now show an inline "upload" prompt in
+  // this exact slot when it's unset, rather than silently substituting
+  // the old bundled default avatar. Shared here so both consumers (and
+  // the one upload flow, changeBedModelImage) stay in sync.
+  const { bedModelImageUrl, isUploading: isUploadingAvatar, uploadError: avatarUploadError, changeBedModelImage } =
+    useBedModel();
+
   const [activeFilter, setActiveFilter] = useState("all");
+  const [catalogSearchTerm, setCatalogSearchTerm] = useState("");
   const [catalogNotice, setCatalogNotice] = useState("");
   // The piece currently open in Prepare Piece, or null - a fresh mount
   // of the modal each time, same pattern as every other modal here.
@@ -516,9 +556,13 @@ function LookDetailView({
   // membership and bed placement are deliberately separate concepts:
   // being in the Collection is enough to show up here; only look_items
   // (isPlaced) determines what's actually styled on the bed.
+  const catalogQuery = catalogSearchTerm.trim().toLowerCase();
   const catalogPieces = useMemo(
-    () => collectionPieces.filter((piece) => matchesFilter(piece, activeFilter)),
-    [collectionPieces, activeFilter],
+    () =>
+      collectionPieces
+        .filter((piece) => matchesFilter(piece, activeFilter))
+        .filter((piece) => !catalogQuery || piece.name?.toLowerCase().includes(catalogQuery)),
+    [collectionPieces, activeFilter, catalogQuery],
   );
 
   // Looks up a Collection piece's saved isPlaced/position, if it has
@@ -762,7 +806,7 @@ function LookDetailView({
     }
 
     if (draftPlacedIds.size >= MAX_BED_PIECES) {
-      setCatalogNotice("your bed is full - remove a piece first");
+      setCatalogNotice("your bed is full - remove an item first");
       return;
     }
 
@@ -925,7 +969,7 @@ function LookDetailView({
     <div className="look-detail">
       <div className="look-studio__header">
         <button type="button" className="look-studio__back" onClick={handleBackClick}>
-          ← {collectionName}
+          ←
         </button>
 
         <div className="look-studio__title-group">
@@ -959,6 +1003,10 @@ function LookDetailView({
             onPieceClick={handlePieceClick}
             onCanvasClick={handleCanvasClick}
             onKeyMove={handleKeyMove}
+            bedModelImageUrl={bedModelImageUrl}
+            isUploadingAvatar={isUploadingAvatar}
+            avatarUploadError={avatarUploadError}
+            onUploadAvatar={changeBedModelImage}
           />
 
           {/* Belongs to the bed, not the catalog - Edit Mode's own
@@ -986,7 +1034,7 @@ function LookDetailView({
                   onClick={handleSaveArrangement}
                   disabled={isSavingLayout || !hasUnsavedChanges}
                 >
-                  {isSavingLayout ? "saving..." : "save look"}
+                  {isSavingLayout ? "saving..." : "Save outfit"}
                 </button>
               </div>
             </div>
@@ -998,14 +1046,14 @@ function LookDetailView({
               <button
                 type="button"
                 onClick={() => handleScaleChange(-SCALE_STEP)}
-                aria-label="Shrink selected piece"
+                aria-label="Shrink selected item"
               >
                 −
               </button>
               <button
                 type="button"
                 onClick={() => handleScaleChange(SCALE_STEP)}
-                aria-label="Enlarge selected piece"
+                aria-label="Enlarge selected item"
               >
                 +
               </button>
@@ -1014,18 +1062,18 @@ function LookDetailView({
           )}
 
           {isEditMode && !heldPieceId && (
-            <p className="look-studio__edit-hint">click a piece on the bed to move it, or click one in my pieces to add/remove it</p>
+            <p className="look-studio__edit-hint">click an item on the bed to move it, or click one in your closet to add or remove it</p>
           )}
 
           {saveLayoutError && <p className="look-detail__panel-error look-detail__save-error">{saveLayoutError}</p>}
         </div>
 
         {/* The browseable catalog - every piece in the parent Collection,
-            not just what's currently styled on the bed. Starts directly
-            with the category toolbar (no "my pieces" title) so this
-            reads as an inventory module, not a labeled content section. */}
+            not just what's currently styled on the bed. */}
         <div className="look-detail__panel">
-          <div className="look-studio__filters" role="group" aria-label="Filter my pieces">
+          <p className="look-studio__panel-label">Your closet</p>
+
+          <div className="look-studio__filters" role="group" aria-label="Filter your items">
             {CATALOG_FILTERS.map((filter) => (
               <button
                 key={filter.key}
@@ -1036,10 +1084,26 @@ function LookDetailView({
                 title={filter.ariaLabel}
                 onClick={() => setActiveFilter(filter.key)}
               >
-                <CategoryIcon filterKey={filter.key} />
+                <span className="look-studio__filter-icon">
+                  <CategoryIcon filterKey={filter.key} />
+                </span>
+                <span className="look-studio__filter-label">{filter.label}</span>
               </button>
             ))}
           </div>
+
+          {collectionPieces.length > 0 && (
+            <label className="look-studio__search">
+              <span aria-hidden="true">⌕</span>
+              <input
+                type="text"
+                placeholder="Search items..."
+                aria-label="Search items"
+                value={catalogSearchTerm}
+                onChange={(event) => setCatalogSearchTerm(event.target.value)}
+              />
+            </label>
+          )}
 
           <div className="look-studio__catalog-divider" aria-hidden="true" />
 
@@ -1064,10 +1128,12 @@ function LookDetailView({
                 ))}
               </div>
             ) : (
-              <p className="look-detail__panel-empty">nothing here yet</p>
+              <p className="look-detail__panel-empty">
+                {catalogQuery ? "no items found ♡" : "nothing here yet"}
+              </p>
             )
           ) : (
-            <p className="look-detail__panel-empty">no pieces in this collection yet</p>
+            <p className="look-detail__panel-empty">no items in this collection yet</p>
           )}
 
           {/* The panel's own entry point into Edit Mode - bigger and more
@@ -1082,7 +1148,7 @@ function LookDetailView({
                 className="look-studio__style-cta"
                 onClick={handleEnterEditMode}
               >
-                ✣ style look
+                ✣ Style outfit
               </button>
             </div>
           )}
@@ -1101,6 +1167,10 @@ function LookDetailView({
         <IllustrateLookModal
           look={look}
           pieces={bedPieces}
+          bedModelImageUrl={bedModelImageUrl}
+          isUploadingAvatar={isUploadingAvatar}
+          avatarUploadError={avatarUploadError}
+          onUploadAvatar={changeBedModelImage}
           onClose={() => setIsIllustrateModalOpen(false)}
           onSaveIllustration={onSaveIllustration}
         />

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import "../../components/modal.css";
 import "./IllustrateLookModal.css";
-import { AVATAR_SRC } from "./looks";
 import { generateLookIllustration } from "./illustrateLook";
 import { categorizeProduct } from "../../lib/categorize";
+import { ALLOWED_PROFILE_IMAGE_TYPES } from "../profile/profile";
 
 // Data-driven so a second style could be added later without touching
 // the modal's structure - Milestone 1 only ships the one, per spec.
@@ -19,9 +19,11 @@ const ILLUSTRATION_STYLES = [
 // The app-level generation request. Provider-agnostic on purpose - no
 // Gemini-specific shape here, that translation happens entirely
 // server-side (supabase/functions/illustrate-look). Note there's no
-// avatar field: the server uses its own bundled copy of the one fixed
-// avatar image (see that function's own header comment for why), so
-// the client has nothing avatar-related to send.
+// avatar field: the server reads the caller's OWN profile
+// (bed_model_image_path) directly from the database rather than
+// trusting a client-supplied image, so the client has nothing
+// avatar-related to send - it can only ever affect what THAT profile
+// points at (via the upload flow below), never claim someone else's.
 function buildGenerationPayload({ look, pieces, styleKey }) {
   return {
     lookId: look.id,
@@ -57,7 +59,16 @@ function buildGenerationPayload({ look, pieces, styleKey }) {
 //   "saving"     - Save Illustration in flight.
 //   "error"      - generation failed; picker still shown (nothing
 //                  usable exists yet, so Try Again is fine here).
-function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
+function IllustrateLookModal({
+  look,
+  pieces,
+  bedModelImageUrl,
+  isUploadingAvatar,
+  avatarUploadError,
+  onUploadAvatar,
+  onClose,
+  onSaveIllustration,
+}) {
   const [selectedStyle, setSelectedStyle] = useState(ILLUSTRATION_STYLES[0].key);
   const [phase, setPhase] = useState(look.illustrationUrl ? "saved" : "form");
   const [resultImageUrl, setResultImageUrl] = useState(look.illustrationUrl ?? null);
@@ -79,6 +90,7 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
   // this modal opened (the Illustrate Look button), so focus can return
   // there on close instead of being dropped back to <body>.
   const triggerElRef = useRef(document.activeElement);
+  const avatarFileInputRef = useRef(null);
 
   useEffect(() => {
     requestAnimationFrame(() => closeButtonRef.current?.focus());
@@ -117,6 +129,18 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
       isMountedRef.current = false;
     };
   }, []);
+
+  function handleChooseAvatarPhoto() {
+    avatarFileInputRef.current?.click();
+  }
+
+  async function handleAvatarFileSelected(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    await onUploadAvatar(file);
+  }
 
   // Calls the feature service (illustrateLook.js), which calls the
   // illustrate-look Edge Function, which calls Gemini - this component
@@ -180,18 +204,12 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="illustrate-look-title"
-        aria-describedby="illustrate-look-subtitle"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="illustrate-look-modal__header">
-          <div>
-            <h2 id="illustrate-look-title" className="illustrate-look-modal__title">
-              ✧ illustrate look
-            </h2>
-            <p id="illustrate-look-subtitle" className="illustrate-look-modal__subtitle">
-              Turn this look into a fashion illustration.
-            </p>
-          </div>
+          <h2 id="illustrate-look-title" className="illustrate-look-modal__title">
+            ✧ Visualize outfit
+          </h2>
 
           <button
             type="button"
@@ -207,7 +225,6 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
         {phase === "saved" || phase === "result" || phase === "saving" ? (
           <>
             <div className="illustrate-look-modal__section">
-              <p className="illustrate-look-modal__section-label">illustrated look</p>
               <div className="illustrate-look-modal__result-frame">
                 <img
                   className="illustrate-look-modal__result-image"
@@ -219,7 +236,7 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
 
             {phase === "saved" && justSaved && (
               <p className="illustrate-look-modal__note illustrate-look-modal__note--success">
-                Illustration saved to this Look.
+                Illustration saved to this outfit.
               </p>
             )}
 
@@ -247,7 +264,7 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
                   onClick={handleSaveIllustration}
                   disabled={phase === "saving"}
                 >
-                  {phase === "saving" ? "saving..." : "save illustration"}
+                  {phase === "saving" ? "saving..." : "Save illustration"}
                 </button>
               )}
             </div>
@@ -257,12 +274,39 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
             <div className="illustrate-look-modal__section">
               <p className="illustrate-look-modal__section-label">model</p>
               <div className="illustrate-look-modal__avatar-frame">
-                <img className="illustrate-look-modal__avatar" src={AVATAR_SRC} alt="Your avatar" />
+                {bedModelImageUrl ? (
+                  <img className="illustrate-look-modal__avatar" src={bedModelImageUrl} alt="Your model" />
+                ) : (
+                  <div className="illustrate-look-modal__avatar-placeholder">
+                    <input
+                      ref={avatarFileInputRef}
+                      type="file"
+                      accept={ALLOWED_PROFILE_IMAGE_TYPES.join(",")}
+                      onChange={handleAvatarFileSelected}
+                      disabled={isUploadingAvatar}
+                      hidden
+                    />
+                    <button
+                      type="button"
+                      className="illustrate-look-modal__avatar-upload"
+                      onClick={handleChooseAvatarPhoto}
+                      disabled={isUploadingAvatar}
+                    >
+                      <span className="illustrate-look-modal__avatar-upload-icon" aria-hidden="true">
+                        +
+                      </span>
+                      <span className="illustrate-look-modal__avatar-upload-label">
+                        {isUploadingAvatar ? "uploading…" : "upload model"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
+              {avatarUploadError && <p className="illustrate-look-modal__note">{avatarUploadError}</p>}
             </div>
 
             <div className="illustrate-look-modal__section">
-              <p className="illustrate-look-modal__section-label">your look</p>
+              <p className="illustrate-look-modal__section-label">your outfit</p>
               {pieces.length > 0 ? (
                 <div className="illustrate-look-modal__pieces">
                   {pieces.map((piece) => (
@@ -315,13 +359,13 @@ function IllustrateLookModal({ look, pieces, onClose, onSaveIllustration }) {
                 type="button"
                 className={`modal__button modal__button--primary${phase === "generating" ? " is-generating" : ""}`}
                 onClick={handleGenerateIllustration}
-                disabled={pieces.length === 0 || phase === "generating"}
+                disabled={pieces.length === 0 || !bedModelImageUrl || phase === "generating"}
               >
                 {phase === "generating"
-                  ? "illustrating your look..."
+                  ? "illustrating your outfit..."
                   : phase === "error"
-                    ? "try again"
-                    : "generate"}
+                    ? "Try again"
+                    : "Visualize outfit"}
               </button>
             </div>
           </>

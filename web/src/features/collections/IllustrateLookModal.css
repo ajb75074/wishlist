@@ -19,26 +19,17 @@
   margin-bottom: 22px;
 }
 
-/* Deliberately NOT .modal__title (Georgia serif) - Look Studio's own
-   typography direction for this feature is clean uppercase sans, same
-   language as "LOOK STUDIO" in the header. */
+/* Deliberately NOT .modal__title - matches Look Studio's own header
+   (LookDetailView.css's .look-studio__title), which uses the same
+   --font-accent stamp treatment, so this modal reads as part of that
+   same tool rather than borrowing the app's generic modal title style. */
 .illustrate-look-modal__title {
   margin: 0 0 4px;
 
-  color: #f5f0e8;
-  font-family: var(--sans);
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.illustrate-look-modal__subtitle {
-  margin: 0;
-
-  color: rgba(245, 240, 232, 0.55);
-  font-family: var(--sans);
-  font-size: 0.78rem;
+  color: var(--cherry-ink);
+  font-family: var(--font-accent);
+  font-weight: 400;
+  font-size: 1.15rem;
 }
 
 .illustrate-look-modal__close {
@@ -64,20 +55,24 @@
   margin-bottom: 20px;
 }
 
+/* Short (1-2 word) structural stamp - exactly the "editorial section
+   label" role --font-accent is for now, not a sentence. */
 .illustrate-look-modal__section-label {
   margin: 0 0 10px;
 
-  color: rgba(245, 240, 232, 0.5);
-  font-family: var(--sans);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  color: var(--muted-ink);
+  font-family: var(--font-accent);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-/* MODEL - a small dimensional frame around the same avatar Look
-   Studio's own bed uses (see looks.js's AVATAR_SRC), so it reads as
-   "this exact character" rather than a generic placeholder. */
+/* MODEL - a small dimensional frame around the same custom model photo
+   Look Studio's own bed uses (LookDetailView's useBedModel) - shows the
+   real photo when the user has uploaded one, or an inline upload
+   prompt in its place otherwise (see .illustrate-look-modal__avatar-
+   placeholder below), so this always reflects exactly what generation
+   will actually use, never a generic placeholder. */
 .illustrate-look-modal__avatar-frame {
   display: flex;
   align-items: center;
@@ -87,10 +82,10 @@
   height: 72px;
   padding: 8px;
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.2));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), var(--blush));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -2px 4px rgba(73, 60, 62, 0.15);
 }
 
 .illustrate-look-modal__avatar {
@@ -98,6 +93,58 @@
   height: 100%;
 
   object-fit: contain;
+}
+
+.illustrate-look-modal__avatar-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.illustrate-look-modal__avatar-upload {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+
+  border: 2px dashed var(--border);
+  border-radius: 50%;
+  background: transparent;
+
+  color: var(--cocoa-ink);
+  cursor: pointer;
+
+  transition: border-color 0.15s ease;
+}
+
+.illustrate-look-modal__avatar-upload:hover:not(:disabled),
+.illustrate-look-modal__avatar-upload:focus-visible {
+  border-color: var(--strawberry);
+}
+
+.illustrate-look-modal__avatar-upload:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.illustrate-look-modal__avatar-upload-icon {
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--strawberry);
+}
+
+.illustrate-look-modal__avatar-upload-label {
+  padding: 0 4px;
+
+  font-family: var(--font-ui);
+  font-size: 0.5rem;
+  letter-spacing: 0.01em;
+  text-align: center;
 }
 
 /* YOUR LOOK - compact thumbnail row of only the currently-placed
@@ -119,10 +166,10 @@
   height: 64px;
   padding: 6px;
 
-  border: 1.5px solid rgba(240, 112, 157, 0.65);
+  border: 1.5px solid rgba(200, 68, 96, 0.65);
   border-radius: 12px;
-  background: linear-gradient(145deg, #fffafa, #f8eef2);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(145deg, var(--surface), var(--powder-pink));
+  box-shadow: 0 4px 10px rgba(60, 32, 40, 0.12);
 }
 
 .illustrate-look-modal__piece img {
@@ -135,9 +182,9 @@
 .illustrate-look-modal__empty {
   margin: 0;
 
-  color: rgba(245, 240, 232, 0.45);
-  font-family: var(--sans);
-  font-size: 0.78rem;
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
 }
 
 /* STYLE - single selectable card now, built to hold more later
@@ -155,9 +202,9 @@
 
   padding: 12px;
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.15));
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), var(--powder-pink));
 
   text-align: left;
   cursor: pointer;
@@ -166,17 +213,17 @@
 }
 
 .illustrate-look-modal__style-card:hover {
-  border-color: rgba(241, 123, 166, 0.5);
+  border-color: rgba(233, 93, 117, 0.5);
 }
 
 .illustrate-look-modal__style-card:focus-visible {
-  outline: 2px solid #f17ba6;
+  outline: 2px solid var(--strawberry);
   outline-offset: 2px;
 }
 
 .illustrate-look-modal__style-card.is-selected {
-  border-color: #f17ba6;
-  box-shadow: 0 0 0 3px rgba(241, 123, 166, 0.16);
+  border-color: var(--strawberry);
+  box-shadow: 0 0 0 3px rgba(233, 93, 117, 0.16);
 }
 
 /* Decorative placeholder for a future style preview thumbnail - no
@@ -189,7 +236,7 @@
   height: 40px;
 
   border-radius: 10px;
-  background: linear-gradient(145deg, #f699bb, #7a4a5f);
+  background: linear-gradient(145deg, var(--blush), var(--strawberry-hover));
 }
 
 .illustrate-look-modal__style-copy {
@@ -199,31 +246,31 @@
 }
 
 .illustrate-look-modal__style-name {
-  color: #f5f0e8;
-  font-family: var(--sans);
+  color: var(--cherry-ink);
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .illustrate-look-modal__style-description {
-  color: rgba(245, 240, 232, 0.55);
-  font-family: var(--sans);
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
   font-size: 0.74rem;
   line-height: 1.45;
 }
 
+/* Functional status text (errors especially) - plain and readable,
+   not decorative type. */
 .illustrate-look-modal__note {
   margin: 4px 0 0;
 
-  color: rgba(241, 123, 166, 0.85);
-  font-family: var(--sans);
-  font-size: 0.76rem;
+  color: var(--error);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
 }
 
-/* Save confirmation - a distinct, calmer green so it doesn't read as
-   another error alongside .illustrate-look-modal__note's pink. */
 .illustrate-look-modal__note--success {
-  color: rgba(140, 209, 156, 0.9);
+  color: var(--success);
 }
 
 /* Result state - the generated image fits within a fixed max-height so
@@ -238,19 +285,20 @@
   justify-content: center;
 
   max-height: 60vh;
-  padding: 8px;
+  padding: 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--surface);
 }
 
 .illustrate-look-modal__result-image {
-  max-width: 100%;
-  max-height: calc(60vh - 16px);
+  display: block;
+  width: 100%;
+  max-height: 60vh;
 
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 16px;
 }
 
 .illustrate-look-modal .modal__actions {
@@ -265,10 +313,10 @@
 @keyframes illustrate-look-pulse {
   0%,
   100% {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(241, 123, 166, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(233, 93, 117, 0.55);
   }
   50% {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 20px 6px rgba(241, 123, 166, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 20px 6px rgba(233, 93, 117, 0.55);
   }
 }
 
