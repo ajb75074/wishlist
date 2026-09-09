@@ -1,0 +1,201 @@
+/* Right-side form content, rendered inside AuthShell's own
+   .auth-shell__form-panel (which already centers it) - this file only
+   owns the form's own width/spacing/field styling, not the page shell. */
+.auth-form {
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-form__transition {
+  display: flex;
+  flex-direction: column;
+
+  animation: auth-form-rise-in 220ms ease;
+}
+
+@keyframes auth-form-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-form__transition {
+    animation: none;
+  }
+}
+
+.auth-form__title {
+  margin: 0 0 28px;
+  font-size: 32px;
+  color: var(--cherry-ink);
+}
+
+.auth-form__field {
+  margin-bottom: 18px;
+}
+
+.auth-form__label {
+  display: block;
+  margin: 0 0 8px;
+
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--muted-ink);
+}
+
+.auth-form input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+}
+
+.auth-form input::placeholder {
+  color: var(--muted-ink);
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--strawberry);
+}
+
+.auth-form input:disabled {
+  opacity: 0.7;
+}
+
+.auth-form__password-row {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-form__password-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-form__toggle {
+  flex-shrink: 0;
+  padding: 0 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--cream);
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+
+  cursor: pointer;
+}
+
+.auth-form__toggle:hover:not(:disabled) {
+  border-color: var(--strawberry);
+}
+
+.auth-form__forgot-password {
+  display: block;
+  margin: -6px 0 4px;
+  padding: 0;
+  align-self: flex-end;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+
+  cursor: pointer;
+  text-align: right;
+  width: 100%;
+}
+
+.auth-form__forgot-password:hover:not(:disabled) {
+  color: var(--strawberry);
+}
+
+.auth-form__error {
+  margin: 4px 0 14px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--error);
+}
+
+.auth-form__success {
+  margin: 4px 0 14px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--success);
+}
+
+/* Flat strawberry, full form width - the one primary action on this
+   screen, no gradient/glow/heavy shadow. */
+.auth-form__submit {
+  width: 100%;
+  margin-top: 6px;
+  padding: 14px;
+
+  border: 1px solid var(--strawberry);
+  border-radius: 10px;
+  background: var(--strawberry);
+
+  color: var(--surface);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.auth-form__submit:hover:not(:disabled) {
+  background: var(--strawberry-hover);
+  border-color: var(--strawberry-hover);
+}
+
+.auth-form__submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.auth-form__switch {
+  margin-top: 20px;
+  padding: 0;
+  align-self: center;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.auth-form__switch:hover:not(:disabled) {
+  color: var(--strawberry);
+}
+
+.auth-form__toggle:disabled,
+.auth-form__forgot-password:disabled,
+.auth-form__switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

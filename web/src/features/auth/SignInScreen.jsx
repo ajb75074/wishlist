@@ -1,89 +1,32 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import ForgotPasswordScreen from "./ForgotPasswordScreen";
-import "./SignInScreen.css";
+import AuthShell from "./AuthShell";
+import "./AuthForm.css";
 
-const MODE_SIGN_IN = "sign-in";
-const MODE_SIGN_UP = "sign-up";
-const MODE_FORGOT_PASSWORD = "forgot-password";
-
-// Deliberately minimal - the whole app is getting a visual redesign
-// later, so this is functional-only: email/password (+name on
-// sign-up), a trivial show/hide toggle, a mode switch (including
-// forgot-password, which hands off to its own component entirely). No
-// social auth, no onboarding - those are separate tasks.
+// Sign In's own route (/sign-in) - Sign Up and Forgot Password are now
+// their own separate routed screens (SignUpScreen.jsx,
+// ForgotPasswordScreen.jsx) rather than modes toggled inside this one
+// component, but all three still share AuthShell/AuthForm.css for the
+// identical split-screen look. Same auth logic/validation/error-
+// handling as before this split - only how you get to each screen
+// changed. animationRef: each text field's onChange calls
+// animationRef.current?.reportKeystroke() directly (an imperative
+// handle, not React state), so the clothing-rack animation next to the
+// form can react to typing speed without this component ever
+// re-rendering because of it - see AuthShell.jsx and
+// ClothingRackAnimation.jsx for the actual animation logic.
 function SignInScreen() {
-  const [mode, setMode] = useState(MODE_SIGN_IN);
-  const [name, setName] = useState("");
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const animationRef = useRef(null);
 
-  const isSignUp = mode === MODE_SIGN_UP;
-
-  function switchMode(nextMode) {
-    setMode(nextMode);
-    setErrorMessage("");
-    setSuccessMessage("");
-    setPassword("");
-    setConfirmPassword("");
-  }
-
-  async function handleSignIn() {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setErrorMessage(error.message || "Could not sign in. Please try again.");
-      setIsSubmitting(false);
-    }
-    // On success, AuthContext's onAuthStateChange listener picks up
-    // the new session and AuthGate swaps this screen out - nothing
-    // else to do here.
-  }
-
-  async function handleSignUp() {
-    if (!name.trim()) {
-      setErrorMessage("Please enter your name.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords don't match.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name: name.trim() } },
-    });
-
-    if (error) {
-      setErrorMessage(error.message || "Could not create your account. Please try again.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // With email confirmation required, signUp creates the user but
-    // returns no session - the AuthContext listener has nothing to
-    // react to, so tell the user to confirm by email instead of
-    // silently doing nothing. With confirmation off, a session comes
-    // back immediately and the listener swaps this screen out exactly
-    // like a normal sign-in.
-    if (!data.session) {
-      setSuccessMessage("Check your email to confirm your account, then sign in.");
-      setIsSubmitting(false);
-    }
-  }
-
-  if (mode === MODE_FORGOT_PASSWORD) {
-    return <ForgotPasswordScreen onBackToSignIn={() => switchMode(MODE_SIGN_IN)} />;
+  function reportTyping() {
+    animationRef.current?.reportKeystroke();
   }
 
   async function handleSubmit(event) {
@@ -91,128 +34,109 @@ function SignInScreen() {
 
     if (isSubmitting) return;
 
+    // Guarantees the animation reaches the end of its loop right as
+    // the form submits, regardless of how far typing had gotten it -
+    // independent of whether the sign-in call itself succeeds.
+    animationRef.current?.completeToEnd();
+
     setIsSubmitting(true);
     setErrorMessage("");
-    setSuccessMessage("");
 
     try {
-      if (isSignUp) {
-        await handleSignUp();
-      } else {
-        await handleSignIn();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setErrorMessage(error.message || "Could not sign in. Please try again.");
+        setIsSubmitting(false);
       }
+      // On success, AuthContext's onAuthStateChange listener picks up
+      // the new session and AuthGate swaps this screen out - nothing
+      // else to do here.
     } catch {
-      setErrorMessage(
-        isSignUp ? "Could not create your account. Please try again." : "Could not sign in. Please try again.",
-      );
+      setErrorMessage("Could not sign in. Please try again.");
       setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="sign-in-screen">
-      <form className="sign-in-screen__form" onSubmit={handleSubmit}>
-        <h1 className="sign-in-screen__title">wishlist ♡</h1>
+    <AuthShell animationRef={animationRef}>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-form__transition">
+          <h1 className="auth-form__title">Welcome back</h1>
 
-        {isSignUp && (
-          <>
-            <label className="sign-in-screen__label" htmlFor="sign-in-name">
-              name
+          <div className="auth-form__field">
+            <label className="auth-form__label" htmlFor="sign-in-email">
+              email
             </label>
             <input
-              id="sign-in-name"
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoComplete="name"
+              id="sign-in-email"
+              type="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                reportTyping();
+              }}
+              autoComplete="username"
               disabled={isSubmitting}
               required
             />
-          </>
-        )}
+          </div>
 
-        <label className="sign-in-screen__label" htmlFor="sign-in-email">
-          email
-        </label>
-        <input
-          id="sign-in-email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          autoComplete="username"
-          disabled={isSubmitting}
-          required
-        />
+          <div className="auth-form__field">
+            <label className="auth-form__label" htmlFor="sign-in-password">
+              password
+            </label>
+            <div className="auth-form__password-row">
+              <input
+                id="sign-in-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  reportTyping();
+                }}
+                autoComplete="current-password"
+                disabled={isSubmitting}
+                required
+              />
 
-        <label className="sign-in-screen__label" htmlFor="sign-in-password">
-          password
-        </label>
-        <div className="sign-in-screen__password-row">
-          <input
-            id="sign-in-password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-            disabled={isSubmitting}
-            required
-          />
+              <button
+                type="button"
+                className="auth-form__toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                disabled={isSubmitting}
+              >
+                {showPassword ? "hide" : "show"}
+              </button>
+            </div>
+          </div>
 
           <button
             type="button"
-            className="sign-in-screen__toggle"
-            onClick={() => setShowPassword((current) => !current)}
+            className="auth-form__forgot-password"
+            onClick={() => navigate("/forgot-password")}
             disabled={isSubmitting}
           >
-            {showPassword ? "hide" : "show"}
+            Forgot password?
+          </button>
+
+          {errorMessage && <p className="auth-form__error">{errorMessage}</p>}
+
+          <button type="submit" className="auth-form__submit" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in…" : "Sign in"}
+          </button>
+
+          <button
+            type="button"
+            className="auth-form__switch"
+            onClick={() => navigate("/sign-up")}
+            disabled={isSubmitting}
+          >
+            New here? Create an account
           </button>
         </div>
-
-        {isSignUp && (
-          <>
-            <label className="sign-in-screen__label" htmlFor="sign-in-confirm-password">
-              confirm password
-            </label>
-            <input
-              id="sign-in-confirm-password"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              disabled={isSubmitting}
-              required
-            />
-          </>
-        )}
-
-        {!isSignUp && (
-          <button
-            type="button"
-            className="sign-in-screen__forgot-password"
-            onClick={() => switchMode(MODE_FORGOT_PASSWORD)}
-            disabled={isSubmitting}
-          >
-            forgot password?
-          </button>
-        )}
-
-        {errorMessage && <p className="sign-in-screen__error">{errorMessage}</p>}
-        {successMessage && <p className="sign-in-screen__success">{successMessage}</p>}
-
-        <button type="submit" className="sign-in-screen__submit" disabled={isSubmitting}>
-          {isSubmitting ? (isSignUp ? "creating account..." : "signing in...") : isSignUp ? "sign up" : "sign in"}
-        </button>
-
-        <button
-          type="button"
-          className="sign-in-screen__switch"
-          onClick={() => switchMode(isSignUp ? MODE_SIGN_IN : MODE_SIGN_UP)}
-          disabled={isSubmitting}
-        >
-          {isSignUp ? "already have an account? sign in" : "don't have an account? sign up"}
-        </button>
       </form>
-    </div>
+    </AuthShell>
   );
 }
 

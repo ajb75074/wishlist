@@ -1,19 +1,25 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { requestPasswordReset } from "./auth";
-import "./SignInScreen.css";
+import AuthShell from "./AuthShell";
+import "./AuthForm.css";
 
 const STATUS_IDLE = "idle";
 const STATUS_SENDING = "sending";
 const STATUS_SENT = "sent";
 const STATUS_ERROR = "error";
 
-// Rendered by SignInScreen's own mode switch, not a separate route -
-// there's nothing here worth deep-linking to, unlike /reset-password
-// which the recovery email itself must point at.
-function ForgotPasswordScreen({ onBackToSignIn }) {
+// Its own route (/forgot-password) - distinct from /reset-password,
+// which the recovery email itself must point at (see
+// ResetPasswordScreen.jsx). Shares AuthShell (and its clothing-rack
+// animation) with SignInScreen/SignUpScreen purely for visual
+// consistency.
+function ForgotPasswordScreen() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState(STATUS_IDLE);
   const [errorMessage, setErrorMessage] = useState("");
+  const animationRef = useRef(null);
 
   const isSubmitting = status === STATUS_SENDING;
 
@@ -21,6 +27,8 @@ function ForgotPasswordScreen({ onBackToSignIn }) {
     event.preventDefault();
 
     if (isSubmitting) return;
+
+    animationRef.current?.completeToEnd();
 
     setStatus(STATUS_SENDING);
     setErrorMessage("");
@@ -47,56 +55,65 @@ function ForgotPasswordScreen({ onBackToSignIn }) {
 
   if (status === STATUS_SENT) {
     return (
-      <div className="sign-in-screen">
-        <div className="sign-in-screen__form">
-          <h1 className="sign-in-screen__title">check your email</h1>
+      <AuthShell animationRef={animationRef}>
+        <div className="auth-form">
+          <div className="auth-form__transition">
+            <h1 className="auth-form__title">Check your email</h1>
 
-          <p className="sign-in-screen__success">
-            If an account exists for that email, we&rsquo;ve sent password reset instructions.
-          </p>
+            <p className="auth-form__success">
+              If an account exists for that email, we&rsquo;ve sent password reset instructions.
+            </p>
 
-          <button type="button" className="sign-in-screen__switch" onClick={onBackToSignIn}>
-            back to sign in
-          </button>
+            <button type="button" className="auth-form__switch" onClick={() => navigate("/sign-in")}>
+              Back to sign in
+            </button>
+          </div>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="sign-in-screen">
-      <form className="sign-in-screen__form" onSubmit={handleSubmit}>
-        <h1 className="sign-in-screen__title">forgot password</h1>
+    <AuthShell animationRef={animationRef}>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-form__transition">
+          <h1 className="auth-form__title">Forgot password</h1>
 
-        <label className="sign-in-screen__label" htmlFor="forgot-password-email">
-          email
-        </label>
-        <input
-          id="forgot-password-email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          autoComplete="username"
-          disabled={isSubmitting}
-          required
-        />
+          <div className="auth-form__field">
+            <label className="auth-form__label" htmlFor="forgot-password-email">
+              email
+            </label>
+            <input
+              id="forgot-password-email"
+              type="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                animationRef.current?.reportKeystroke();
+              }}
+              autoComplete="username"
+              disabled={isSubmitting}
+              required
+            />
+          </div>
 
-        {errorMessage && <p className="sign-in-screen__error">{errorMessage}</p>}
+          {errorMessage && <p className="auth-form__error">{errorMessage}</p>}
 
-        <button type="submit" className="sign-in-screen__submit" disabled={isSubmitting}>
-          {isSubmitting ? "sending..." : "send reset link"}
-        </button>
+          <button type="submit" className="auth-form__submit" disabled={isSubmitting}>
+            {isSubmitting ? "Sending…" : "Send reset link"}
+          </button>
 
-        <button
-          type="button"
-          className="sign-in-screen__switch"
-          onClick={onBackToSignIn}
-          disabled={isSubmitting}
-        >
-          back to sign in
-        </button>
+          <button
+            type="button"
+            className="auth-form__switch"
+            onClick={() => navigate("/sign-in")}
+            disabled={isSubmitting}
+          >
+            Back to sign in
+          </button>
+        </div>
       </form>
-    </div>
+    </AuthShell>
   );
 }
 

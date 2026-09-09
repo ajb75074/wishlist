@@ -1,0 +1,97 @@
+/* Extremely quiet page background - the clothing-rack animation is the
+   one visual feature here, so nothing else (gradients, shapes, blobs)
+   competes with it. */
+.auth-shell-page {
+  min-height: 100svh;
+  width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background: var(--cream);
+}
+
+/* One composition, not two separate cards - a single thin border +
+   very restrained shadow around both panels together, overflow hidden
+   so each side's own background fills flush to the shared radius. */
+.auth-shell {
+  display: flex;
+  width: 100%;
+  max-width: 1150px;
+  min-height: 620px;
+  box-sizing: border-box;
+
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(73, 60, 62, 0.1);
+
+  background: var(--surface);
+}
+
+/* Left - playful/animated. A real cream canvas/twill texture (the
+   user's own asset, src/assets/bg.png) instead of the earlier
+   SVG-noise approximation - covers the panel without repeating, since
+   the source photo already reads as one continuous surface rather
+   than a small repeatable tile. */
+.auth-shell__visual {
+  flex: 0 0 54%;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+
+  background-color: #faf7f0;
+  background-image: url("../../assets/bg.png");
+  background-size: cover;
+  background-position: center;
+}
+
+/* Right - quiet/functional. Plain warm-white, never tinted pink, so
+   the contrast with the left side stays intentional. */
+.auth-shell__form-panel {
+  flex: 1 1 46%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 64px;
+  overflow-y: auto;
+
+  background: var(--surface);
+}
+
+@media (max-width: 860px) {
+  .auth-shell-page {
+    padding: 16px;
+  }
+
+  .auth-shell {
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 16px;
+  }
+
+  /* Short and fixed on mobile, deliberately - the animation stays
+     present (typing-speed reaction still works with a hardware
+     keyboard) but never dominates the viewport the way the desktop
+     54% split would. */
+  .auth-shell__visual {
+    flex: none;
+    width: 100%;
+    padding: 28px 20px;
+  }
+
+  .auth-shell__form-panel {
+    flex: none;
+    width: 100%;
+    padding: 32px 24px 40px;
+  }
+}
