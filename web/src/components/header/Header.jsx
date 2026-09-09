@@ -14,11 +14,6 @@ function Header({
 
       {/* Scattered interactive stickers */}
       <Sticker
-        src="bags.png"
-        className="header-decor--bags"
-      />
-
-      <Sticker
         src="flower.png"
         className="header-decor--flower"
       />

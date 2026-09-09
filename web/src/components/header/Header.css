@@ -3,10 +3,9 @@
 
   padding: 24px 0 30px;
 
-  /* Temporary while the page background is dark */
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
 
-  border-bottom: 1px solid rgba(245, 240, 232, 0.2);
+  border-bottom: 1px solid rgba(73, 60, 62, 0.2);
 }
 /* Scattered scraps - kept above the header content so every sticker
    stays hoverable/draggable, even where it visually overlaps text */
@@ -59,16 +58,6 @@
   100% {
     transform: rotate(var(--rot, 0deg)) scale(1);
   }
-}
-
-/* Shopping bags — closest to title, upper-left of sticker area */
-.header-decor--bags {
-  --rot: 16deg;
-
-  top: 14%;
-  left: 49%;
-
-  width: 38px;
 }
 
 .header-decor--stem {
@@ -142,23 +131,25 @@
 .header-title h1 {
   margin: -8px 0 0;
 
-  color: #f5f0e8;
+  color: var(--cherry-ink);
 
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: clamp(4.5rem, 9vw, 8rem);
   font-weight: 400;
   line-height: 0.85;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.01em;
 }
 
+/* Handwritten scrapbook note under the display title, not another
+   line of body copy. */
 .header-title p {
   margin: 16px 0 0;
 
-  color: #f5f0e8;
+  color: var(--muted-ink);
 
-  font-family: monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  letter-spacing: 0.01em;
 }
 
 /* Taken out of flow so it can't push the title down or grow the header.
@@ -198,7 +189,7 @@
   padding: 8px 10px;
 
 
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
 }
 
 .header-search input {
@@ -209,18 +200,18 @@
   outline: 0;
   background: transparent;
 
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
 
-  font-family: monospace;
+  font-family: var(--font-ui);
   font-size: 0.7rem;
 }
 
 .header-search input::placeholder {
-  color: rgba(245, 240, 232, 0.6);
+  color: rgba(73, 60, 62, 0.6);
 }
 
 .header-search span {
-  color: #f5f0e8;
+  color: var(--cocoa-ink);
 }
 
 
