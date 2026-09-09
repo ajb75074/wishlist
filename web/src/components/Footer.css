@@ -1,0 +1,11 @@
+.app-footer {
+  display: flex;
+  justify-content: center;
+
+  padding: 20px 0;
+}
+
+.app-footer img {
+  width: 64px;
+  height: auto;
+}

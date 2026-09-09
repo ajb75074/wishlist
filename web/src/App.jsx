@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 import ProductGrid from "./features/wishlist/ProductGrid";
-import FilterBar from "./features/wishlist/FilterBar";
+import WishlistHero from "./features/wishlist/WishlistHero";
+import WishlistToolbar from "./features/wishlist/WishlistToolbar";
 import DonateConfirmModal from "./features/wishlist/DonateConfirmModal";
 import { useWishlist } from "./features/wishlist/useWishlist";
 import Header from "./components/header/Header";
 import { categorizeProduct } from "./lib/categorize";
 import { basicColor } from "./lib/basicColor";
+import { priceMatchesRanges } from "./lib/priceRanges";
 import Sidebar from "./components/sidebar/Sidebar";
+import Footer from "./components/Footer";
 import CreateCollectionModal from "./features/collections/CreateCollectionModal";
 import EditCollectionModal from "./features/collections/EditCollectionModal";
 import CollectionsView from "./features/collections/CollectionsView";
@@ -16,7 +19,6 @@ import CollectionRoute from "./features/collections/CollectionRoute";
 import CollectionSavePopover from "./features/collections/CollectionSavePopover";
 import DeleteCollectionModal from "./features/collections/DeleteCollectionModal";
 import { useCollections } from "./features/collections/useCollections";
-import SelectModeBar from "./components/SelectModeBar";
 import ActionTray from "./components/ActionTray";
 import ProfileView from "./features/profile/ProfileView";
 import AddItemModal from "./features/wishlist/AddItemModal";
@@ -27,11 +29,22 @@ function App() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedStore, setSelectedStore] = useState("All");
+  // Category/Store support selecting several at once (the Filter
+  // popover renders them as checkboxes), so these are arrays - an
+  // empty array means "no filter applied", same meaning "All" used to
+  // carry as a string. Color stays single-select (a row of swatches,
+  // not checkboxes), so it keeps its original string shape.
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedStores, setSelectedStores] = useState([]);
   const [selectedColor, setSelectedColor] = useState("All");
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [sortOrder, setSortOrder] = useState("newest");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Only ever set by Save to Collection's "no matches" suggestion, so
+  // a name typed there can prefill Create Collection instead of the
+  // user retyping it - every other entry point (Sidebar, Collections)
+  // opens the modal with no name via the same handler below.
+  const [createCollectionPrefillName, setCreateCollectionPrefillName] = useState("");
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   // All Saves' own Saved/Owned view - presentation only, never sent to
   // Supabase and never touched by Collections/Looks, which keep
@@ -109,6 +122,21 @@ function App() {
     navigate(view === "all" ? "/" : "/collections");
   }
 
+  // Shared by every "+ create collection" entry point (Sidebar,
+  // Collections, Save to Collection) so the prefill name is always
+  // explicitly set (even to "") rather than only being cleared by
+  // whichever handler happens to remember to - a stale name from one
+  // opening can never leak into an unrelated one.
+  //
+  // Sidebar/CollectionsView wire this straight to a button's onClick
+  // (`onClick={onCreateCollection}`), so it's often actually called
+  // with the click event as its first argument, not a name - only
+  // Save to Collection's suggestion ever passes a real string.
+  function handleOpenCreateModal(prefillName) {
+    setCreateCollectionPrefillName(typeof prefillName === "string" ? prefillName : "");
+    setIsCreateModalOpen(true);
+  }
+
   // Clicking the trigger again toggles the same popover closed instead
   // of just re-measuring/reopening it; clicking a different card's
   // trigger while one is open moves the popover to that product.
@@ -134,6 +162,24 @@ function App() {
   function handleCancelSelectMode() {
     setIsSelectMode(false);
     setSelectedProductIds(new Set());
+  }
+
+  // Draft filter values only ever reach this state on Apply - see
+  // FilterPopover's own comment on why it's safe to commit all five
+  // in one go here.
+  function handleApplyFilters(next) {
+    setSelectedCategories(next.categories);
+    setSelectedStores(next.stores);
+    setSelectedColor(next.color);
+    setSelectedPriceRanges(next.priceRanges);
+    setSortOrder(next.sortOrder);
+  }
+
+  function handleClearFilters() {
+    setSelectedCategories([]);
+    setSelectedStores([]);
+    setSelectedColor("All");
+    setSelectedPriceRanges([]);
   }
 
   // A selected item can be hidden by the new ownership view the moment
@@ -207,7 +253,7 @@ function App() {
       setIsSelectMode(false);
       setSelectedProductIds(new Set());
     } else {
-      setDonateError("Could not donate all selected pieces. Please try again.");
+      setDonateError("Could not donate all selected items. Please try again.");
     }
   }
 
@@ -232,21 +278,27 @@ function App() {
     )
     : ownershipFilteredProducts;
 
-  if (selectedCategory !== "All") {
-    filteredProducts = filteredProducts.filter(
-      (product) => categorizeProduct(product) === selectedCategory,
+  if (selectedCategories.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      selectedCategories.includes(categorizeProduct(product)),
     );
   }
 
-  if (selectedStore !== "All") {
-    filteredProducts = filteredProducts.filter(
-      (product) => product.store === selectedStore,
+  if (selectedStores.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      selectedStores.includes(product.store),
     );
   }
 
   if (selectedColor !== "All") {
     filteredProducts = filteredProducts.filter(
       (product) => basicColor(product.color) === selectedColor,
+    );
+  }
+
+  if (selectedPriceRanges.length > 0) {
+    filteredProducts = filteredProducts.filter((product) =>
+      priceMatchesRanges(product.price, selectedPriceRanges),
     );
   }
 
@@ -267,12 +319,13 @@ function App() {
         activeView={location.pathname.startsWith("/collections") ? "collections" : "all"}
         onViewChange={handleViewChange}
         collections={collections}
-        onCreateCollection={() => setIsCreateModalOpen(true)}
+        onCreateCollection={handleOpenCreateModal}
         onSelectCollection={handleSelectCollection}
         selectedCollectionId={currentCollection?.id}
       />
 
       <div className="app-content">
+        <div className="app-content__main">
 
         {/* The collection detail page has its own heading (thumbnail +
             name), so the generic app Header would just be a redundant
@@ -288,7 +341,7 @@ function App() {
         )}
 
         {location.pathname === "/" && (
-          <Header
+          <WishlistHero
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
@@ -304,72 +357,30 @@ function App() {
             element={
               <>
             {!loading && !error && (
-              <div className="toolbar-row">
-                {/* Always visible (even with zero items in the current
-                    view, and even in Select Mode) - unlike + Add Item/
-                    SelectModeBar/FilterBar below, switching views needs
-                    to work from an empty view too, and a selection made
-                    before switching still needs a way to be cleared. */}
-                <div className="ownership-toggle" role="group" aria-label="Ownership view">
-                  <button
-                    type="button"
-                    className={`ownership-toggle__btn${ownership === "saved" ? " is-active" : ""}`}
-                    aria-pressed={ownership === "saved"}
-                    onClick={() => handleOwnershipChange("saved")}
-                  >
-                    saved
-                  </button>
-                  <button
-                    type="button"
-                    className={`ownership-toggle__btn${ownership === "owned" ? " is-active" : ""}`}
-                    aria-pressed={ownership === "owned"}
-                    onClick={() => handleOwnershipChange("owned")}
-                  >
-                    owned
-                  </button>
-                </div>
-
-                {/* Phase 3's one entry point for manual item creation -
-                    visible with zero items in the current view too
-                    (unlike SelectModeBar/FilterBar below, which need
-                    existing products), hidden during Select Mode
-                    alongside FilterBar so it doesn't compete with the
-                    bulk-action bar. */}
-                {!isSelectMode && (
-                  <button
-                    type="button"
-                    className="add-item-button"
-                    onClick={() => setIsAddItemModalOpen(true)}
-                  >
-                    + add item
-                  </button>
-                )}
-
-                {ownershipFilteredProducts.length > 0 && (
-                  <>
-                    <SelectModeBar
-                      isActive={isSelectMode}
-                      selectedCount={selectedProductIds.size}
-                      onEnter={handleEnterSelectMode}
-                      onCancel={handleCancelSelectMode}
-                    />
-
-                    {!isSelectMode && (
-                      <FilterBar
-                        products={ownershipFilteredProducts}
-                        category={selectedCategory}
-                        onCategoryChange={setSelectedCategory}
-                        store={selectedStore}
-                        onStoreChange={setSelectedStore}
-                        color={selectedColor}
-                        onColorChange={setSelectedColor}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+              <WishlistToolbar
+                ownership={ownership}
+                onOwnershipChange={handleOwnershipChange}
+                isSelectMode={isSelectMode}
+                onAddItem={() => setIsAddItemModalOpen(true)}
+                selectMode={{
+                  isActive: isSelectMode,
+                  selectedCount: selectedProductIds.size,
+                  onEnter: handleEnterSelectMode,
+                  onCancel: handleCancelSelectMode,
+                }}
+                hasAnyProducts={ownershipFilteredProducts.length > 0}
+                resultCount={filteredProducts.length}
+                products={ownershipFilteredProducts}
+                filters={{
+                  categories: selectedCategories,
+                  stores: selectedStores,
+                  color: selectedColor,
+                  priceRanges: selectedPriceRanges,
+                  sortOrder,
+                }}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+              />
             )}
 
             {!loading && !error && ownershipFilteredProducts.length === 0 && (
@@ -414,7 +425,7 @@ function App() {
                   className="action-tray__button action-tray__button--primary"
                   onClick={handleOpenDonateModal}
                 >
-                  donate ♡
+                  donate
                 </button>
               </ActionTray>
             )}
@@ -437,7 +448,7 @@ function App() {
             element={
               <CollectionsView
                 collections={collections}
-                onCreateCollection={() => setIsCreateModalOpen(true)}
+                onCreateCollection={handleOpenCreateModal}
                 onSelectCollection={handleSelectCollection}
                 onEditCollection={handleRequestEditCollection}
                 onDeleteCollection={handleRequestDeleteCollection}
@@ -474,10 +485,15 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
+        </div>
+
+        <Footer />
+
       </div>
 
       {isCreateModalOpen && (
         <CreateCollectionModal
+          initialName={createCollectionPrefillName}
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleCreateCollection}
         />
@@ -515,7 +531,7 @@ function App() {
           anchorEl={savePopover.anchorEl}
           collections={collections}
           onClose={handleCloseSavePopover}
-          onCreateCollection={() => setIsCreateModalOpen(true)}
+          onCreateCollection={handleOpenCreateModal}
         />
       )}
 

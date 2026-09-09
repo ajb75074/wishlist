@@ -6,11 +6,23 @@
 .app-content {
   flex: 1;
   min-width: 0;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
 
   /* Shared content gutter - Header/FilterBar/ProductGrid all span
      this box's full width, so they line up with each other without
      needing their own horizontal padding. */
   padding: 0 24px;
+}
+
+/* Everything except the footer - grows to fill the leftover vertical
+   space, so Footer always lands at the bottom of the viewport (on
+   short pages) or the bottom of the scrolled content (on long ones),
+   never floating right under a short page's own content. */
+.app-content__main {
+  flex: 1;
 }
 
 /* Look Studio gets the full window width instead of sharing it with
