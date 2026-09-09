@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import ChangePasswordModal from "./ChangePasswordModal";
-import { ALLOWED_PROFILE_IMAGE_TYPES } from "./profile";
+import { ALLOWED_PROFILE_IMAGE_TYPES, GENDER_OPTIONS } from "./profile";
 import { useProfile } from "./useProfile";
+import { useAuth } from "../../lib/AuthContext";
+import keyIcon from "../../assets/key.png";
 import "./ProfileView.css";
 
 // Plain geometric placeholder - functional-only like the rest of this
@@ -18,25 +20,36 @@ function DefaultAvatar() {
 }
 
 function ProfileView() {
+  const { signOut } = useAuth();
   const {
     email,
     displayName,
     profileImageUrl,
     hasProfileImage,
+    gender,
+    bedModelImageUrl,
+    hasBedModelImage,
     isLoading,
     isSavingName,
     isSavingImage,
+    isSavingGender,
+    isSavingBedModelImage,
     errorMessage,
     successMessage,
     saveDisplayName,
     changeProfileImage,
     clearProfileImage,
+    saveGender,
+    changeBedModelImage,
+    clearBedModelImage,
   } = useProfile();
 
   const [nameDraft, setNameDraft] = useState("");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [bedModelImageLoadFailed, setBedModelImageLoadFailed] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const fileInputRef = useRef(null);
+  const bedModelFileInputRef = useRef(null);
 
   // Same "resync on source change" trick CollectionThumbnail already
   // uses for its own image-fallback state: keeps the editable draft in
@@ -68,6 +81,19 @@ function ProfileView() {
     await changeProfileImage(file);
   }
 
+  function handleChooseBedModelPhoto() {
+    bedModelFileInputRef.current?.click();
+  }
+
+  async function handleBedModelFileSelected(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setBedModelImageLoadFailed(false);
+    await changeBedModelImage(file);
+  }
+
   if (isLoading) {
     return (
       <div className="profile-view">
@@ -82,83 +108,176 @@ function ProfileView() {
     <div className="profile-view">
       <h1 className="profile-view__title">Profile</h1>
 
-      <div className="profile-view__avatar-row">
-        <div className="profile-view__avatar">
-          {showImage ? (
-            <img src={profileImageUrl} alt="" onError={() => setImageLoadFailed(true)} />
-          ) : (
-            <DefaultAvatar />
-          )}
-        </div>
+      <div className="profile-view__grid">
+        <section className="profile-view__panel profile-view__panel--profile">
+          <h2 className="profile-view__panel-title">Profile</h2>
 
-        <div className="profile-view__avatar-actions">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ALLOWED_PROFILE_IMAGE_TYPES.join(",")}
-            onChange={handleFileSelected}
-            disabled={isSavingImage}
-            hidden
-          />
+          <div className="profile-view__avatar-row">
+            <div className="profile-view__avatar">
+              {showImage ? (
+                <img src={profileImageUrl} alt="" onError={() => setImageLoadFailed(true)} />
+              ) : (
+                <DefaultAvatar />
+              )}
+            </div>
 
-          <button type="button" onClick={handleChoosePhoto} disabled={isSavingImage}>
-            {isSavingImage ? "saving..." : hasProfileImage ? "change photo" : "upload photo"}
-          </button>
+            <div className="profile-view__avatar-actions">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ALLOWED_PROFILE_IMAGE_TYPES.join(",")}
+                onChange={handleFileSelected}
+                disabled={isSavingImage}
+                hidden
+              />
 
-          {hasProfileImage && (
+              <button
+                type="button"
+                className="profile-view__upload"
+                onClick={handleChoosePhoto}
+                disabled={isSavingImage}
+              >
+                {isSavingImage ? "saving..." : hasProfileImage ? "change photo" : "upload photo"}
+              </button>
+
+              {hasProfileImage && (
+                <button
+                  type="button"
+                  className="profile-view__remove-photo"
+                  onClick={clearProfileImage}
+                  disabled={isSavingImage}
+                >
+                  remove photo
+                </button>
+              )}
+            </div>
+          </div>
+
+          <form className="profile-view__form" onSubmit={handleSaveName}>
+            <div className="profile-view__field-group">
+              <label className="profile-view__label" htmlFor="profile-display-name">
+                display name
+              </label>
+              <input
+                id="profile-display-name"
+                type="text"
+                value={nameDraft}
+                onChange={(event) => setNameDraft(event.target.value)}
+                disabled={isSavingName}
+              />
+            </div>
+
+            <div className="profile-view__field-group">
+              <label className="profile-view__label" htmlFor="profile-email">
+                email
+              </label>
+              <input id="profile-email" type="email" value={email} disabled readOnly />
+            </div>
+
+            {errorMessage && <p className="profile-view__error">{errorMessage}</p>}
+            {successMessage && <p className="profile-view__success">{successMessage}</p>}
+
+            <button type="submit" className="profile-view__save" disabled={isSavingName}>
+              {isSavingName ? "saving..." : "save"}
+            </button>
+          </form>
+        </section>
+
+        <div className="profile-view__side">
+          <section className="profile-view__panel profile-view__panel--model">
+            <h2 className="profile-view__panel-title">Look Studio model</h2>
+
+            <div className="profile-view__avatar-row">
+              <div className="profile-view__avatar">
+                {bedModelImageUrl && !bedModelImageLoadFailed ? (
+                  <img src={bedModelImageUrl} alt="" onError={() => setBedModelImageLoadFailed(true)} />
+                ) : (
+                  <DefaultAvatar />
+                )}
+              </div>
+
+              <div className="profile-view__avatar-actions">
+                <input
+                  ref={bedModelFileInputRef}
+                  type="file"
+                  accept={ALLOWED_PROFILE_IMAGE_TYPES.join(",")}
+                  onChange={handleBedModelFileSelected}
+                  disabled={isSavingBedModelImage}
+                  hidden
+                />
+
+                <button
+                  type="button"
+                  className="profile-view__upload"
+                  onClick={handleChooseBedModelPhoto}
+                  disabled={isSavingBedModelImage}
+                >
+                  {isSavingBedModelImage ? "saving..." : hasBedModelImage ? "change photo" : "upload photo"}
+                </button>
+
+                {hasBedModelImage && (
+                  <button
+                    type="button"
+                    className="profile-view__remove-photo"
+                    onClick={clearBedModelImage}
+                    disabled={isSavingBedModelImage}
+                  >
+                    remove photo
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="profile-view__field-group">
+              <label className="profile-view__label">gender</label>
+              <div className="profile-view__gender-options" role="radiogroup" aria-label="Model gender">
+                {GENDER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={gender === option.value}
+                    className={`profile-view__gender-option${gender === option.value ? " is-selected" : ""}`}
+                    onClick={() => saveGender(option.value)}
+                    disabled={isSavingGender}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="profile-view__panel profile-view__panel--account">
+            <h2 className="profile-view__panel-title">Account</h2>
+
             <button
               type="button"
-              className="profile-view__remove-photo"
-              onClick={clearProfileImage}
-              disabled={isSavingImage}
+              className="profile-view__account-row"
+              onClick={() => setIsChangePasswordOpen(true)}
             >
-              remove photo
+              <span>change password</span>
+              <span className="profile-view__account-row-chevron" aria-hidden="true">
+                ›
+              </span>
             </button>
-          )}
+
+            {/* Same signOut() the Sidebar's own "Sign out" button already
+                calls (useAuth) - surfaced here too rather than a new
+                capability, since Account is the more expected home for it. */}
+            <button type="button" className="profile-view__account-row" onClick={signOut}>
+              <span>sign out</span>
+              <span className="profile-view__account-row-chevron" aria-hidden="true">
+                ›
+              </span>
+            </button>
+          </section>
         </div>
       </div>
 
-      <form className="profile-view__form" onSubmit={handleSaveName}>
-        <label className="profile-view__label" htmlFor="profile-display-name">
-          display name
-        </label>
-        <input
-          id="profile-display-name"
-          type="text"
-          value={nameDraft}
-          onChange={(event) => setNameDraft(event.target.value)}
-          disabled={isSavingName}
-        />
-
-        <label className="profile-view__label" htmlFor="profile-email">
-          email
-        </label>
-        <input id="profile-email" type="email" value={email} disabled readOnly />
-
-        {errorMessage && <p className="profile-view__error">{errorMessage}</p>}
-        {successMessage && <p className="profile-view__success">{successMessage}</p>}
-
-        <button type="submit" className="profile-view__save" disabled={isSavingName}>
-          {isSavingName ? "saving..." : "save"}
-        </button>
-      </form>
-
-      <div className="profile-view__section-divider" />
-
-      <section className="profile-view__account">
-        <h2 className="profile-view__section-title">Account</h2>
-
-        <label className="profile-view__label">password</label>
-        <p className="profile-view__password-dots">••••••••••••</p>
-
-        <button
-          type="button"
-          className="profile-view__change-password"
-          onClick={() => setIsChangePasswordOpen(true)}
-        >
-          change password
-        </button>
-      </section>
+      <div className="profile-view__key">
+        <img src={keyIcon} alt="" aria-hidden="true" />
+      </div>
 
       {isChangePasswordOpen && (
         <ChangePasswordModal onClose={() => setIsChangePasswordOpen(false)} />

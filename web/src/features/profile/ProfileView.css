@@ -1,14 +1,64 @@
-/* Functional-only, matching SignInScreen's minimal styling - real
-   design comes with the app-wide visual redesign. */
+/* Centered dashboard-style container (not full-bleed) - .app-content
+   already gives the whole route a 24px gutter, so this only adds a
+   ceiling width and lets the extra space on wide desktops sit as even
+   margins either side, rather than the page hugging the sidebar. */
 .profile-view {
-  max-width: 420px;
-  padding: 24px 0 40px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 40px 0 64px;
 }
 
 .profile-view__title {
+  margin: 0 0 28px;
+  font-size: 40px;
+  color: var(--cherry-ink);
+}
+
+/* Two columns on desktop - left (Profile) slightly wider than the
+   right stack (Look Studio model + Account), matching the app's other
+   "one side does more" layouts rather than a rigid 50/50 split. */
+.profile-view__grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: start;
+  gap: 28px;
+}
+
+.profile-view__side {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+@media (max-width: 860px) {
+  .profile-view__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Plain grouped surface - warm off-white, thin neutral border, no
+   gradient/colored header/heavy shadow. Separation between panels
+   comes from whitespace + this border, not stacked card shadows. */
+.profile-view__panel {
+  box-sizing: border-box;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+/* Short structural stamp (matches the Sidebar's own "MY COLLECTIONS"
+   treatment) - never a sentence, so --font-accent is appropriate here
+   even though the rest of this page is functional --font-ui copy. */
+.profile-view__panel-title {
   margin: 0 0 24px;
-  font-size: 22px;
-  color: var(--text-h);
+
+  font-family: var(--font-accent);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-ink);
 }
 
 .profile-view__avatar-row {
@@ -18,13 +68,19 @@
   margin-bottom: 28px;
 }
 
+/* Keepsake frame - the one restrained decorative touch on this page
+   (a dotted inner ring), reused for both the account photo and the
+   Look Studio model photo so the two stay visually paired. */
 .profile-view__avatar {
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
   overflow: hidden;
   border-radius: 50%;
   background: var(--border);
+  border: 1px solid var(--border);
+  outline: 1px dotted var(--muted-ink);
+  outline-offset: -6px;
 }
 
 .profile-view__avatar img,
@@ -42,29 +98,52 @@
   gap: 8px;
 }
 
-.profile-view__avatar-actions button {
-  padding: 7px 12px;
+/* Quiet secondary action, not the strawberry primary treatment - the
+   avatar itself is the focal point of this row, not the button. */
+.profile-view__upload {
+  padding: 9px 16px;
+
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 8px;
+  background: var(--cream);
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.profile-view__upload:hover:not(:disabled) {
+  border-color: var(--strawberry);
+}
+
+.profile-view__upload:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Understated text-only link - a lesser action than Upload, so it
+   doesn't compete with it for visual weight. */
+.profile-view__remove-photo {
+  border: 0;
   background: transparent;
-  color: inherit;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+  padding: 2px 0;
+
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+
   cursor: pointer;
 }
 
-.profile-view__avatar-actions button:first-child {
-  border-color: #f17ba6;
-  color: #f17ba6;
+.profile-view__remove-photo:hover:not(:disabled) {
+  color: var(--strawberry);
 }
 
-.profile-view__remove-photo {
-  opacity: 0.75;
-}
-
-.profile-view__avatar-actions button:disabled {
+.profile-view__remove-photo:disabled {
   opacity: 0.5;
   cursor: default;
 }
@@ -72,59 +151,92 @@
 .profile-view__form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-width: 320px;
+}
+
+.profile-view__field-group {
+  margin-bottom: 18px;
+}
+
+.profile-view__field-group:last-of-type {
+  margin-bottom: 0;
 }
 
 .profile-view__label {
-  margin-top: 10px;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  opacity: 0.8;
+  display: block;
+  margin: 0 0 8px;
+
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: var(--muted-ink);
 }
 
+/* Matches the redesigned modals' own field system (components/
+   modal.css's .modal-field) - same padding/radius/tokens, so a form
+   field looks identical whether it's in a modal or on this page. */
 .profile-view__form input {
-  padding: 8px 10px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 14px;
+
+  background: var(--cream);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+  border-radius: 10px;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
   font-size: 14px;
 }
 
+.profile-view__form input:focus {
+  outline: none;
+  border-color: var(--strawberry);
+}
+
 .profile-view__form input:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .profile-view__error {
-  margin-top: 10px;
+  margin: 14px 0 0;
+  font-family: var(--font-ui);
   font-size: 13px;
-  color: #d6455f;
+  color: var(--error);
 }
 
 .profile-view__success {
-  margin-top: 10px;
+  margin: 14px 0 0;
+  font-family: var(--font-ui);
   font-size: 13px;
-  color: #2f9e5c;
+  color: var(--success);
 }
 
+/* Compact, not full-width - the form above it is already only as wide
+   as the panel, so a full-bleed button here would look like a generic
+   SaaS "submit" bar rather than a deliberate action. */
 .profile-view__save {
   align-self: flex-start;
-  min-width: 100px;
-  margin-top: 18px;
-  padding: 9px;
-  border: 1px solid #f17ba6;
-  border-radius: 4px;
-  background: #f17ba6;
-  color: #fff;
-  font-family: var(--mono);
-  font-size: 12px;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+  min-width: 140px;
+  margin-top: 20px;
+  padding: 12px 20px;
+
+  border: 1px solid var(--strawberry);
+  border-radius: 10px;
+  background: var(--strawberry);
+
+  color: var(--surface);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-view__save:hover:not(:disabled) {
+  background: var(--strawberry-hover);
+  border-color: var(--strawberry-hover);
 }
 
 .profile-view__save:disabled {
@@ -132,33 +244,100 @@
   cursor: default;
 }
 
-.profile-view__section-divider {
-  height: 1px;
-  margin: 28px 0 20px;
-  background: var(--border);
+.profile-view__gender-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.profile-view__section-title {
-  margin: 0 0 12px;
-  font-size: 16px;
-  color: var(--text-h);
-}
+/* Inactive: cream/neutral, same quiet language as .profile-view__upload.
+   Selected: pale blush fill + strawberry border, dark text throughout -
+   never a solid strawberry fill with light text, so only one option
+   reads as "on" without the whole row turning pink. */
+.profile-view__gender-option {
+  padding: 8px 16px;
 
-.profile-view__password-dots {
-  margin: 0;
-  letter-spacing: 0.1em;
-}
-
-.profile-view__change-password {
-  margin-top: 12px;
-  padding: 7px 12px;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  font-family: var(--mono);
-  font-size: 11px;
-  text-transform: lowercase;
-  letter-spacing: 0.04em;
+  border-radius: 999px;
+  background: var(--cream);
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.profile-view__gender-option.is-selected {
+  border-color: var(--strawberry);
+  background: var(--blush);
+  color: var(--cherry-ink);
+}
+
+.profile-view__gender-option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Clean settings-row treatment (Account) - separation between rows
+   comes from the border, not individual card shells per action. */
+.profile-view__account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 14px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+
+  color: var(--cocoa-ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  text-align: left;
+
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.profile-view__account-row:last-of-type {
+  border-bottom: 0;
+}
+
+.profile-view__account-row:hover {
+  color: var(--strawberry);
+}
+
+.profile-view__account-row-chevron {
+  color: var(--muted-ink);
+}
+
+@media (max-width: 520px) {
+  .profile-view__panel {
+    padding: 24px;
+  }
+
+  .profile-view__title {
+    font-size: 32px;
+  }
+}
+
+/* A small decorative touch at the very bottom of the page - the source
+   asset is drawn vertically (key head up top, shaft down), rotated 90deg
+   here to lie flat/horizontal instead. */
+.profile-view__key {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+.profile-view__key img {
+  width: 150px;
+  height: auto;
+  transform: rotate(90deg);
 }
