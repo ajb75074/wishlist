@@ -1,28 +1,13 @@
-import { useEffect } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "../../components/modal.css";
 import "./DonateConfirmModal.css";
 
-// App only renders this while the modal should be open, so each open is
-// a fresh mount - no reset-on-open effect needed, same pattern as
-// CreateCollectionModal.
-// Presentation only - the actual deleteWishlistItem calls happen in
-// App.jsx's onConfirm handler (reusing the existing delete logic),
-// this component just asks for confirmation first.
 function DonateConfirmModal({ count, isSubmitting, errorMessage, onCancel, onConfirm }) {
   const isPlural = count > 1;
 
-  // Escape closes the modal, same as CreateCollectionModal - but not
-  // while a donate is actually in flight.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape" && !isSubmitting) {
-        onCancel();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel, isSubmitting]);
+  useEscapeKey(() => {
+    if (!isSubmitting) onCancel();
+  });
 
   return (
     <div

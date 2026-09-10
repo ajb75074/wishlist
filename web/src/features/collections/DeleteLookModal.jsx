@@ -1,11 +1,7 @@
-import { useEffect } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "../../components/modal.css";
 import "./DeleteLookModal.css";
 
-// Same shell as DeleteCollectionModal - fresh mount while a Look is
-// pending removal, Escape/backdrop-click cancel unless a delete is
-// actually in flight. The real deleteLook call happens in
-// CollectionDetailView's onConfirm handler, this component only asks first.
 function DeleteLookModal({
   lookName,
   collectionName,
@@ -14,16 +10,9 @@ function DeleteLookModal({
   onCancel,
   onConfirm,
 }) {
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape" && !isSubmitting) {
-        onCancel();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel, isSubmitting]);
+  useEscapeKey(() => {
+    if (!isSubmitting) onCancel();
+  });
 
   return (
     <div

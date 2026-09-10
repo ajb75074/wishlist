@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "../../components/modal.css";
 import "./CreateLookModal.css";
 
-// App only renders this component while the modal should be open, so
-// each open is a fresh mount - form state (just the name now) starts
-// clean for free, same pattern as CreateCollectionModal.
-// No piece picker anymore - a Look now always starts empty, and the
-// user goes straight into Look Studio to style it from their pieces.
 function CreateLookModal({ onClose, onCreate }) {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,17 +13,7 @@ function CreateLookModal({ onClose, onCreate }) {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  // Escape closes the modal, matching CreateCollectionModal.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const canSubmit = name.trim().length > 0;
 

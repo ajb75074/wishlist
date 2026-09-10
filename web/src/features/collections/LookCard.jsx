@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "./LookCard.css";
 
 const MAX_PREVIEW_IMAGES = 4;
 
-// Same Material Symbols "more_vert" icon as SelectModeBar's own trigger -
-// not shared/exported there, so duplicated here, matching this app's
-// existing convention of small local icon components per file.
 function KebabIcon() {
   return (
     <svg viewBox="0 -960 960 960" width="16" height="16" aria-hidden="true">
@@ -49,19 +47,15 @@ function LookCollage({ pieces }) {
   );
 }
 
-// The card itself is a <button> (opens Look Detail), so the menu
-// trigger has to be a sibling rather than nested inside it - same
-// reason CollectionsView's own delete button sits beside its card
-// button instead of inside it. Also keeps the menu from being clipped
-// by the card's own overflow: hidden (used for the collage's corners).
+// The card itself is a <button>, so the menu trigger has to be a sibling
+// rather than nested inside it.
 function LookCard({ look, onClick, onRequestRemove }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const wrapperRef = useRef(null);
-  // Only pieces currently styled on the bed count/show here - a Look's
-  // catalog (every Collection piece) is no longer the same thing as
-  // what's actually arranged, so look.wishitems.length would overcount.
   const placedPieces = look.wishitems.filter((piece) => piece.isPlaced);
   const pieceCount = placedPieces.length;
+
+  useEscapeKey(() => setIsMenuOpen(false), isMenuOpen);
 
   useEffect(() => {
     if (!isMenuOpen) return undefined;
@@ -74,19 +68,8 @@ function LookCard({ look, onClick, onRequestRemove }) {
       setIsMenuOpen(false);
     }
 
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    }
-
     document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isMenuOpen]);
 
   return (

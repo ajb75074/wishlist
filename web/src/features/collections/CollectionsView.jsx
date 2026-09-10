@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import CollectionThumbnail from "./CollectionThumbnail";
 import "./CollectionsView.css";
 
-// Same Material Symbols "more_vert" glyph as LookCard's own KebabIcon -
-// not shared/exported there, so duplicated here (matches this app's
-// existing convention of small local icon components per file).
 function KebabIcon() {
   return (
     <svg viewBox="0 -960 960 960" width="16" height="16" aria-hidden="true">
@@ -16,13 +14,11 @@ function KebabIcon() {
   );
 }
 
-// One card's own kebab menu (trigger + dropdown). Split out from the
-// grid map so its open/closed state and outside-click/Escape handling
-// - identical pattern to LookCard's own menu - stay per-card instead of
-// needing an "which card's menu is open" index in the parent.
 function CollectionCardMenu({ collection, onEdit, onDelete }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  useEscapeKey(() => setIsMenuOpen(false), isMenuOpen);
 
   useEffect(() => {
     if (!isMenuOpen) return undefined;
@@ -32,19 +28,8 @@ function CollectionCardMenu({ collection, onEdit, onDelete }) {
       setIsMenuOpen(false);
     }
 
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setIsMenuOpen(false);
-      }
-    }
-
     document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isMenuOpen]);
 
   return (
@@ -96,8 +81,6 @@ function CollectionCardMenu({ collection, onEdit, onDelete }) {
   );
 }
 
-// Presentation only - collections/handlers all come from App.jsx.
-// No Supabase calls and no modal logic live here.
 function CollectionsView({
   collections,
   onCreateCollection,
@@ -130,7 +113,7 @@ function CollectionsView({
                       shows through its transparent center. Bare
                       relative filename, same convention as every other
                       public/ image in this app (e.g. header.jsx's
-                      src="bags.png") - resolved by the browser at
+                      src="stem.png") - resolved by the browser at
                       runtime relative to the current document, which
                       works in both dev and the packaged Chrome
                       extension without going through Vite's build-time

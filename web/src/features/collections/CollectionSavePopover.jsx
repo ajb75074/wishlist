@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import CollectionThumbnail from "./CollectionThumbnail";
 import { addItemToCollection, getCollectionsForItem } from "./collections";
 import "../../components/modal.css";
@@ -29,11 +30,6 @@ function getPosition(anchorRect) {
   return { top, left };
 }
 
-// App only renders this while a product's popover should be open, so
-// each open is a fresh mount - search/success/error state starts
-// clean for free. Calls collections.js directly (unlike ProductCard,
-// which never touches Supabase) since membership status is
-// popover-local UI state, not something the rest of the app reads.
 function CollectionSavePopover({
   product,
   collections,
@@ -75,10 +71,10 @@ function CollectionSavePopover({
     };
   }, [product.id]);
 
-  // Closes on outside click/Escape. mousedown (not click) on the
-  // trigger button is explicitly ignored so a second click on it can
-  // toggle-close via the button's own handler in App.jsx, instead of
-  // this listener closing it first and the click reopening it.
+  useEscapeKey(onClose);
+
+  // mousedown (not click) on the trigger is ignored so its own handler can
+  // toggle-close.
   useEffect(() => {
     function handlePointerDown(event) {
       if (popoverRef.current?.contains(event.target)) return;
@@ -86,19 +82,8 @@ function CollectionSavePopover({
       onClose();
     }
 
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
     document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [anchorEl, onClose]);
 
   useEffect(() => {

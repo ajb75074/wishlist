@@ -1,15 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useRef, useState } from "react";
+import { useAuth } from "../../lib/useAuth";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import { MIN_PASSWORD_LENGTH, changePassword } from "../auth/auth";
 import "../../components/modal.css";
 import "./ChangePasswordModal.css";
 
-// Presentation + one call into auth.js's changePassword helper -
-// nothing here reads, stores, or compares the current password itself;
-// Supabase Auth alone verifies it (see changePassword's own comment on
-// how and what that does to the existing session). All three fields
-// are local, temporary component state, cleared immediately on success
-// and on every close/cancel path.
 function ChangePasswordModal({ onClose }) {
   const { user } = useAuth();
 
@@ -20,13 +15,9 @@ function ChangePasswordModal({ onClose }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // isSubmitting alone isn't enough to guarantee only one operation
-  // ever runs - it's regular React state, so a second call to
-  // handleSubmit landing before the next render commits would still
-  // read the old (false) value. This ref is set synchronously, in the
-  // same tick as the check, so a duplicate call can never slip through
-  // the gap between "user submits again" and "React re-renders with
-  // the button disabled."
+  // isSubmitting state alone can't prevent a duplicate call landing
+  // before the next render commits - this ref is set synchronously in
+  // the same tick as the check instead.
   const isSubmittingRef = useRef(false);
 
   function clearFields() {
@@ -35,11 +26,6 @@ function ChangePasswordModal({ onClose }) {
     setConfirmPassword("");
   }
 
-  // Routes every close path (Escape, backdrop click, Cancel, Done)
-  // through here so field-clearing never depends on the parent
-  // (ProfileView) happening to unmount this component on close - it
-  // does today, but this doesn't rely on that as the only thing
-  // keeping passwords from lingering.
   function handleClose() {
     if (isSubmitting) return;
     clearFields();
@@ -47,28 +33,8 @@ function ChangePasswordModal({ onClose }) {
     onClose();
   }
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        handleClose();
-      }
-    }
+  useEscapeKey(handleClose);
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-    // handleClose itself isn't memoized (it reads isSubmitting fresh
-    // each render), so depending on isSubmitting/onClose directly here
-    // re-subscribes exactly when either actually changes, rather than
-    // on every render - same tradeoff DonateConfirmModal's identical
-    // Escape-handling effect already makes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSubmitting, onClose]);
-
-  // Runs only from this form's own submit event - never from an
-  // effect - so React StrictMode's dev-only double-invoke (which only
-  // affects effects, not event handlers) cannot cause this to fire
-  // twice. The isSubmitting guard below still covers a real duplicate
-  // click/Enter while a request is already in flight.
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -165,6 +131,7 @@ function ChangePasswordModal({ onClose }) {
               autoComplete="new-password"
               disabled={isSubmitting}
               required
+              minLength={6}
             />
 
             <label className="change-password-modal__label" htmlFor="change-password-confirm">
@@ -178,6 +145,7 @@ function ChangePasswordModal({ onClose }) {
               autoComplete="new-password"
               disabled={isSubmitting}
               required
+              minLength={6}
             />
 
             {errorMessage && <p className="modal__error">{errorMessage}</p>}

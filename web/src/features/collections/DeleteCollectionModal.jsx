@@ -1,11 +1,7 @@
-import { useEffect } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "../../components/modal.css";
 import "./DeleteCollectionModal.css";
 
-// App only renders this while a collection is pending deletion, so each
-// open is a fresh mount - same pattern as CreateCollectionModal and
-// DonateConfirmModal. The actual deleteCollection call happens in
-// App.jsx's onConfirm handler, this component only asks first.
 function DeleteCollectionModal({
   collectionName,
   isSubmitting,
@@ -13,17 +9,9 @@ function DeleteCollectionModal({
   onCancel,
   onConfirm,
 }) {
-  // Escape closes the modal, but not while a delete is actually in flight.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape" && !isSubmitting) {
-        onCancel();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onCancel, isSubmitting]);
+  useEscapeKey(() => {
+    if (!isSubmitting) onCancel();
+  });
 
   return (
     <div

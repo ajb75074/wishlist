@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import CollectionThumbnail from "./CollectionThumbnail";
 import "../../components/modal.css";
 import "./CreateCollectionModal.css";
@@ -15,9 +16,6 @@ const COLOR_PALETTE = [
   { name: "peach", value: "#f5c9a8" },
 ];
 
-// App only renders this while a collection is being edited, so each
-// open is a fresh mount, pre-filled from the collection passed in -
-// same fresh-mount-per-open pattern every other modal in this app uses.
 function EditCollectionModal({ collection, onClose, onSave }) {
   const [name, setName] = useState(collection.name);
   const [thumbnailMode, setThumbnailMode] = useState(collection.imageUrl ? "image" : "color");
@@ -31,16 +29,7 @@ function EditCollectionModal({ collection, onClose, onSave }) {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   async function handleSubmit(event) {
     event.preventDefault();

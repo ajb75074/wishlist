@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/useAuth";
 import {
   ALLOWED_PROFILE_IMAGE_TYPES,
   MAX_PROFILE_IMAGE_BYTES,
@@ -14,10 +14,6 @@ import {
   uploadProfileImage,
 } from "./profile";
 
-// Owns the Profile page's data + the three mutations it exposes
-// (rename, upload photo, remove photo) - same shape as useWishlist:
-// the service module (profile.js) only ever talks to Supabase, this
-// hook owns loading/error/success state and what the UI can call.
 export function useProfile() {
   const { user } = useAuth();
 
@@ -106,8 +102,6 @@ export function useProfile() {
     }
   }
 
-  // `nextGender` is one of GENDER_OPTIONS' values, or null to clear it
-  // ("prefer not to say") - both are handled identically here.
   async function saveGender(nextGender) {
     setIsSavingGender(true);
     setErrorMessage("");

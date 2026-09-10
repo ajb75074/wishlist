@@ -3,10 +3,9 @@ import "../../components/modal.css";
 import "./IllustrateLookModal.css";
 import { generateLookIllustration } from "./illustrateLook";
 import { categorizeProduct } from "../../lib/categorize";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import { ALLOWED_PROFILE_IMAGE_TYPES } from "../profile/profile";
 
-// Data-driven so a second style could be added later without touching
-// the modal's structure - Milestone 1 only ships the one, per spec.
 const ILLUSTRATION_STYLES = [
   {
     key: "y2k-fashion-sketch",
@@ -16,24 +15,17 @@ const ILLUSTRATION_STYLES = [
   },
 ];
 
-// The app-level generation request. Provider-agnostic on purpose - no
-// Gemini-specific shape here, that translation happens entirely
-// server-side (supabase/functions/illustrate-look). Note there's no
-// avatar field: the server reads the caller's OWN profile
-// (bed_model_image_path) directly from the database rather than
-// trusting a client-supplied image, so the client has nothing
-// avatar-related to send - it can only ever affect what THAT profile
-// points at (via the upload flow below), never claim someone else's.
+// No avatar field: the server reads the caller's own profile
+// (bed_model_image_path) from the database rather than trusting a
+// client-supplied image.
 function buildGenerationPayload({ look, pieces, styleKey }) {
   return {
     lookId: look.id,
     pieces: pieces.map((piece) => ({
       id: piece.id,
       name: piece.name,
-      // Derived via the app's existing name-keyword heuristic
-      // (lib/categorize.js) - wishitems have no stored category column,
-      // so this is the project's existing normalized equivalent rather
-      // than a new category system.
+      // wishitems have no category column, so this uses the app's name-
+      // keyword heuristic.
       category: categorizeProduct(piece),
       imageUrl: piece.cutoutImageUrl ?? piece.imageUrl,
     })),
@@ -41,24 +33,8 @@ function buildGenerationPayload({ look, pieces, styleKey }) {
   };
 }
 
-// App only renders this while the modal should be open, so each open
-// is a fresh mount - state below starts clean for free, same pattern
-// as every other modal in this feature.
-//
-// Phase machine (Milestone 3 - cost control means no free-standing
-// Regenerate once a generation succeeds):
-//   "saved"      - look.illustrationUrl already existed on open, OR a
-//                  save just completed. Image + Close only.
-//   "form"       - no saved illustration yet; full model/pieces/style
-//                  picker, Generate.
-//   "generating" - request in flight; same picker, disabled + label.
-//   "result"     - a fresh (unsaved) generation succeeded; image +
-//                  Close + Save Illustration. No Regenerate - closing
-//                  without saving simply discards it (nothing was ever
-//                  written to Supabase for it).
-//   "saving"     - Save Illustration in flight.
-//   "error"      - generation failed; picker still shown (nothing
-//                  usable exists yet, so Try Again is fine here).
+// Phase machine - no free-standing Regenerate once a generation succeeds
+// (cost control).
 function IllustrateLookModal({
   look,
   pieces,
@@ -74,21 +50,13 @@ function IllustrateLookModal({
   const [resultImageUrl, setResultImageUrl] = useState(look.illustrationUrl ?? null);
   const [errorMessage, setErrorMessage] = useState("");
   const [saveErrorMessage, setSaveErrorMessage] = useState("");
-  // Gates the "Illustration saved to this Look." confirmation line -
-  // only true right after an active save in this session, not merely
-  // because phase is "saved" (which is also true when reopening a Look
-  // that already had one saved from a previous visit).
   const [justSaved, setJustSaved] = useState(false);
   const closeButtonRef = useRef(null);
-  // Same synchronous-guard reasoning as isGeneratingRef, for Save.
   const isSavingRef = useRef(false);
   // Synchronous guard against a double-click firing two requests before
   // React has re-rendered the disabled button - state alone can't catch
   // that, since setState isn't applied until the next render.
   const isGeneratingRef = useRef(false);
-  // Captured once, at mount - the element that had focus right before
-  // this modal opened (the Illustrate Look button), so focus can return
-  // there on close instead of being dropped back to <body>.
   const triggerElRef = useRef(document.activeElement);
   const avatarFileInputRef = useRef(null);
 
@@ -96,16 +64,7 @@ function IllustrateLookModal({
     requestAnimationFrame(() => closeButtonRef.current?.focus());
   }, []);
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   useEffect(() => {
     const triggerEl = triggerElRef.current;
@@ -114,14 +73,8 @@ function IllustrateLookModal({
     };
   }, []);
 
-  // Avoids a "set state on an unmounted component" warning if the
-  // modal is closed while a generation request is still in flight -
-  // the fetch itself isn't aborted (Milestone 2 keeps this simple),
-  // its result is just ignored once we're gone. Reset to true at the
-  // START of the effect, not just at useRef's initial value - in dev
-  // StrictMode, React mounts/unmounts/remounts once on purpose, which
-  // runs this cleanup immediately; without resetting it here, the ref
-  // would be stuck false for the rest of the component's real life.
+  // Avoids setState after unmount if the modal closes mid-request. Reset
+  // inside the effect, for StrictMode's double-invoke.
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
@@ -142,12 +95,6 @@ function IllustrateLookModal({
     await onUploadAvatar(file);
   }
 
-  // Calls the feature service (illustrateLook.js), which calls the
-  // illustrate-look Edge Function, which calls Gemini - this component
-  // never talks to either directly. Only reachable from "form"/"error"
-  // (see the render below) - once a generation succeeds there is no
-  // path back to this handler without closing and reopening the modal,
-  // which is the whole point of removing Regenerate.
   async function handleGenerateIllustration() {
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
@@ -170,12 +117,6 @@ function IllustrateLookModal({
     }
   }
 
-  // Uploads the freshly-generated (still unsaved) result via the
-  // feature service (CollectionDetailView's onSaveIllustration ->
-  // looks.js's saveLookIllustration -> Storage + the Look's own row).
-  // A failed save falls back to "result" (not "error") - the generated
-  // image is still perfectly good and sitting in memory, so the user
-  // can just press Save again without paying for another generation.
   async function handleSaveIllustration() {
     if (isSavingRef.current) return;
     isSavingRef.current = true;

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import "../../components/modal.css";
 import "./PreparePieceModal.css";
 import {
@@ -20,10 +21,8 @@ const ERROR_MESSAGES = {
   SAVE_FAILED: "couldn't save this item - try again.",
 };
 
-// App only renders this while a piece is being prepared, so each open
-// is a fresh mount - points/mask/etc. all start clean for free. The
-// segmentation MODEL itself is a module-level singleton (see
-// segmentation.js) and is NOT reloaded on each open.
+// The segmentation model itself is a module-level singleton, so it survives
+// this modal's remounts.
 function PreparePieceModal({ product, onClose, onSave }) {
   const [phase, setPhase] = useState("loading"); // loading | ready | error
   const [loadErrorKey, setLoadErrorKey] = useState(null);
@@ -52,10 +51,8 @@ function PreparePieceModal({ product, onClose, onSave }) {
         const { model, processor } = await loadSegmentationModel();
         if (!isCurrent) return;
 
-        // Direct fetch is the fast path (no extra hop) and works for
-        // any CORS-friendly host (e.g. Shopify). Only falls back to the
-        // proxy - which fixes it for any host, at the cost of one extra
-        // network round trip - when that fails.
+        // Direct fetch is the fast path; the proxy fallback costs an extra
+        // hop but works for any host.
         try {
           blob = await fetchImageAsBlob(product.imageUrl);
         } catch {
@@ -85,9 +82,6 @@ function PreparePieceModal({ product, onClose, onSave }) {
         setPhase("ready");
       } catch (error) {
         if (!isCurrent) return;
-        // Full detail goes to the console only - the on-screen message
-        // stays plain-language, but this is what to check when the
-        // generic message above doesn't say enough on its own.
         console.error("Prepare Piece setup failed:", error);
         setLoadErrorKey(error.message in ERROR_MESSAGES ? error.message : "MODEL_LOAD_FAILED");
         setPhase("error");
@@ -110,16 +104,9 @@ function PreparePieceModal({ product, onClose, onSave }) {
     drawCanvas(canvasRef.current, imageElRef.current, mask, points);
   }, [phase, mask, points]);
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape" && !isSaving) {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, isSaving]);
+  useEscapeKey(() => {
+    if (!isSaving) onClose();
+  });
 
   async function runSegmentation(nextPoints) {
     setIsSegmenting(true);

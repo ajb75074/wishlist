@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import CollectionThumbnail from "./CollectionThumbnail";
 import "../../components/modal.css";
 import "./CreateCollectionModal.css";
 
-// A small curated palette drawn from the app's own design tokens
-// (index.css) rather than arbitrary hex values, so every cover choice
-// already belongs to the same palette as the rest of the app.
 const COLOR_PALETTE = [
   { name: "blush", value: "#fadadd" },
   { name: "strawberry", value: "#e95d75" },
@@ -15,11 +13,6 @@ const COLOR_PALETTE = [
   { name: "peach", value: "#f5c9a8" },
 ];
 
-// App only renders this component while the modal should be open, so
-// each open is a fresh mount - form state starts clean for free, with
-// no reset-on-open effect needed.
-// Presentation + form state only - the actual Supabase call happens in
-// App.jsx's onCreate handler, this component just calls it.
 function CreateCollectionModal({ onClose, onCreate, initialName = "" }) {
   const [name, setName] = useState(initialName);
   const [thumbnailMode, setThumbnailMode] = useState("color");
@@ -29,22 +22,11 @@ function CreateCollectionModal({ onClose, onCreate, initialName = "" }) {
   const [errorMessage, setErrorMessage] = useState("");
   const inputRef = useRef(null);
 
-  // Autofocus the input on mount (i.e. as soon as the modal opens).
   useEffect(() => {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  // Escape closes the modal.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   async function handleSubmit(event) {
     event.preventDefault();

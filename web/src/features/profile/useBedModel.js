@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/useAuth";
 import {
   ALLOWED_PROFILE_IMAGE_TYPES,
   MAX_PROFILE_IMAGE_BYTES,
@@ -8,14 +8,6 @@ import {
   uploadBedModelImage,
 } from "./profile";
 
-// Read-only-plus-upload, single-purpose sibling of useProfile - Look
-// Studio (the bed itself, and Illustrate Look's "model" preview) only
-// ever needs to know what photo to show in place of the default
-// avatar, and - now that the bed itself offers an inline "upload
-// selfie" placeholder when none is set - a way to upload one directly
-// from there without routing to the full Profile page. Kept as its own
-// hook rather than reusing useProfile so those two components don't
-// pull in display-name/password state they have nothing to do with.
 export function useBedModel() {
   const { user } = useAuth();
 
