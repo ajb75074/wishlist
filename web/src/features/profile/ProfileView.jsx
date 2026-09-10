@@ -2,13 +2,10 @@ import { useRef, useState } from "react";
 import ChangePasswordModal from "./ChangePasswordModal";
 import { ALLOWED_PROFILE_IMAGE_TYPES, GENDER_OPTIONS } from "./profile";
 import { useProfile } from "./useProfile";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/useAuth";
 import keyIcon from "../../assets/key.png";
 import "./ProfileView.css";
 
-// Plain geometric placeholder - functional-only like the rest of this
-// screen, not a design asset. Deliberately unrelated to Look Studio's
-// dress-up avatar image, which lives entirely under features/collections.
 function DefaultAvatar() {
   return (
     <svg viewBox="0 0 64 64" className="profile-view__avatar-fallback" aria-hidden="true">
@@ -51,10 +48,8 @@ function ProfileView() {
   const fileInputRef = useRef(null);
   const bedModelFileInputRef = useRef(null);
 
-  // Same "resync on source change" trick CollectionThumbnail already
-  // uses for its own image-fallback state: keeps the editable draft in
-  // step with whatever profile.js last loaded/saved, without a
-  // setState-in-effect.
+  // Resync the draft when the loaded profile changes, without a setState-in-
+  // effect.
   const [lastDisplayName, setLastDisplayName] = useState(null);
   if (displayName !== lastDisplayName) {
     setLastDisplayName(displayName);
@@ -115,7 +110,7 @@ function ProfileView() {
           <div className="profile-view__avatar-row">
             <div className="profile-view__avatar">
               {showImage ? (
-                <img src={profileImageUrl} alt="" onError={() => setImageLoadFailed(true)} />
+                <img src={profileImageUrl} alt="Your profile photo" onError={() => setImageLoadFailed(true)} />
               ) : (
                 <DefaultAvatar />
               )}
@@ -190,7 +185,7 @@ function ProfileView() {
             <div className="profile-view__avatar-row">
               <div className="profile-view__avatar">
                 {bedModelImageUrl && !bedModelImageLoadFailed ? (
-                  <img src={bedModelImageUrl} alt="" onError={() => setBedModelImageLoadFailed(true)} />
+                  <img src={bedModelImageUrl} alt="Your Look Studio model photo" onError={() => setBedModelImageLoadFailed(true)} />
                 ) : (
                   <DefaultAvatar />
                 )}
