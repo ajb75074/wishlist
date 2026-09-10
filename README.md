@@ -1,72 +1,140 @@
-# Wishlist App
+# Wishlist
 
-A visual shopping wishlist and organization tool for saving products from across the web and keeping them in one personal, visual archive.
+Wishlist is a fashion-focused wishlist and outfit-planning application. It lets users save products from across the web via a Chrome extension, organize them into Saved/Owned collections, build outfits from saved pieces in Look Studio, and generate an AI illustration of how a selected outfit looks together.
 
-## Project Goals
+## Overview
 
-- Save products from online stores using a Chrome extension
-- View saved products in a visual wishlist
-- Search and filter saved products
-- Organize products into collections
-- Build outfits from saved products
-- Create a more personal and visual alternative to traditional shopping wishlists
+The project has three parts that work together:
 
-## Current Status
+- **`web/`** — the React web app: browsing, filtering, collections, Look Studio, and account/profile management.
+- **`extension/`** — a Chrome extension that scrapes product data from retailer pages and saves it straight to a user's wishlist.
+- **`supabase/`** — the Postgres schema (migrations), storage buckets, and two edge functions (AI outfit illustration, an image proxy).
 
-**Phase 2 — Wishlist Web App**
+All three share one Supabase project for auth, data, and storage.
 
-The Chrome extension and core wishlist experience are functional.
+## Features
 
-### Completed
-
-- Chrome extension for capturing product information from supported product pages
-- Product data extraction and normalization
-- Supabase database integration
-- Save products from the extension to the wishlist
-- Responsive visual product grid
-- Product cards with:
-  - Product image
-  - Product name
-  - Retailer
-  - Price
-  - Color
-  - Size
-  - Link to original product
-- Inline editing for color and size
-- Delete saved products
-- Search and filter saved products
-- Interactive editorial-style header
-- Draggable decorative elements and hover interactions
-
-### In Progress
-
-- Collections
-- Adding saved products to collections
-
-### Planned
-
-- Outfit building
-- Additional filtering and sorting
-- Collection management
-- UI/UX polish
-- Responsive/mobile improvements
+- Sign in / sign up / password reset, each its own route
+- Save products from supported retailer pages via the Chrome extension (structured-data scraping with metadata/DOM fallbacks)
+- Add items manually, with an in-browser interactive cutout tool (SAM segmentation model) for removing a photo's background
+- Saved / Owned organization, with a "donate" flow for moving items out of Owned
+- Search, category/store/color/price filtering, and sorting
+- Collections: create, edit, delete, and save items into them
+- Look Studio: drag items onto a canvas to arrange an outfit, then generate an AI fashion illustration of it (Gemini via a Supabase edge function)
+- Profile: display name, account photo, a separate Look Studio "model" photo and gender preference (used as the identity reference for generated illustrations), password change
+- Responsive layout across desktop, tablet, and mobile
 
 ## Tech Stack
 
-- React
-- Vite
-- JavaScript
-- CSS
-- Supabase
-- Chrome Extensions API
+- **Frontend:** React 19, Vite, React Router (`HashRouter`, so the extension's packaged build doesn't need a server for deep links)
+- **Backend:** Supabase (Postgres, Auth, Storage, Edge Functions)
+- **AI:** Google Gemini, called from the `illustrate-look` edge function, for outfit illustration; `@huggingface/transformers` (SAM) running client-side for interactive product-photo cutouts
+- **Extension:** Manifest V3, plain JavaScript content/background scripts
+- **Styling:** plain CSS with a centralized design-token system (`src/index.css`) — no CSS framework
+
+## Architecture
+
+The web app is organized by feature: `src/features/<domain>` holds a domain's components, styles, and its own data-access module (e.g. `collections.js`, `wishlist.js`) side by side, rather than routing every request through a separate global services layer. Shared, cross-feature UI (the modal shell, sidebar, header, footer) lives in `src/components`; auth context, the Supabase client, and small stateless helpers live in `src/lib`. The extension and web app never talk to each other directly — both go through the same Supabase project, so a product saved from either surface shows up in the other.
 
 ## Project Structure
 
-The project is split into two main parts:
+```text
+wishlist/
+├── web/                  # React + Vite app (this is the "cd here and npm install" folder)
+│   ├── src/
+│   │   ├── assets/       # images, gifs, cursors used via ES imports
+│   │   ├── components/   # shared UI: modal shell, sidebar, header, footer
+│   │   ├── features/
+│   │   │   ├── auth/         # sign in/up, forgot/reset password, clothing-rack animation
+│   │   │   ├── wishlist/     # product grid, filters, add/prepare item
+│   │   │   ├── collections/  # collections, Look Studio, outfit illustration
+│   │   │   └── profile/      # account settings, Look Studio model photo
+│   │   ├── lib/           # Supabase client, auth context/hook, small utilities
+│   │   └── App.jsx
+│   └── public/            # statically-served assets (referenced by bare path, not imported)
+│
+├── extension/             # Chrome extension (Manifest V3)
+│   ├── scraping/          # structured-data + fallback product extraction
+│   ├── services/          # popup's own Supabase calls
+│   ├── utils/
+│   └── wishlist/          # built output of web/ (regenerated by `npm run build`, not hand-edited)
+│
+└── supabase/
+    ├── migrations/        # SQL schema history
+    └── functions/
+        ├── illustrate-look/  # builds the Gemini prompt, returns the generated illustration
+        └── image-proxy/      # proxies retailer product images around CORS/hotlink restrictions
+```
 
-- **Chrome Extension** — extracts product information from shopping sites and saves products
-- **React Web App** — displays, organizes, edits, and manages saved products
+## Getting Started
 
-## Vision
+The web app lives in `web/` — that's the directory to run npm commands from.
 
-Wishlist is designed to feel less like a traditional ecommerce dashboard and more like a personal fashion archive — combining the utility of a wishlist with the visual experience of a digital moodboard.
+```bash
+git clone <repo-url>
+cd wishlist/web
+npm install
+npm run dev
+```
+
+This starts the Vite dev server (default `http://localhost:5173`). Sign-up requires a working Supabase connection (see below).
+
+## Environment Variables
+
+Copy each `.env.example` to `.env.local` and fill in real values — never commit the filled-in file.
+
+**`web/.env.local`**
+
+```text
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_APP_URL=
+```
+
+**`supabase/.env.local`** (used when running edge functions locally)
+
+```text
+GEMINI_API_KEY=
+```
+
+In production, `GEMINI_API_KEY` is set as a Supabase Edge Function secret, not read from a committed file.
+
+## Development
+
+From `web/`:
+
+```bash
+npm run dev      # start the Vite dev server
+npm run lint      # eslint across the project
+npm run build     # production build of the web app AND the extension's bundled copy (see below)
+npm run preview   # preview the production build locally
+```
+
+There is no automated test suite yet — `npm run lint` and `npm run build` are the checks to run before committing.
+
+## Browser Extension
+
+The extension's code lives in `extension/`. Its popup embeds a full build of the web app, so building the web app is part of building the extension:
+
+1. From `web/`, run `npm run build`. This does two things: writes `extension/config.local.js` from your `web/.env.local` values, then builds the React app straight into `extension/wishlist/` (Vite's configured output directory for this project).
+2. In Chrome, go to `chrome://extensions`, enable Developer Mode, and "Load unpacked" pointing at the `extension/` folder.
+3. Reload the extension after any rebuild to pick up changes.
+
+The extension's popup (`popup.html`) is a small, separate vanilla-JS surface (quick add/view), while the full `extension/wishlist/` build is the same React app used at `web/`.
+
+## How It Works
+
+A product page is scraped by `extension/scraping` (JSON-LD structured data first, then Open Graph/meta tags, then DOM fallbacks), normalized, and written to Supabase. The web app reads from the same tables, so a save from the extension appears immediately in the wishlist. Look Studio's outfit illustration sends the arranged pieces' images and the user's chosen Look Studio model photo to the `illustrate-look` edge function, which builds a Gemini prompt server-side (never exposing the API key to the client) and returns a generated image, which is then stored in Supabase Storage against that outfit.
+
+## Future Improvements
+
+- Automated test coverage (none exists yet)
+- Code-splitting the web app's main bundle (currently a single ~1MB chunk)
+
+## Acknowledgments
+
+The in-browser product-photo cutout tool (used when manually adding an item) runs Meta AI's [Segment Anything Model](https://ai.meta.com/research/publications/segment-anything/), via the "SlimSAM" distillation published on Hugging Face as [Xenova/slimsam-77-uniform](https://huggingface.co/Xenova/slimsam-77-uniform), executed client-side with [`@huggingface/transformers`](https://github.com/huggingface/transformers.js).
+
+## Author
+
+Avanie Baptiste
