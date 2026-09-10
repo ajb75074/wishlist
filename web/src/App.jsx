@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
+import NotFoundView from "./components/NotFoundView";
 import ProductGrid from "./features/wishlist/ProductGrid";
 import WishlistHero from "./features/wishlist/WishlistHero";
 import WishlistToolbar from "./features/wishlist/WishlistToolbar";
@@ -29,33 +30,18 @@ function App() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
-  // Category/Store support selecting several at once (the Filter
-  // popover renders them as checkboxes), so these are arrays - an
-  // empty array means "no filter applied", same meaning "All" used to
-  // carry as a string. Color stays single-select (a row of swatches,
-  // not checkboxes), so it keeps its original string shape.
+  // Arrays: Category/Store allow multiple selections; empty means no filter.
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedStores, setSelectedStores] = useState([]);
   const [selectedColor, setSelectedColor] = useState("All");
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [sortOrder, setSortOrder] = useState("newest");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  // Only ever set by Save to Collection's "no matches" suggestion, so
-  // a name typed there can prefill Create Collection instead of the
-  // user retyping it - every other entry point (Sidebar, Collections)
-  // opens the modal with no name via the same handler below.
   const [createCollectionPrefillName, setCreateCollectionPrefillName] = useState("");
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  // All Saves' own Saved/Owned view - presentation only, never sent to
-  // Supabase and never touched by Collections/Looks, which keep
-  // reading every wishitem regardless of ownership. Saved-first is the
-  // product decision, so this is the default and the only two values -
-  // no "all" option unless a concrete need for one shows up later.
   const [ownership, setOwnership] = useState("saved");
   // { product, anchorEl, rect } | null - which product's save popover is open
   const [savePopover, setSavePopover] = useState(null);
-  // All Saves Select Mode - a separate, opt-in management state so
-  // Browse Mode cards stay clean by default.
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState(new Set());
   // Trigger for opening a specific card's existing edit mode from the
@@ -63,19 +49,12 @@ function App() {
   // for the same product) so ProductCard's effect always re-fires.
   const [autoEditProductId, setAutoEditProductId] = useState(null);
   const [autoEditKey, setAutoEditKey] = useState(0);
-  // Donate confirmation - opened from the Select Mode action tray.
-  // App only renders the modal while this is true, so it always mounts
-  // fresh (see DonateConfirmModal's own comment on that pattern).
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
   const [isDonating, setIsDonating] = useState(false);
   const [donateError, setDonateError] = useState("");
 
-  // The current collection (if any) is derived from the URL rather than
-  // kept as its own state - /collections/:collectionName is the single
-  // source of truth for which one is open, so the Sidebar's own
-  // highlight and the "collection just got deleted" check below both
-  // read off this instead of a parallel piece of state that could drift
-  // from the URL.
+  // Derived from the URL, not state - /collections/:collectionName is the
+  // single source of truth for which collection is open.
   const collectionNameParam = decodeURIComponent(
     location.pathname.match(/^\/collections\/([^/]+)/)?.[1] ?? "",
   ) || null;
@@ -108,30 +87,16 @@ function App() {
     ? collections.find((c) => c.name.toLowerCase() === collectionNameParam.toLowerCase())
     : null;
 
-  // Drilling into a specific collection also makes the broader
-  // "Collections" nav section read as active, regardless of whether
-  // this was triggered from CollectionsView or the Sidebar list.
   function handleSelectCollection(collection) {
     navigate(`/collections/${encodeURIComponent(collection.name)}`);
   }
 
-  // Any top-level nav change resets the drill-down, so re-clicking
-  // "Collections" itself returns to the general grid rather than
-  // staying on whichever collection was last open.
   function handleViewChange(view) {
     navigate(view === "all" ? "/" : "/collections");
   }
 
-  // Shared by every "+ create collection" entry point (Sidebar,
-  // Collections, Save to Collection) so the prefill name is always
-  // explicitly set (even to "") rather than only being cleared by
-  // whichever handler happens to remember to - a stale name from one
-  // opening can never leak into an unrelated one.
-  //
-  // Sidebar/CollectionsView wire this straight to a button's onClick
-  // (`onClick={onCreateCollection}`), so it's often actually called
-  // with the click event as its first argument, not a name - only
-  // Save to Collection's suggestion ever passes a real string.
+  // Often wired straight to a button's onClick, so the first argument may be
+  // a click event rather than a name.
   function handleOpenCreateModal(prefillName) {
     setCreateCollectionPrefillName(typeof prefillName === "string" ? prefillName : "");
     setIsCreateModalOpen(true);
@@ -164,9 +129,6 @@ function App() {
     setSelectedProductIds(new Set());
   }
 
-  // Draft filter values only ever reach this state on Apply - see
-  // FilterPopover's own comment on why it's safe to commit all five
-  // in one go here.
   function handleApplyFilters(next) {
     setSelectedCategories(next.categories);
     setSelectedStores(next.stores);
@@ -182,12 +144,8 @@ function App() {
     setSelectedPriceRanges([]);
   }
 
-  // A selected item can be hidden by the new ownership view the moment
-  // it changes (its id would linger in selectedProductIds pointing at
-  // a card that's no longer rendered) - clearing the selection here is
-  // the smallest safe fix, without leaving/re-entering Select Mode
-  // itself. A no-op guard avoids clearing an in-progress selection for
-  // a click that didn't actually change anything.
+  // Clear the selection when the ownership view changes - selected ids could
+  // otherwise point at cards that are no longer rendered.
   function handleOwnershipChange(nextOwnership) {
     if (nextOwnership === ownership) return;
     setOwnership(nextOwnership);
@@ -206,9 +164,6 @@ function App() {
     });
   }
 
-  // Only offered when exactly one item is selected. Exits Select Mode
-  // and hands off to that card's own existing edit UI (Save/Cancel work
-  // exactly as they already do) instead of building a second editor.
   function handleEditFromSelectMode() {
     const [onlyId] = selectedProductIds;
 
@@ -229,9 +184,6 @@ function App() {
     setDonateError("");
   }
 
-  // Donate ♡ is the fashion-themed rename for the same global delete -
-  // this modal is the confirmation, so it calls performDelete directly
-  // rather than popping a second, redundant confirm on top of itself.
   async function handleConfirmDonate() {
     setIsDonating(true);
     setDonateError("");
@@ -257,60 +209,56 @@ function App() {
     }
   }
 
-  // Presentation-only split of the SAME wishlist state useWishlist
-  // already owns - nothing is removed/mutated, a product just moves
-  // in or out of this derived list as `ownership` or the product's own
-  // isOwned changes. !product.isOwned (rather than === false) is
-  // deliberate: any pre-feature/defensive row without a real isOwned
-  // value already normalizes to false at the data layer, and this
-  // stays correct even if that ever isn't the case.
-  const ownershipFilteredProducts = products.filter((product) =>
-    ownership === "saved" ? !product.isOwned : product.isOwned,
+  // !isOwned (not === false) stays correct for rows where isOwned isn't a
+  // real boolean.
+  const ownershipFilteredProducts = useMemo(
+    () => products.filter((product) => (ownership === "saved" ? !product.isOwned : product.isOwned)),
+    [products, ownership],
   );
 
-  const query = searchTerm.trim().toLowerCase();
+  const filteredProducts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
 
-  let filteredProducts = query
-    ? ownershipFilteredProducts.filter((product) =>
-      [product.name, product.store, product.color].some((field) =>
-        field?.toLowerCase().includes(query),
-      ),
-    )
-    : ownershipFilteredProducts;
+    let result = query
+      ? ownershipFilteredProducts.filter((product) =>
+        [product.name, product.store, product.color].some((field) =>
+          field?.toLowerCase().includes(query),
+        ),
+      )
+      : ownershipFilteredProducts;
 
-  if (selectedCategories.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedCategories.includes(categorizeProduct(product)),
-    );
-  }
+    if (selectedCategories.length > 0) {
+      result = result.filter((product) => selectedCategories.includes(categorizeProduct(product)));
+    }
 
-  if (selectedStores.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedStores.includes(product.store),
-    );
-  }
+    if (selectedStores.length > 0) {
+      result = result.filter((product) => selectedStores.includes(product.store));
+    }
 
-  if (selectedColor !== "All") {
-    filteredProducts = filteredProducts.filter(
-      (product) => basicColor(product.color) === selectedColor,
-    );
-  }
+    if (selectedColor !== "All") {
+      result = result.filter((product) => basicColor(product.color) === selectedColor);
+    }
 
-  if (selectedPriceRanges.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      priceMatchesRanges(product.price, selectedPriceRanges),
-    );
-  }
+    if (selectedPriceRanges.length > 0) {
+      result = result.filter((product) => priceMatchesRanges(product.price, selectedPriceRanges));
+    }
 
-  if (sortOrder === "price-desc") {
-    filteredProducts = [...filteredProducts].sort(
-      (a, b) => (Number(b.price) || 0) - (Number(a.price) || 0),
-    );
-  } else if (sortOrder === "price-asc") {
-    filteredProducts = [...filteredProducts].sort(
-      (a, b) => (Number(a.price) || 0) - (Number(b.price) || 0),
-    );
-  }
+    if (sortOrder === "price-desc") {
+      result = [...result].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    } else if (sortOrder === "price-asc") {
+      result = [...result].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    }
+
+    return result;
+  }, [
+    ownershipFilteredProducts,
+    searchTerm,
+    selectedCategories,
+    selectedStores,
+    selectedColor,
+    selectedPriceRanges,
+    sortOrder,
+  ]);
 
   return (
     <div className="app-layout">
@@ -482,7 +430,7 @@ function App() {
 
           <Route path="/profile" element={<ProfileView />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundView />} />
         </Routes>
 
         </div>
