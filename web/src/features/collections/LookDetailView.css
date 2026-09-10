@@ -1,7 +1,3 @@
-/* LOOK STUDIO ROOT - sized to the viewport (not the document), so the
-   whole experience fits on one screen at normal desktop sizes instead
-   of requiring page-level scrolling. Falls back to normal document
-   flow on narrow/short screens (see the media query at the bottom). */
 .look-detail {
   display: flex;
   flex-direction: column;
@@ -10,14 +6,6 @@
   overflow: hidden;
 }
 
-
-/* HEADER - a floating dimensional bar (warm cream-tinted "acrylic", not
-   clear glass), 3-column grid so the title stays centered regardless of
-   the Collection/Look name lengths, with a real piece count on the right
-   instead of decorative filler. backdrop-filter is progressively
-   enhanced - the @supports fallback below raises the background's own
-   opacity so the bar still reads as a solid light surface without blur
-   support, rather than looking see-through/broken. */
 .look-studio__header {
   position: relative;
 
@@ -33,15 +21,15 @@
 
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.82);
+  background: rgba(var(--surface-rgb), 0.82);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 8px 24px rgba(60, 32, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 24px rgba(var(--cherry-ink-rgb), 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .look-studio__header {
-    background: rgba(255, 252, 248, 0.96);
+    background: rgba(var(--surface-rgb), 0.96);
   }
 }
 
@@ -72,11 +60,6 @@
   color: var(--forest-ink);
 }
 
-/* Product/tool title, sentence case now (per the "illustrate look"-style
-   softened label treatment) - the display font gives it a bit of editorial
-   presence instead of the old tracked-out uppercase sans. The Look's
-   own name sits beside it in the same group so the pair reads as one
-   title, not three separately-centered header pieces. */
 .look-studio__title-group {
   display: flex;
   align-items: baseline;
@@ -118,30 +101,11 @@
   text-overflow: ellipsis;
 }
 
-
-/* BODY - three zones sharing whatever height remains under the header:
-   illustration (left) / bed (center, still the dominant workspace) /
-   catalog (right). grid-template-rows: minmax(0, 1fr) is the fix that
-   makes every height:100%/min-height:0 chain in the three columns
-   below actually resolve against real, viewport-bounded space instead
-   of each column's own content height - without it, a percentage
-   height on a grid child can't resolve against an implicit `auto` row
-   (the grid equivalent of a flex child missing `min-height: 0`), and
-   content silently overflows .look-detail's clip as a cut-off bottom.
-   minmax() on each column (not fixed percentages) lets the illustration
-   column shrink first on narrower desktops while the bed and catalog
-   keep their own floors - see the width guidance in each column's own
-   rules below. */
 .look-studio__body {
   flex: 1;
   min-height: 0;
 
   display: grid;
-  /* The illustration column deliberately has NO fr growth - its own
-     frame caps at 220px (see .look-studio__illustration-frame), so
-     letting this track grow past ~210px would only waste space as
-     blank column padding around a fixed-size frame. All real extra
-     space flows to the bed (still weighted heaviest) and the catalog. */
   grid-template-columns: minmax(160px, 210px) minmax(420px, 1.7fr) minmax(340px, 1fr);
   grid-template-rows: minmax(0, 1fr);
   gap: 20px;
@@ -150,11 +114,6 @@
   padding-bottom: 10px;
 }
 
-/* LEFT - illustration + fit total. Deliberately NOT a boxed sidebar:
-   no panel background/border wrapping the whole column, unlike the
-   catalog's own dimensional surface on the right - the illustration
-   sits directly in the workspace, with only the image itself getting
-   a subtle paper treatment. */
 .look-studio__illustration-column {
   display: flex;
   flex-direction: column;
@@ -166,17 +125,6 @@
   min-width: 0;
 }
 
-/* Portrait frame (matches Gemini's own 3:4 output) sized from the
-   column's WIDTH, not stretched to fill the column's height - at this
-   column's narrow share of the layout, that naturally keeps the
-   illustration smaller than the bed (which is height-driven instead)
-   without needing an explicit max-height fight between the two. The
-   slight rotation is the only other "material" cue this column gets;
-   no card shadow heavy enough to read as a sidebar.
-
-   A plain thick polaroid-style border (not the old gingham frame
-   image) - box-sizing: border-box so the border eats into the fixed
-   max-width/aspect-ratio box rather than growing past it. */
 .look-studio__illustration-frame {
   box-sizing: border-box;
   position: relative;
@@ -191,7 +139,7 @@
   border: 10px solid var(--surface);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 8px 20px rgba(60, 32, 40, 0.14);
+  box-shadow: 0 8px 20px rgba(var(--cherry-ink-rgb), 0.14);
   transform: rotate(-1deg);
 
   cursor: pointer;
@@ -217,14 +165,6 @@
   object-fit: cover;
 }
 
-/* No saved illustration yet - the entry point is the dress/sparkle
-   artwork itself (already carries its own "Illustrate Look" lettering
-   and sparkle), not a card. Chrome-free on purpose: no paper
-   background, border, shadow, or rotation, since the artwork already
-   reads as a complete piece against the light workspace - a frame
-   around it would compete with it rather than presenting it. Sized to
-   the asset's own real proportions (1550:2200) rather than the 3:4
-   ratio the saved-illustration frame uses. */
 .look-studio__illustration-frame--empty {
   aspect-ratio: 1550 / 2200;
   padding: 0;
@@ -297,12 +237,6 @@
   height: 100%;
 }
 
-/* Small toolbar strip directly under the bed - not a floating page-level
-   CTA. The same region swaps its content between View Mode's Illustrate
-   Look action and Edit Mode's cancel/save pair - kept deliberately
-   separate from Style Look (which lives in the catalog panel's own
-   footer, see .look-studio__panel-footer) so the two aren't presented
-   as a paired duo. */
 .look-studio__bed-controls {
   display: flex;
   justify-content: center;
@@ -311,12 +245,6 @@
   margin-top: 10px;
 }
 
-/* View Mode's entry point into Edit Mode - a bigger, more visible
-   call-to-action anchored to the bottom of the catalog panel, since
-   styling the look is the primary thing this whole screen exists to
-   do. flex-shrink: 0 + living inside the panel's own fixed-height flex
-   column means this footer only shrinks the catalog grid's available
-   space - it never pushes the panel (or the page) into scrolling. */
 .look-studio__panel-footer {
   flex-shrink: 0;
   padding-top: 12px;
@@ -324,9 +252,6 @@
   border-top: 1px solid var(--border);
 }
 
-/* Look Studio's one matcha moment (see index.css/the redesign brief:
-   strawberry stays for hearts/accents/selection, matcha is reserved
-   for this and completion states) - flat color, no gradient, no glow. */
 .look-studio__style-cta {
   display: flex;
   align-items: center;
@@ -353,8 +278,8 @@
 }
 
 .look-studio__style-cta:hover {
-  background: #5f7858;
-  border-color: #5f7858;
+  background: var(--matcha-hover);
+  border-color: var(--matcha-hover);
 }
 
 .look-studio__style-cta:focus-visible {
@@ -362,8 +287,6 @@
   outline-offset: 2px;
 }
 
-/* Functional instructional copy (how Edit Mode works), not a
-   decorative annotation - plain and readable. */
 .look-studio__edit-hint {
   flex-shrink: 0;
   margin: 8px 0 0;
@@ -373,11 +296,6 @@
   font-family: var(--font-ui);
   font-size: 0.76rem;
 }
-
-
-/* BED - the real bed.png photo as the backdrop; garment pieces sit on
-   its comforter area (roughly the lower two-thirds - the top third is
-   the pillows in the photo itself). No CSS-drawn shapes anymore. */
 
 .look-bed {
   container-type: size;
@@ -390,22 +308,6 @@
   justify-content: center;
 }
 
-/* Square, matching bed.png's own 1:1 dimensions - sized from the
-   available HEIGHT (not a fixed width) so the bed shrinks to fit
-   whatever vertical room the viewport actually leaves, capped at 700px
-   on tall/roomy screens. No frame/background of our own - the photo
-   (with its own hand-drawn sticker outline) is the whole visual. */
-/* Guaranteed square regardless of which axis the surrounding grid
-   column constrains tighter - container query units (cqw/cqh, measured
-   against .look-bed's own box, see container-type: size above) let
-   width and height both resolve from whichever of the container's own
-   width/height is smaller, capped at 700px. This replaces an earlier
-   height:100%/max-width:min(700px,100%)/aspect-ratio:1/1 combination
-   that could silently stop being square: aspect-ratio can't reconcile
-   an explicit height against a separately-clamped max-width when a
-   narrower container makes width the tighter constraint, and pieces
-   positioned by percentage against that logically-still-square element
-   would then render outside the visually letterboxed bed photo.  */
 .look-bed__surface {
   position: relative;
   overflow: hidden;
@@ -414,18 +316,10 @@
   height: min(100cqw, 100cqh, 700px);
 }
 
-/* Shown while a piece is picked up, so the bed itself hints "click
-   here to drop" instead of only the piece communicating that. */
 .look-bed__surface.is-placing {
   cursor: crosshair;
 }
 
-/* The source photo (bed.png) is a saturated pink ruched comforter -
-   recolored here via filter (rather than a new asset, which would
-   need real photography/generation) to a warm ivory with a faint
-   blush undertone in its own shadows/folds, matching the "soft ivory
-   dressing-room surface" the redesign calls for without losing the
-   photo's texture/imperfection. */
 .look-bed__image {
   position: absolute;
   inset: 0;
@@ -439,15 +333,6 @@
   filter: hue-rotate(65deg) saturate(0.45) brightness(1.08);
 }
 
-/* Sits on the pillow area of bed.png itself (roughly where the two
-   pillows cross near the top-center), not floating above the photo.
-   Oversized on purpose - a big head perched over the outfit reads as a
-   playful bobblehead rather than a realistic proportioned figure.
-   Cropped into a circle (aspect-ratio: 1 + object-fit: cover) rather
-   than showing the uploaded photo's own rectangle - most user photos
-   won't have a transparent background like the old bundled avatar.png
-   did, so a circle crop reads as an intentional portrait frame
-   regardless of what's behind the person in the source photo. */
 .look-bed__avatar {
   position: absolute;
   top: 10%;
@@ -460,16 +345,12 @@
 
   border-radius: 50%;
   border: 2px solid var(--surface);
-  box-shadow: 0 2px 6px rgba(60, 32, 40, 0.18);
+  box-shadow: 0 2px 6px rgba(var(--cherry-ink-rgb), 0.18);
 
   object-fit: cover;
   pointer-events: none;
 }
 
-/* Same slot/position as .look-bed__avatar above, shown instead of it
-   when the user hasn't uploaded a model photo yet - an invitation, not
-   a silent fallback image. Capped with min() so it stays a reasonable
-   circle rather than growing huge on a wide bed. */
 .look-bed__avatar-placeholder {
   position: absolute;
   top: 10%;
@@ -566,10 +447,6 @@
   object-fit: contain;
 }
 
-/* Edit Mode piece - click to pick up (see LookDetailView.jsx's
-   holdStateRef), not a press-and-hold drag. touch-action/user-select
-   still matter once picked up and a pointer/touch is moving it (same
-   touch-action approach Header.css uses for sticker drag). */
 .look-bed__piece.is-editable {
   cursor: pointer;
   touch-action: none;
@@ -582,27 +459,15 @@
   outline-offset: 2px;
 }
 
-/* will-change/transition:none only while actually held - movement is a
-   direct DOM `transform` write (see LookDetailView.jsx applyHoldFrame),
-   not a React re-render, so nothing here should ease into place or
-   fight that per-frame write. */
 .look-bed__piece.is-held {
   cursor: url("../../assets/move.cur"), move;
   will-change: transform;
   transition: none;
   outline: 2px solid var(--strawberry);
   outline-offset: 2px;
-  box-shadow: 0 10px 24px rgba(60, 32, 40, 0.22);
+  box-shadow: 0 10px 24px rgba(var(--cherry-ink-rgb), 0.22);
 }
 
-/* Width/height/position/rotation/scale are all inline styles from
-   LookDetailView.jsx now (see SIZES/getSize and the piece's own style
-   object) - Edit Mode can move and resize pieces freely, and each
-   piece's box fits its own image's real aspect ratio once it loads. */
-
-
-/* Resize toolbar - outside the bed entirely, only shown while a piece
-   is picked up, acting on that one selected piece. */
 .look-detail__resize-toolbar {
   display: flex;
   align-items: center;
@@ -619,7 +484,7 @@
 
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: rgba(255, 252, 248, 0.9);
+  background: rgba(var(--surface-rgb), 0.9);
 }
 
 .look-detail__resize-toolbar span {
@@ -643,7 +508,7 @@
   height: 22px;
   padding: 0;
 
-  border: 1px solid rgba(73, 60, 62, 0.25);
+  border: 1px solid rgba(var(--cocoa-ink-rgb), 0.25);
   border-radius: 50%;
   background: transparent;
 
@@ -658,7 +523,7 @@
 
 .look-detail__resize-toolbar button:hover {
   border-color: var(--strawberry);
-  background: rgba(233, 93, 117, 0.12);
+  background: rgba(var(--strawberry-rgb), 0.12);
 }
 
 .look-detail__resize-toolbar button:focus-visible {
@@ -666,9 +531,6 @@
   outline-offset: 2px;
 }
 
-
-/* Flat editorial button, no glossy bevel/gradient - the base for the
-   edit-toolbar's cancel/save actions. */
 .look-detail__button {
   padding: 8px 16px;
 
@@ -713,8 +575,6 @@
   background: var(--strawberry-hover);
 }
 
-/* Cancel/reset - secondary actions, so they stay visually quiet next to
-   Save Look rather than competing with it. */
 .look-detail__button--ghost {
   border-color: transparent;
   background: transparent;
@@ -741,22 +601,6 @@
   text-align: right;
 }
 
-
-/* CATALOG - "my pieces ♡". Everything belonging to the Look, not just
-   what's currently on the bed. Unboxed, image-first, dress-up-game
-   inventory feel rather than boxed product cards. */
-
-/* LEVEL 2 of the page's depth hierarchy (page background is Level 1,
-   cream; tiles below are Level 3, raised warm-white). Flat
-   --surface-secondary, a touch deeper than the cream page - no glow/
-   gradient, so the panel recedes behind the products instead of
-   competing with them. overflow: hidden keeps the scalloped notch
-   below clipped to the rounded corners; the catalog grid still
-   scrolls internally via its own overflow-y (a child's scroll isn't
-   blocked by a parent's overflow: hidden). Now that the
-   panel is its own visible surface with real shadow/elevation, the old
-   hard 1px vertical line between it and the bed was redundant - the
-   gap + this panel's own edge is enough separation on its own. */
 .look-detail__panel {
   position: relative;
   overflow: hidden;
@@ -774,21 +618,9 @@
   border: 1px solid var(--border);
   border-radius: 26px 26px 34px 34px;
   background: var(--surface-secondary);
-  box-shadow: 0 12px 32px rgba(60, 32, 40, 0.08);
+  box-shadow: 0 12px 32px rgba(var(--cherry-ink-rgb), 0.08);
 }
 
-/* Special surface of this screen - a die-cut scalloped notch along the
-   inside of the catalog drawer's top edge, like a paper inventory card
-   tucked into the workspace, the one "special" panel treatment this
-   view gets. Adapted from index.css's .motif-scalloped-top (reproduced
-   directly on this selector rather than requiring the class in the
-   JSX, which is out of scope here): the panel's own overflow: hidden
-   (needed to clip the radial highlights above to its rounded corners)
-   would crop that shared version's notch, which pokes above the box -
-   this variant sits flush at top: 0 instead so the whole cut stays
-   inside the clipped box. --scallop-bg matches the panel's own surface
-   tone immediately below the notch, since the mask punches through to
-   whatever sits behind it. */
 .look-detail__panel {
   --scallop-r: 8px;
   --scallop-bg: var(--surface-secondary);
@@ -812,8 +644,6 @@
   pointer-events: none;
 }
 
-/* Short editorial section stamp for the catalog panel - same role as
-   the sidebar's "MY COLLECTIONS" and the Outfits tab's "YOUR OUTFITS". */
 .look-studio__panel-label {
   flex-shrink: 0;
   margin: 0 0 10px;
@@ -825,8 +655,6 @@
   text-transform: uppercase;
 }
 
-/* space-between so the five category dials spread across the panel's
-   full width instead of clustering to the left. */
 .look-studio__filters {
   display: flex;
   align-items: flex-start;
@@ -834,11 +662,6 @@
   flex-shrink: 0;
 }
 
-/* Small line icon + label, stacked - replaces the old circular beveled
-   "Y2K dial" look. Flat and quiet at rest; the active state is a pale
-   blush circle behind the icon, not a strawberry block. aria-label +
-   title stay on the button for anyone relying on them, now backed by
-   the visible label too. */
 .look-studio__filter {
   display: flex;
   flex-direction: column;
@@ -867,12 +690,9 @@
 }
 
 .look-studio__filter:hover .look-studio__filter-icon {
-  background: rgba(36, 79, 67, 0.08);
+  background: rgba(var(--forest-ink-rgb), 0.08);
 }
 
-/* The four PNG category glyphs (top/bottom/shoes/other) - sized to
-   match the "all" SVG's own 32x32 so the row reads as one consistent
-   icon set despite mixing a vector icon with raster ones. */
 .look-studio__filter-glyph {
   width: 32px;
   height: 32px;
@@ -900,9 +720,6 @@
   font-weight: 600;
 }
 
-/* Understated rule separating the category toolbar from the grid below
-   it - replaces the removed "my pieces" title as the panel's only
-   internal structure. */
 .look-studio__catalog-divider {
   flex-shrink: 0;
   height: 1px;
@@ -911,9 +728,6 @@
   background: var(--border);
 }
 
-/* Search - same recipe as the Wishlist page's own search (cream
-   surface, neutral border, icon on the left, no pink glow), scaled
-   down for this panel. */
 .look-studio__search {
   flex-shrink: 0;
   display: flex;
@@ -977,9 +791,6 @@
   font-size: 0.95rem;
 }
 
-/* The catalog is the ONLY thing allowed to scroll internally - the
-   page itself never should (see .look-detail's own overflow:hidden).
-   Thin, muted scrollbar instead of a default chunky one. */
 .look-studio__catalog-grid {
   flex: 1;
   min-height: 0;
@@ -993,7 +804,7 @@
   padding: 2px 4px 2px 0;
 
   scrollbar-width: thin;
-  scrollbar-color: rgba(73, 60, 62, 0.2) transparent;
+  scrollbar-color: rgba(var(--cocoa-ink-rgb), 0.2) transparent;
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar {
@@ -1001,12 +812,12 @@
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-thumb {
-  background: rgba(73, 60, 62, 0.2);
+  background: rgba(var(--cocoa-ink-rgb), 0.2);
   border-radius: 999px;
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-thumb:hover {
-  background: rgba(73, 60, 62, 0.35);
+  background: rgba(var(--cocoa-ink-rgb), 0.35);
 }
 
 .look-studio__catalog-grid::-webkit-scrollbar-track {
@@ -1017,13 +828,6 @@
   position: relative;
 }
 
-/* LEVEL 3 - raised, warm-white inventory tile against the panel's own
-   secondary surface. A quiet neutral border by default (NOT strawberry
-   - a resting tile should never look selected); the only color this
-   tile ever gets is on hover/placed/focus, so it stays meaningful.
-   object-fit: contain (below) keeps the whole item visible regardless
-   of the slot's own square shape, so a bag or a pair of pants is
-   never cropped - the frame is generous padding, not a crop boundary. */
 .look-studio__tile {
   position: relative;
 
@@ -1038,7 +842,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--surface);
-  box-shadow: 0 3px 8px rgba(60, 32, 40, 0.06);
+  box-shadow: 0 3px 8px rgba(var(--cherry-ink-rgb), 0.06);
 
   cursor: pointer;
 
@@ -1049,20 +853,15 @@
   cursor: default;
 }
 
-/* Lift + brighten only - never a dramatic scale-up, per spec. */
 .look-studio__tile:not(:disabled):hover {
   transform: translateY(-2px);
   border-color: var(--strawberry);
-  box-shadow: 0 8px 16px rgba(60, 32, 40, 0.1);
+  box-shadow: 0 8px 16px rgba(var(--cherry-ink-rgb), 0.1);
 }
 
-/* "This is on the bed" state - the one place a resting tile is allowed
-   a strawberry border, the product itself stays fully visible (never
-   darkened/obscured) so the catalog is still scannable for what's
-   currently styled. */
 .look-studio__tile.is-placed {
   border-color: var(--strawberry);
-  box-shadow: 0 6px 14px rgba(60, 32, 40, 0.08);
+  box-shadow: 0 6px 14px rgba(var(--cherry-ink-rgb), 0.08);
 }
 
 .look-studio__tile:focus-visible {
@@ -1080,16 +879,10 @@
   pointer-events: none;
 }
 
-/* Depth only for transparent cutouts - a real rectangular retailer
-   photo already has its own shadows baked in, so this would look like
-   a double shadow on those; a cutout, with nothing behind it, reads as
-   a flat sticker without one. */
 .look-studio__tile-image.has-cutout {
-  filter: drop-shadow(0 5px 7px rgba(60, 32, 40, 0.15));
+  filter: drop-shadow(0 5px 7px rgba(var(--cherry-ink-rgb), 0.15));
 }
 
-/* Plain indicator dot (not a heart) - communicates "on the bed" only,
-   no favorite/decorative meaning attached. */
 .look-studio__tile-badge {
   position: absolute;
   top: 6px;
@@ -1100,14 +893,9 @@
   border-radius: 50%;
 
   background: var(--strawberry-hover);
-  box-shadow: 0 0 4px rgba(200, 68, 96, 0.8);
+  box-shadow: 0 0 4px rgba(var(--strawberry-hover-rgb), 0.8);
 }
 
-/* Prepare Piece - sibling of the tile button (not nested inside it, a
-   button can't nest inside another button), the one remaining
-   secondary action on a piece now that catalog membership doesn't need
-   its own "remove" control. Direct button, no dropdown, since there's
-   only ever this one action. */
 .look-studio__tile-prepare {
   position: absolute;
   top: 2px;
@@ -1124,7 +912,7 @@
 
   border: none;
   border-radius: 50%;
-  background: rgba(60, 32, 40, 0.55);
+  background: rgba(var(--cherry-ink-rgb), 0.55);
 
   color: var(--surface);
   font-size: 0.62rem;
@@ -1150,10 +938,6 @@
   outline-offset: 2px;
 }
 
-
-/* Below this width, one-viewport-fit is no longer the priority (per
-   spec, desktop is) - fall back to normal stacked document flow with
-   ordinary page scrolling instead of squeezing everything in. */
 @media (max-width: 900px) {
   .look-detail {
     height: auto;

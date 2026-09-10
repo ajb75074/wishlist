@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import PreparePieceModal from "../wishlist/PreparePieceModal";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import IllustrateLookModal from "./IllustrateLookModal";
+import DiscardChangesModal from "./DiscardChangesModal";
 import { useBedModel } from "../profile/useBedModel";
 import { ALLOWED_PROFILE_IMAGE_TYPES } from "../profile/profile";
 import { categorizeProduct } from "../../lib/categorize";
@@ -10,25 +10,20 @@ import shoesIcon from "../../assets/shoes.png";
 import bagIcon from "../../assets/bag.png";
 import "./LookDetailView.css";
 
-// Detail preview caps at more pieces than LookCard's compact collage
-// (4) since there's far more room here - this is the planning surface,
-// not the browsing thumbnail. Also mirrored server-side as MAX_PIECES
-// in supabase/functions/illustrate-look/index.ts - keep both in sync,
-// since a bed that allows more pieces than the generation endpoint
-// accepts would let a fully-styled Look fail Illustrate Look outright.
+// Code-split: pulls in @huggingface/transformers (the in-browser SAM
+// segmentation model), which would otherwise bloat the main bundle
+// every visitor downloads even if they never open this modal.
+const PreparePieceModal = lazy(() => import("../wishlist/PreparePieceModal"));
+
+// Also mirrored server-side as MAX_PIECES in
+// supabase/functions/illustrate-look/index.ts - keep both in sync, or
+// a fully-styled bed could fail Illustrate Look outright.
 const MAX_BED_PIECES = 8;
 
-// How far one arrow-key press nudges a piece, as a fraction of the bed
-// canvas's own width/height.
 const KEYBOARD_STEP = 0.02;
 
-// Mirrors the deterministic top-left placements this view used before
-// dragging existed, now as data instead of hardcoded CSS percentages -
-// both the view-mode fallback (no saved position yet) and Edit Mode's
-// "reset arrangement" read from this same table. Width/height/rotation
-// stay in LookDetailView.css, keyed by count + DOM order exactly as
-// before; only position (top-left corner, as a 0-1 fraction of the bed
-// canvas) is ever movable or persisted.
+// Fallback placement per piece count (0-1 fraction of the bed canvas), also
+// used by Edit Mode's "reset arrangement".
 const DEFAULT_POSITIONS = {
   1: [{ x: 0.32, y: 0.4 }],
   2: [
@@ -53,13 +48,6 @@ const DEFAULT_POSITIONS = {
     { x: 0.38, y: 0.82 },
     { x: 0.62, y: 0.34 },
   ],
-  // x/y stay within the same envelope the 1-5 slots above already
-  // proved safe (roughly x: 0.1-0.62, y: 0.3-0.83) - bed.png's own
-  // drawn comforter artwork has transparent padding baked into the
-  // file, so a piece can sit inside the (square, clipped) bed surface
-  // yet still visually land outside the drawn bed if its anchor pushes
-  // much past that range - packing 6-8 slots tighter within the same
-  // proven bounds instead of widening them.
   6: [
     { x: 0.3, y: 0.22 },
     { x: 0.1, y: 0.4 },
@@ -93,96 +81,30 @@ function getDefaultPosition(count, index) {
   return DEFAULT_POSITIONS[count]?.[index] ?? { x: 0.4, y: 0.4 };
 }
 
-// Mirrors LookDetailView.css's old per-count/index `transform:
-// rotate()` values. Only needed so the live "held" preview can compose
-// "keep the existing rotation, then translate by the move delta"
-// without the two fighting over the single `transform` property.
-const ROTATIONS = {
-  1: [-2],
-  2: [-5, 4],
-  3: [-2, -7, 6],
-  4: [-2, -8, 5, 2],
-  5: [-3, -8, 5, 2, 9],
-  6: [-3, -9, 4, -6, 3, 8],
-  7: [-4, -9, 5, -7, 2, 9, -2],
-  8: [-4, -9, 5, -7, 2, 9, -2, 6],
-};
-
-function getRotation(count, index) {
-  return ROTATIONS[count]?.[index] ?? 0;
+// Hashed per piece, not per index, so tilt and size don't reshuffle when
+// another piece is added or removed.
+function hashPieceId(pieceId) {
+  let hash = 0;
+  for (let i = 0; i < pieceId.length; i++) {
+    hash = (hash * 31 + pieceId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
 }
 
-// Mirrors LookDetailView.css's old per-count/index width/height values -
-// width is still the "size dial" the resize toolbar adjusts, but height
-// is only a fallback used until a piece's real image has loaded; once
-// its natural aspect ratio is known, height is derived from that
-// instead, so the piece's own box hugs its actual shape (no leftover
-// transparent letterboxing around a cutout to click/drag through).
-const SIZES = {
-  1: [{ width: 36, height: 40 }],
-  2: [
-    { width: 30, height: 34 },
-    { width: 30, height: 34 },
-  ],
-  3: [
-    { width: 30, height: 28 },
-    { width: 24, height: 22 },
-    { width: 24, height: 24 },
-  ],
-  4: [
-    { width: 28, height: 26 },
-    { width: 24, height: 22 },
-    { width: 26, height: 26 },
-    { width: 20, height: 12 },
-  ],
-  5: [
-    { width: 22, height: 24 },
-    { width: 22, height: 22 },
-    { width: 24, height: 24 },
-    { width: 18, height: 11 },
-    { width: 16, height: 16 },
-  ],
-  6: [
-    { width: 20, height: 22 },
-    { width: 20, height: 20 },
-    { width: 22, height: 22 },
-    { width: 16, height: 10 },
-    { width: 18, height: 18 },
-    { width: 14, height: 14 },
-  ],
-  7: [
-    { width: 19, height: 21 },
-    { width: 19, height: 19 },
-    { width: 20, height: 20 },
-    { width: 15, height: 9 },
-    { width: 17, height: 17 },
-    { width: 13, height: 13 },
-    { width: 15, height: 15 },
-  ],
-  8: [
-    { width: 18, height: 20 },
-    { width: 18, height: 18 },
-    { width: 19, height: 19 },
-    { width: 14, height: 9 },
-    { width: 16, height: 16 },
-    { width: 12, height: 12 },
-    { width: 14, height: 14 },
-    { width: 13, height: 13 },
-  ],
-};
+function getRotation(pieceId) {
+  return (hashPieceId(pieceId) % 19) - 9;
+}
 
-function getSize(count, index) {
-  return SIZES[count]?.[index] ?? { width: 24, height: 24 };
+function getSize(pieceId) {
+  const width = 16 + (hashPieceId(pieceId) % 15);
+  return { width, height: width };
 }
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-// wishitems.price is a real numeric column (arrives as a JS number, or
-// null when unknown) - the string/empty-string cases are only handled
-// defensively in case that ever changes upstream, not because live
-// data currently needs it.
+// price is a numeric column; the string cases are defensive only.
 function parsePrice(price) {
   if (typeof price === "number" && Number.isFinite(price)) return price;
   if (typeof price === "string" && price.trim() !== "") {
@@ -192,9 +114,6 @@ function parsePrice(price) {
   return null;
 }
 
-// Sums only the pieces that actually have a usable price - unpriced
-// pieces are silently skipped rather than treated as $0, and the total
-// is null (not 0) only when NOT ONE placed piece has a usable price.
 function calculateFitTotal(pieces) {
   const prices = pieces.map((piece) => parsePrice(piece.price)).filter((price) => price != null);
   if (prices.length === 0) return null;
@@ -209,16 +128,6 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 2;
 const SCALE_STEP = 0.1;
 
-// Catalog filters reuse the app's existing name-keyword categorizer
-// (lib/categorize.js) - no persisted category data exists or is being
-// added here. "Dresses" folds into "top". The key stays "bags"
-// internally (matchesFilter, state) - only the visible label/ariaLabel
-// changed to "Other" - and its match now folds in categorizeProduct's
-// own "Other" fallback too, so a tab literally labeled "Other" doesn't
-// silently exclude the one category that IS "other". ariaLabel doubles
-// as the button's accessible name and hover title - the visible
-// control is icon-only, so this is the only place the human-readable
-// category name lives.
 const CATALOG_FILTERS = [
   { key: "all", label: "All", ariaLabel: "All items" },
   { key: "top", label: "Tops", ariaLabel: "Tops" },
@@ -238,15 +147,6 @@ function matchesFilter(piece, filterKey) {
   return true;
 }
 
-// "All" stays a hand-rolled inline SVG (same "small local icon
-// component" convention LookCard.jsx already uses for its own kebab
-// icon) since no asset exists for it - currentColor so the circular
-// button's own text color drives it. The other four are the user's own
-// provided icon set (src/assets/{shirt,pants,shoes,bag}.png) instead of
-// hand-drawn outlines, so - unlike "all" - they don't tint via
-// currentColor; the filter pill's own background/label color still
-// carries the hover/active state (see .look-studio__filter.is-active
-// in LookDetailView.css).
 function CategoryIcon({ filterKey }) {
   if (filterKey === "all") {
     return (
@@ -271,16 +171,12 @@ function CategoryIcon({ filterKey }) {
   return <img className="look-studio__filter-glyph" src={bagIcon} alt="" aria-hidden="true" />;
 }
 
-// Deterministic, count-based placement over the real bed photo when no
-// position is saved/drafted yet. In Edit Mode, clicking a piece "picks
-// it up" (see LookDetailView's holdStateRef) - it then follows the
-// pointer until clicked again or the bed background is clicked, with
-// an arrow-key fallback for keyboard/non-pointer input.
 function LookBed({
   pieces,
   isEditMode,
   positions,
   heldPieceId,
+  pieceZOrder,
   onPieceClick,
   onCanvasClick,
   onKeyMove,
@@ -290,9 +186,6 @@ function LookBed({
   onUploadAvatar,
 }) {
   const visiblePieces = pieces.slice(0, MAX_BED_PIECES);
-  // naturalHeight/naturalWidth per piece, filled in as each image
-  // finishes loading - until then, boxes use the deterministic
-  // width/height guess from SIZES as a placeholder.
   const [aspectRatios, setAspectRatios] = useState({});
   const avatarFileInputRef = useRef(null);
 
@@ -359,16 +252,12 @@ function LookBed({
             {visiblePieces.map((piece, index) => {
               const position = positions[piece.id] ?? getDefaultPosition(visiblePieces.length, index);
               const isHeld = heldPieceId === piece.id;
-              const rotationDeg = getRotation(visiblePieces.length, index);
+              const rotationDeg = getRotation(piece.id);
               const scale = position.scale ?? DEFAULT_SCALE;
 
-              const baseSize = getSize(visiblePieces.length, index);
+              const baseSize = getSize(piece.id);
               const ratio = aspectRatios[piece.id];
               const widthPercent = baseSize.width;
-              // Height follows the image's own real proportions once
-              // known, instead of a fixed guess - this is what makes the
-              // box hug the item's actual shape rather than leaving
-              // transparent padding around a cutout.
               const heightPercent = ratio ? widthPercent * ratio : baseSize.height;
 
               return (
@@ -383,7 +272,7 @@ function LookBed({
                     // Not set while actively held - applyHoldFrame owns
                     // this element's transform directly during a drag.
                     transform: isHeld ? undefined : `rotate(${rotationDeg}deg) scale(${scale})`,
-                    zIndex: isHeld ? 10 : undefined,
+                    zIndex: isHeld ? 1000 : pieceZOrder.indexOf(piece.id) + 1,
                   }}
                   tabIndex={isEditMode ? 0 : undefined}
                   aria-label={isEditMode ? `Move ${piece.name}` : undefined}
@@ -409,9 +298,6 @@ function LookBed({
   );
 }
 
-// Wrapper mirrors LookCard's own pattern: the tile itself is a <button>
-// (click-to-place-on-bed in Edit Mode), so the ••• trigger has to be a
-// sibling rather than nested inside it.
 function CatalogTile({ piece, isPlaced, isEditMode, onToggle, onPrepare }) {
   const hasCutout = Boolean(piece.cutoutImageUrl);
 
@@ -460,13 +346,6 @@ function CatalogTile({ piece, isPlaced, isEditMode, onToggle, onPrepare }) {
   );
 }
 
-// The Look Studio layout's left zone. One clickable frame that's
-// either the saved illustration (click -> IllustrateLookModal, which
-// already renders its own "saved" phase - image + Close, no
-// regeneration risk) or, with no saved illustration yet, the
-// generation entry point (click -> the same modal's "form" phase).
-// Deliberately no title/date/piece-count/status text here - just the
-// image (or empty state) and, below it, the fit total.
 const ILLUSTRATE_EMPTY_ASSET = "illustrate-look-empty.png";
 
 function IllustrationColumn({ illustrationUrl, fitTotal, onOpen }) {
@@ -508,24 +387,15 @@ function LookDetailView({
   onPrepareCutout,
   onSaveIllustration,
 }) {
-  // Raw and nullable (no AVATAR_SRC fallback) - both the bed itself and
-  // Illustrate Look's own preview now show an inline "upload" prompt in
-  // this exact slot when it's unset, rather than silently substituting
-  // the old bundled default avatar. Shared here so both consumers (and
-  // the one upload flow, changeBedModelImage) stay in sync.
   const { bedModelImageUrl, isUploading: isUploadingAvatar, uploadError: avatarUploadError, changeBedModelImage } =
     useBedModel();
 
   const [activeFilter, setActiveFilter] = useState("all");
   const [catalogSearchTerm, setCatalogSearchTerm] = useState("");
   const [catalogNotice, setCatalogNotice] = useState("");
-  // The piece currently open in Prepare Piece, or null - a fresh mount
-  // of the modal each time, same pattern as every other modal here.
   const [preparingPiece, setPreparingPiece] = useState(null);
-  // Illustrate Look's prep/confirmation modal - just an open/closed
-  // flag, same pattern as preparingPiece. No separate "which pieces are
-  // styled" state; the modal is handed bedPieces directly (see below).
   const [isIllustrateModalOpen, setIsIllustrateModalOpen] = useState(false);
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
 
   // Edit Mode / arrangement state. draftPositions/draftPlacedIds are the
   // ONLY things moving or placing a piece ever touch - Supabase doesn't
@@ -533,29 +403,16 @@ function LookDetailView({
   const [isEditMode, setIsEditMode] = useState(false);
   const [draftPositions, setDraftPositions] = useState({});
   const [draftPlacedIds, setDraftPlacedIds] = useState(new Set());
-  // Which piece is currently "picked up" and following the pointer -
-  // click-to-pick-up / move freely / click-again-to-drop, rather than a
-  // press-and-hold drag (which felt choppy - this avoids needing
-  // continuous pointer capture on a held button entirely).
   const [heldPieceId, setHeldPieceId] = useState(null);
+  const [pieceZOrder, setPieceZOrder] = useState([]);
   const [isSavingLayout, setIsSavingLayout] = useState(false);
   const [saveLayoutError, setSaveLayoutError] = useState("");
-  // Snapshots taken the moment Edit Mode is entered - compared against
-  // the live draft to decide whether Save has anything to do. State
-  // (not refs) since they're read during render for that comparison.
   const [initialPositions, setInitialPositions] = useState({});
   const [initialPlacedIds, setInitialPlacedIds] = useState(new Set());
-  // Live-hold math (not reactive - written on pick-up, read on every
-  // pointermove while held, cleared on drop; doesn't need to trigger
-  // renders). While a piece is held, its DOM node is moved directly via
-  // `transform` - draftPositions only gets a single update, on drop.
+  // Live-hold math, deliberately non-reactive: written on pick-up, read on
+  // every pointermove, cleared on drop.
   const holdStateRef = useRef(null);
 
-  // "my pieces" is automatically every piece in the parent Collection -
-  // no separate "add pieces to this Look" step exists anymore. Catalog
-  // membership and bed placement are deliberately separate concepts:
-  // being in the Collection is enough to show up here; only look_items
-  // (isPlaced) determines what's actually styled on the bed.
   const catalogQuery = catalogSearchTerm.trim().toLowerCase();
   const catalogPieces = useMemo(
     () =>
@@ -565,18 +422,12 @@ function LookDetailView({
     [collectionPieces, activeFilter, catalogQuery],
   );
 
-  // Looks up a Collection piece's saved isPlaced/position, if it has
-  // ever been placed (i.e. has its own look_items row) - most Collection
-  // pieces won't, and that's fine, they just default to "not placed".
   const lookPieceById = useMemo(() => {
     const map = new Map();
     look.wishitems.forEach((piece) => map.set(piece.id, piece));
     return map;
   }, [look.wishitems]);
 
-  // View Mode reads each piece's own saved position/placement; a piece
-  // that's never been arranged simply has none, and LookBed already
-  // falls back to the deterministic default for anything missing here.
   const savedPositions = useMemo(() => {
     const map = {};
     look.wishitems
@@ -601,10 +452,6 @@ function LookDetailView({
   }, [collectionPieces, look.wishitems, isEditMode, draftPlacedIds]);
 
   const bedPositions = isEditMode ? draftPositions : savedPositions;
-  // Reuses bedPieces (the same "currently placed" list the bed itself
-  // renders from) rather than a second placed-state computation - live
-  // during Edit Mode too, so the total updates as pieces are added/
-  // removed, same immediacy as the bed itself.
   const fitTotal = useMemo(() => calculateFitTotal(bedPieces), [bedPieces]);
   const hasUnsavedChanges =
     JSON.stringify(draftPositions) !== JSON.stringify(initialPositions) ||
@@ -635,10 +482,8 @@ function LookDetailView({
       `translate(${leftPx - held.originLeftPx}px, ${topPx - held.originTopPx}px) rotate(${held.rotationDeg}deg) scale(${held.scale})`;
   }
 
-  // Tracks the pointer globally (not just over the piece) so the held
-  // piece keeps following even if the cursor moves faster than the
-  // piece itself, or briefly leaves the bed. Escape cancels the pick-up
-  // without committing anything.
+  // Tracked globally so the held piece keeps following even if the pointer
+  // outruns it or leaves the bed.
   useEffect(() => {
     if (!heldPieceId) return undefined;
 
@@ -676,9 +521,8 @@ function LookDetailView({
       document.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("keydown", handleKeyDown);
     };
-    // handleScaleChange/cancelHold only ever touch holdStateRef, not
-    // reactive state directly - re-subscribing these listeners on every
-    // render (which including them here would cause) buys nothing.
+    // These only touch holdStateRef, so re-subscribing on every render would
+    // buy nothing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [heldPieceId]);
 
@@ -690,8 +534,6 @@ function LookDetailView({
     };
   }, []);
 
-  // Finalizes the held piece's current followed position into
-  // draftPositions (a normal "drop").
   function commitHold() {
     const held = holdStateRef.current;
     if (!held) return;
@@ -713,8 +555,6 @@ function LookDetailView({
     }));
   }
 
-  // Abandons the pick-up entirely - the piece snaps back to wherever it
-  // was before being picked up, nothing is written to draftPositions.
   function cancelHold() {
     const held = holdStateRef.current;
     if (!held) return;
@@ -732,13 +572,11 @@ function LookDetailView({
     event.stopPropagation();
 
     if (holdStateRef.current) {
-      // Clicking the held piece again drops it; clicking a different
-      // one just drops whatever was held (it doesn't also pick up the
-      // new one, to keep pick-up/drop unambiguous - a second click on
-      // the new piece picks it up normally).
       commitHold();
       return;
     }
+
+    setPieceZOrder((current) => [...current.filter((id) => id !== piece.id), piece.id]);
 
     const pieceEl = event.currentTarget;
     const canvasEl = pieceEl.closest("[data-bed-surface]");
@@ -777,10 +615,6 @@ function LookDetailView({
     }
   }
 
-  // Only ever called for the currently-held piece (the resize toolbar
-  // only renders while one is held) - mutates the live hold state
-  // directly and repaints immediately, same as a pointer move would,
-  // rather than going through draftPositions until the piece is dropped.
   function handleScaleChange(delta) {
     const held = holdStateRef.current;
     if (!held) return;
@@ -789,10 +623,6 @@ function LookDetailView({
     applyHoldFrame();
   }
 
-  // Click on a "my pieces" catalog tile in Edit Mode - toggles whether
-  // it's currently styled on the bed. Look membership (look_items row)
-  // is never touched here; only draftPlacedIds/draftPositions change,
-  // exactly like moving a piece only touches draftPositions.
   function handleTogglePlacement(piece) {
     setCatalogNotice("");
 
@@ -813,11 +643,6 @@ function LookDetailView({
     const nextPlacedIds = new Set(draftPlacedIds);
     nextPlacedIds.add(piece.id);
 
-    // Ordered the same way LookBed will actually render them (by the
-    // Collection's own item order, since bedPieces is sourced from
-    // collectionPieces in Edit Mode), so the default position assigned
-    // here matches the size/rotation slot the piece will really end up
-    // in - including for a piece with no look_items row yet.
     const orderedPlaced = collectionPieces.filter((item) => nextPlacedIds.has(item.id));
     const newCount = orderedPlaced.length;
     const newIndex = orderedPlaced.findIndex((item) => item.id === piece.id);
@@ -862,10 +687,8 @@ function LookDetailView({
   }
 
   async function handleSaveArrangement() {
-    // A piece mid-hold when Save is clicked shouldn't have its
-    // in-progress move silently lost - fold it into the payload
-    // directly rather than relying on the (async) state setter having
-    // already landed by the time we read draftPositions below.
+    // Fold an in-progress move into the payload rather than relying on the
+    // async state setter having landed.
     const held = holdStateRef.current;
     let positionsToSave = draftPositions;
 
@@ -884,11 +707,8 @@ function LookDetailView({
     setIsSavingLayout(true);
     setSaveLayoutError("");
 
-    // Pieces still placed get their full position/scale + isPlaced:true.
-    // Pieces that WERE placed but got removed this session only send
-    // isPlaced:false - their old x/y/scale are deliberately left alone
-    // in the database (see updateLookLayout), so they reappear where
-    // they were the next time they're placed again.
+    // Removed pieces send only isPlaced:false - their old x/y/scale stay in
+    // the database so they reappear where they were.
     const removedIds = [...initialPlacedIds].filter((id) => !draftPlacedIds.has(id));
 
     const positions = [
@@ -922,12 +742,15 @@ function LookDetailView({
     cancelHold();
 
     if (isEditMode && hasUnsavedChanges) {
-      const confirmDiscard = window.confirm(
-        "Discard unsaved arrangement changes?",
-      );
-      if (!confirmDiscard) return;
+      setIsDiscardConfirmOpen(true);
+      return;
     }
 
+    onBack();
+  }
+
+  function handleConfirmDiscard() {
+    setIsDiscardConfirmOpen(false);
     onBack();
   }
 
@@ -1000,6 +823,7 @@ function LookDetailView({
             isEditMode={isEditMode}
             positions={bedPositions}
             heldPieceId={heldPieceId}
+            pieceZOrder={pieceZOrder}
             onPieceClick={handlePieceClick}
             onCanvasClick={handleCanvasClick}
             onKeyMove={handleKeyMove}
@@ -1156,11 +980,13 @@ function LookDetailView({
       </div>
 
       {preparingPiece && (
-        <PreparePieceModal
-          product={preparingPiece}
-          onClose={() => setPreparingPiece(null)}
-          onSave={(blob) => onPrepareCutout(preparingPiece.id, blob)}
-        />
+        <Suspense fallback={null}>
+          <PreparePieceModal
+            product={preparingPiece}
+            onClose={() => setPreparingPiece(null)}
+            onSave={(blob) => onPrepareCutout(preparingPiece.id, blob)}
+          />
+        </Suspense>
       )}
 
       {isIllustrateModalOpen && (
@@ -1173,6 +999,13 @@ function LookDetailView({
           onUploadAvatar={changeBedModelImage}
           onClose={() => setIsIllustrateModalOpen(false)}
           onSaveIllustration={onSaveIllustration}
+        />
+      )}
+
+      {isDiscardConfirmOpen && (
+        <DiscardChangesModal
+          onCancel={() => setIsDiscardConfirmOpen(false)}
+          onConfirm={handleConfirmDiscard}
         />
       )}
     </div>
