@@ -1,23 +1,15 @@
 import { useEffect, useState } from "react";
 import { createCollection, deleteCollection, getCollections, updateCollection } from "./collections";
 
-// Owns the collections list and its CRUD. Deliberately doesn't know
-// about `selectedCollection`/navigation - that's App-level concern.
-// `onCollectionDeleted` lets App.jsx react (e.g. back out of a detail
-// view) without this hook needing to understand navigation at all.
 export function useCollections({ onCollectionDeleted } = {}) {
   const [collections, setCollections] = useState([]);
   // Lets routing tell "not found" (bad/stale URL) apart from "haven't
   // fetched yet" (fresh page load/refresh straight into a collection or
   // Look Studio URL, before this mount effect resolves).
   const [isLoadingCollections, setIsLoadingCollections] = useState(true);
-  // Collection pending deletion confirmation, or null.
   const [collectionPendingDelete, setCollectionPendingDelete] = useState(null);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
   const [deleteCollectionError, setDeleteCollectionError] = useState("");
-  // The collection currently open in the edit modal, or null - doubles
-  // as both "is the modal open" and "which collection to pre-fill it
-  // with", same pattern LookDetailView's preparingPiece uses.
   const [editingCollection, setEditingCollection] = useState(null);
 
   useEffect(() => {
@@ -53,9 +45,6 @@ export function useCollections({ onCollectionDeleted } = {}) {
     setEditingCollection(null);
   }
 
-  // Same {name, imageUrl, color} shape handleCreateCollection takes, so
-  // EditCollectionModal can reuse CreateCollectionModal's own field
-  // handling almost verbatim.
   async function handleUpdateCollection({ name, imageUrl, color }) {
     try {
       const updated = await updateCollection(editingCollection.id, { name, imageUrl, color });

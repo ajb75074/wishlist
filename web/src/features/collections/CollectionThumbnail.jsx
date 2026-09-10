@@ -1,9 +1,6 @@
 import { useState } from "react";
 import "./CollectionThumbnail.css";
 
-// image loads -> show image. Otherwise (no url, or it failed) -> show color.
-// Used by the Sidebar collection rows, the create-modal preview, and
-// CollectionsView's large framed cards - one place that decides image-vs-color.
 function CollectionThumbnail({ imageUrl, color, size, className = "" }) {
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -21,11 +18,8 @@ function CollectionThumbnail({ imageUrl, color, size, className = "" }) {
     <span
       className={`collection-thumbnail ${className}`}
       style={{
-        // Fixed-size callers (Sidebar, modal previews) pass a pixel
-        // size, unchanged. Callers that size this entirely via their
-        // own CSS class (e.g. CollectionsView's large framed visual,
-        // which needs width/height: 100% of a responsive container)
-        // can omit size instead of fighting an inline px value.
+        // Fixed-size callers pass a pixel size; callers that size this via
+        // CSS pass none.
         ...(size ? { width: size, height: size } : null),
         backgroundColor: showImage ? undefined : color,
       }}

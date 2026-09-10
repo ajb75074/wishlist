@@ -4,8 +4,6 @@ import FilterPopover from "./FilterPopover";
 import bowIcon from "../../assets/bow2.png";
 import "./WishlistToolbar.css";
 
-// Three decreasing bars - the standard "filter" glyph. Same mark
-// FilterBar used to use, kept so the icon language doesn't change.
 function FilterIcon() {
   return (
     <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -16,11 +14,6 @@ function FilterIcon() {
   );
 }
 
-// VIEW (Saved/Owned) + ACTIONS (Add Item, Filter, management menu) +
-// CONTENT header (result count/divider) for the Wishlist page - the
-// hero above it lives in WishlistHero. All state/handlers are owned
-// by App.jsx exactly as before; this component only changes how
-// they're laid out and styled.
 function WishlistToolbar({
   ownership,
   onOwnershipChange,

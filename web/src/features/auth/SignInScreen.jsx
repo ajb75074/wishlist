@@ -4,18 +4,6 @@ import { supabase } from "../../lib/supabase";
 import AuthShell from "./AuthShell";
 import "./AuthForm.css";
 
-// Sign In's own route (/sign-in) - Sign Up and Forgot Password are now
-// their own separate routed screens (SignUpScreen.jsx,
-// ForgotPasswordScreen.jsx) rather than modes toggled inside this one
-// component, but all three still share AuthShell/AuthForm.css for the
-// identical split-screen look. Same auth logic/validation/error-
-// handling as before this split - only how you get to each screen
-// changed. animationRef: each text field's onChange calls
-// animationRef.current?.reportKeystroke() directly (an imperative
-// handle, not React state), so the clothing-rack animation next to the
-// form can react to typing speed without this component ever
-// re-rendering because of it - see AuthShell.jsx and
-// ClothingRackAnimation.jsx for the actual animation logic.
 function SignInScreen() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -34,9 +22,6 @@ function SignInScreen() {
 
     if (isSubmitting) return;
 
-    // Guarantees the animation reaches the end of its loop right as
-    // the form submits, regardless of how far typing had gotten it -
-    // independent of whether the sign-in call itself succeeds.
     animationRef.current?.completeToEnd();
 
     setIsSubmitting(true);

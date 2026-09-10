@@ -4,9 +4,6 @@ import logo from "../../assets/logo.png";
 import starIcon from "../../assets/star.png";
 import "./Sidebar.css";
 
-// Simple line icons, matching the "quiet nav rail" brief - deliberately
-// not the app's earlier blocky/filled icon style, which reads heavier
-// than this redesign wants the navigation to feel.
 function HomeIcon() {
   return (
     <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">

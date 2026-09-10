@@ -13,9 +13,6 @@ function KebabIcon() {
   );
 }
 
-// Shared by All Saves and (later) Collection Detail: a small editorial
-// utility control, not a giant button. Presentation only - App.jsx /
-// CollectionDetailView own the actual selection state.
 function SelectModeBar({ isActive, selectedCount, onEnter, onCancel }) {
   if (!isActive) {
     return (

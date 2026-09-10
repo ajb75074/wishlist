@@ -1,21 +1,5 @@
-// Prepare Piece needs to read pixel data (canvas getImageData/toBlob) from
-// a retailer's product image. That only works in the browser if the
-// retailer's own server sends CORS headers - most don't (self-hosted
-// WordPress/WooCommerce sites in particular). This function fetches the
-// image server-side (CORS is a browser-only restriction, not a
-// server-to-server one) and re-serves the same bytes with permissive
-// CORS headers attached, so the browser can read them regardless of
-// what the original host does or doesn't send.
-//
-// AUTH: requires a real authenticated user (requireUser) - the
-// project's anon/publishable key alone is no longer sufficient, since
-// this function fetches arbitrary client-supplied URLs server-side and
-// was otherwise effectively an open proxy to anyone holding the public
-// anon key. No service-role key involved.
-//
-// This never redraws/regenerates image content - it's a byte-for-byte
-// passthrough of whatever the source server returns, still gated to
-// image/* responses only (never a generic authenticated file proxy).
+// Re-serves a retailer image with permissive CORS headers so Prepare Piece
+// can read its pixels. Authenticated, SSRF-guarded, and size-capped.
 import { requireUser } from "../_shared/auth.ts";
 import { assertSafeUrl, readBodyWithLimit } from "../_shared/urlSafety.ts";
 
@@ -109,10 +93,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Uint8Array is a fully valid Response body per the Fetch spec - this
-  // cast is purely a TS lib typing mismatch (BodyInit's declared type
-  // here doesn't structurally match Uint8Array's generic ArrayBuffer
-  // parameter), not a runtime concern.
+  // Uint8Array is a valid Response body; the cast is only a TS lib typing
+  // mismatch.
   return new Response(bytes as BodyInit, {
     status: 200,
     headers: {

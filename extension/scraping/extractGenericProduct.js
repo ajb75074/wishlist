@@ -1,12 +1,4 @@
-// Meta-tag + DOM extraction, organized by concern. No JSON-LD here
-// (see extractStructuredData.js) and no orchestration/precedence logic
-// (see extractProduct.js) - this module only knows how to read values
-// off the live page.
 const WishlistGenericProduct = (() => {
-    // Unchanged from the original inline scraper - six selectors, first
-    // non-empty textContent wins. Not expanded in this phase; live
-    // testing on Mihara found no reliable generic color signal, so this
-    // stays exactly as-is (Part 7).
     const COLOR_SELECTORS = [
         '[data-testid="swatch-color-title"]',
         '[data-testid="selected-color"]',
@@ -16,9 +8,6 @@ const WishlistGenericProduct = (() => {
         "#variation_color_name span",
     ];
 
-    // A leaf element's cleaned text has to be *only* a currency amount
-    // to match - "$315.00" matches, "$315.00 (was $420.00)" does not,
-    // a star rating or review count does not (no currency symbol).
     const PRICE_TEXT_PATTERN = /^[$€£¥]\s?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?$/;
 
     // How far up from the product name/title element to look for a
@@ -60,13 +49,8 @@ const WishlistGenericProduct = (() => {
         return { name, price, currency, imageUrl };
     }
 
-    // Reads whatever src-like value an element actually has, preferring
-    // the live rendered source over the original markup attribute -
-    // currentSrc reflects what the browser actually picked (responsive
-    // images, lazy-load swaps), src is the fallback, data-src covers
-    // lazy-loaded images that haven't swapped their real src in yet. A
-    // <meta itemprop="image" content="..."> has none of those, only
-    // content.
+    // Prefers currentSrc (what the browser actually picked) over the markup
+    // attribute, then lazy-load attributes.
     function readImageElementSrc(element) {
         if (!element) {
             return null;
@@ -84,17 +68,8 @@ const WishlistGenericProduct = (() => {
         );
     }
 
-    // Conservative, non-retailer-specific "main product image" finder,
-    // shared by the image fallback (below) and the image-alt name
-    // fallback. Prefers the one semantic microdata marker already used
-    // elsewhere in this file ([itemprop="image"]); otherwise falls back
-    // to the first sufficiently-large *visible* <img> in document order -
-    // deliberately not "the first img" with no size/visibility filter
-    // (which is just as likely to be a logo, nav icon, or an unrelated
-    // recommendation-card thumbnail), and deliberately not "the largest
-    // img" either: a product gallery's own DOM order already represents
-    // its primary-image order, and picking by rendered area alone can
-    // land on a later gallery image instead of the first one.
+    // Conservative, non-retailer-specific main-image finder: semantic marker
+    // first, then the largest visible <img>.
     function findLikelyMainProductImage(doc) {
         const semanticImage = doc.querySelector('[itemprop="image"]');
         if (semanticImage) {
@@ -128,20 +103,8 @@ const WishlistGenericProduct = (() => {
         return null;
     }
 
-    // Conservative generic price fallback for pages with no structured/
-    // meta price and no Amazon-style price element. Rather than
-    // scanning the whole document (which risks matching a recommended-
-    // product's price, a promo banner, or a cart total), this only
-    // looks within a small subtree around the product name/title -
-    // title and price sit adjacent in essentially every product-page
-    // layout, which bounds the search to where a product's own price
-    // actually lives without assuming anything about a specific
-    // retailer's markup. Only considers leaf elements (no child
-    // elements, so it can't match a big container that merely contains
-    // a price somewhere inside unrelated text), only elements that are
-    // actually rendered, and skips anything styled with a strikethrough
-    // (a crossed-out compare-at price when a real current price is
-    // likely available elsewhere nearby).
+    // Generic price fallback: searches only near the product title, and only
+    // leaf elements whose entire text is a currency amount.
     function findNearbyPriceText(doc, nameElement) {
         if (!nameElement) {
             return null;
@@ -182,15 +145,7 @@ const WishlistGenericProduct = (() => {
         return null;
     }
 
-    // The Amazon-specific fallbacks from the original scraper, kept
-    // as-is (same elements, same attributes) - preserved per the
-    // "don't delete working Amazon support" instruction. Two
-    // correctness fixes were applied when this was pulled out of
-    // content.js (documented in the Phase 1 report): the
-    // data-old-hires/data-a-dynamic-image branch had an operator-
-    // precedence bug that discarded data-old-hires whenever
-    // data-a-dynamic-image was also present, and a malformed
-    // data-a-dynamic-image value could throw uncaught.
+    // Amazon-specific fallbacks, kept as-is from the original scraper.
     function extractDomProduct(doc = document) {
         let nameElement = doc.querySelector("#productTitle");
         let name = cleanNonEmpty(nameElement?.textContent);
@@ -207,17 +162,10 @@ const WishlistGenericProduct = (() => {
                 : null;
         }
 
-        // [itemprop="image"] used to also live inside the Amazon-only
-        // image lookup below; it's genuinely generic semantic markup,
-        // not an Amazon convention, so it's now resolved once here via
-        // findLikelyMainProductImage and shared with the alt-text name
-        // fallback immediately below.
         const mainImage = findLikelyMainProductImage(doc);
 
-        // Emergency last resort: the alt text of the same "likely main
-        // image" already identified above - only when it's a real <img>
-        // (a <meta itemprop="image"> has no alt), and only after every
-        // other, more specific name source has failed.
+        // Last resort: alt text of the likely main image, only when it's a
+        // real <img>.
         if (!name && mainImage?.tagName === "IMG") {
             name = cleanNonEmpty(mainImage.getAttribute("alt"));
             if (name) {

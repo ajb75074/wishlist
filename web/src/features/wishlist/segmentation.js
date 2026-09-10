@@ -4,21 +4,9 @@ import {
   RawImage,
   env,
 } from "@huggingface/transformers";
-// Interactive product-cutout segmentation - adapted from the proven
-// standalone prototype at tools/interactive-cutout-test/app.js. Same
-// model, same CDN-loading approach, same encode-once/decode-per-point
-// architecture, just reshaped into reusable functions instead of a
-// page-level script. No React and no Supabase in this file.
-//
-// Loaded from a CDN, not npm-installed: the actual inference runtime
-// (onnxruntime-web, a transitive dependency of this package) is ~140MB
-// unpacked on disk, mostly prebuilt WASM variants for browser features
-// most users won't need - installing it as a normal dependency risks it
-// silently ending up inside the app's own Vite/extension bundle unless
-// extra bundler config is added. A runtime string-URL import is
-// invisible to Vite's bundler, so nothing extra ships in the app; the
-// ~14MB model is fetched once by the browser and cached there, and is
-// never committed to this repo.
+
+// SlimSAM (Xenova/slimsam-77-uniform) run in-browser via transformers.js on
+// ONNX Runtime WASM.
 const MODEL_ID = "Xenova/slimsam-77-uniform";
 
 const ONNX_RUNTIME_BASE_URL = new URL("onnx/", document.baseURI).href;
@@ -30,9 +18,8 @@ env.backends.onnx.wasm.wasmPaths = {
 
 let modelPromise = null;
 
-// Module-level singleton - the model loads once for the whole page
-// session and is reused by every Prepare Piece open after the first,
-// regardless of how many times the modal is opened/closed.
+// Singleton - loads once per page session, reused across every
+// Prepare Piece open.
 export function loadSegmentationModel() {
   if (!modelPromise) {
     modelPromise = (async () => {
@@ -45,24 +32,19 @@ export function loadSegmentationModel() {
   return modelPromise;
 }
 
-// transformers.js's own image type, needed for the encoder/decoder
-// calls - kept separate from the plain HTMLImageElement used for
-// on-screen drawing and the final export.
 export async function loadRawImage(url) {
   return RawImage.fromURL(url);
 }
 
-// Runs the expensive image encoder exactly once per source image.
 export async function encodeImage(processor, model, rawImage) {
   const imageInputs = await processor(rawImage);
   const imageEmbeddings = await model.get_image_embeddings(imageInputs);
   return { imageInputs, imageEmbeddings };
 }
 
-// Re-decodes from scratch with the FULL current point list on every
-// call, rather than incrementally patching the previous mask - simpler,
-// and cheap because only the small decoder re-runs; imageEmbeddings
-// (the expensive encoder output) is passed in unchanged and reused.
+// Re-decodes from the full current point list on every call rather
+// than patching the previous mask - only the cheap decoder re-runs;
+// imageEmbeddings (the expensive part) is reused unchanged.
 export async function decodePoints({ model, processor, rawImage, imageInputs, imageEmbeddings, points }) {
   const pointCoords = points.map((p) => [p.x, p.y]);
   const pointLabels = points.map((p) => p.label);
@@ -84,8 +66,8 @@ export async function decodePoints({ model, processor, rawImage, imageInputs, im
     imageInputs.reshaped_input_sizes,
   );
 
-  // SAM proposes 3 candidate masks per prompt; pick the one the model
-  // itself is most confident in (highest predicted IoU).
+  // SAM proposes 3 candidate masks per prompt; keep the one with the
+  // highest predicted IoU.
   const scores = outputs.iou_scores.data;
   let bestIndex = 0;
   for (let i = 1; i < scores.length; i++) {
@@ -100,10 +82,9 @@ export async function decodePoints({ model, processor, rawImage, imageInputs, im
   return { width, height, data };
 }
 
-// Builds the final transparent PNG straight from the ORIGINAL image's
-// own pixels - the mask only ever supplies the alpha channel, nothing
-// is redrawn or recolored. Crops to the mask's bounding box with a
-// small padding margin so the object doesn't touch the PNG's own edge.
+// Builds a transparent PNG from the original pixels - the mask only
+// supplies alpha, nothing is redrawn or recolored. Crops to the mask's
+// bounding box plus a small padding margin.
 export function buildCutoutBlob(imageEl, mask, { padding = 12 } = {}) {
   return new Promise((resolve, reject) => {
     const { width, height, data } = mask;
@@ -118,9 +99,6 @@ export function buildCutoutBlob(imageEl, mask, { padding = 12 } = {}) {
     try {
       sourceData = sourceCtx.getImageData(0, 0, width, height);
     } catch {
-      // Belt-and-suspenders: the explicit fetch-to-blob step in
-      // PreparePieceModal should already catch a CORS-blocked image
-      // before this ever runs, but a tainted canvas throws here too.
       reject(new Error("CANVAS_TAINTED"));
       return;
     }
@@ -174,13 +152,9 @@ export function buildCutoutBlob(imageEl, mask, { padding = 12 } = {}) {
   });
 }
 
-// Brings a remote retailer image into the browser's own memory as a
-// Blob before anything else touches it. This is the one explicit point
-// where a CORS-disabled host fails, cleanly and predictably - once this
-// succeeds, everything downstream (the display <img>, transformers.js's
-// RawImage, and the export canvas) reads from that same local blob: URL
-// instead of the original remote URL, so nothing further can taint a
-// canvas or fail on cross-origin grounds.
+// Fetched into a local blob: URL before anything else touches the
+// image, so a CORS-disabled retailer host fails once, here, instead of
+// silently tainting the canvas later.
 export async function fetchImageAsBlob(url) {
   let response;
 

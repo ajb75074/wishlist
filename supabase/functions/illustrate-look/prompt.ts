@@ -1,7 +1,5 @@
-// Builds the actual Gemini prompt text - kept entirely server-side (see
-// index.ts) so the client can never inject/override the real
-// instructions Gemini receives. The client only ever supplies a
-// `style` ID and Look/piece metadata; this file owns the wording.
+// Prompt text is built server-side so the client can never inject or override
+// Gemini's instructions.
 
 export interface Piece {
   id: string;
@@ -10,10 +8,8 @@ export interface Piece {
   imageUrl: string;
 }
 
-// Same broad grouping Look Studio's own catalog filter uses
-// (LookDetailView.jsx's matchesFilter/CATALOG_FILTERS) - reused here so
-// "top/bottom/shoes/bag" ordering matches what the app already treats
-// as those buckets, rather than inventing a second categorization.
+// Same grouping Look Studio's catalog filter uses, so ordering matches the
+// app.
 const CATEGORY_RANK: Record<string, number> = {
   Tops: 1,
   Dresses: 1,
@@ -32,11 +28,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   Accessories: "ACCESSORY",
 };
 
-// Mirrors the profiles.gender check constraint (see the
-// bed_model_and_gender migration) - a deliberately open set, not a
-// strict binary. Each gets its own pose-selection guidance below
-// (POSE_GUIDANCE_BY_GENDER); an unrecognized/absent value falls back to
-// NEUTRAL_POSE_GUIDANCE instead of guessing.
+// Mirrors the profiles.gender check constraint - a deliberately open set.
 
 // Applies regardless of which (if any) gender-specific guidance is
 // used below - shared so all four paths give Gemini the same baseline
@@ -146,12 +138,7 @@ export function buildIllustrationPrompt({
   pieces: Piece[];
   styleLabel: string;
   styleDescription: string;
-  // Optional - one of profiles.gender's own values ("feminine" /
-  // "masculine" / "androgynous"), or omitted/unrecognized when the
-  // user hasn't set a preference. Only ever drives POSE SELECTION
-  // below; every "preserve the model's real appearance" instruction is
-  // unchanged and still wins for everything else (face, skin tone,
-  // hair, body proportions).
+  // Optional - one of profiles.gender's values. Only drives pose selection.
   genderPresentation?: string;
 }): string {
   const pieceLines = pieces

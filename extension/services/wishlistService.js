@@ -36,10 +36,8 @@ const WishlistService = (() => {
 
         const config = getConfig();
 
-        // wishitems.user_id is NOT NULL with a DEFAULT of auth.uid() -
-        // there's no user-owned write this can make without a real
-        // session, so this is checked and returned on *before* any
-        // network call, not just handled after a failed request.
+        // wishitems.user_id is NOT NULL defaulting to auth.uid(), so a
+        // session is required before any network call is made.
         const sessionResult = await WishlistAuthSession.getStoredSession(config.supabaseUrl);
 
         if (sessionResult.status !== "valid") {
@@ -64,13 +62,8 @@ const WishlistService = (() => {
             );
 
             if (response.status === 401 || response.status === 403) {
-                // The session looked valid locally but Supabase rejected
-                // it anyway (revoked/rotated elsewhere, clock skew,
-                // etc.) - never retry with the anon/publishable key for
-                // a user-owned write, and never let this fall into the
-                // catch block below, which would otherwise disguise an
-                // auth failure as a "saved locally, Supabase
-                // unavailable" success-flavored message.
+                // The session looked valid locally but Supabase rejected it -
+                // never retry a user-owned write with the anon key.
                 return { success: false, authRequired: true, sessionStatus: "rejected" };
             }
 
@@ -94,10 +87,8 @@ const WishlistService = (() => {
 
             return { success: true, product: responseBody?.[0] || null };
         } catch (error) {
-            // Reaching here means a genuine network/fetch-level failure
-            // or an unexpected non-auth server error - not an
-            // authorization problem, which is already returned above
-            // before this try block is ever entered.
+            // A genuine network or server failure, not an authorization
+            // problem (those return above).
             console.error("Supabase save error:", error);
 
             try {

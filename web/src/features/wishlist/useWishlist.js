@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 import { deleteWishlistItem, getWishlistItems, updateWishlistItem } from "./wishlist";
 import { useRefetchOnFocus } from "../../lib/useRefetchOnFocus";
 
-// Owns the wishlist product list and the two mutations that touch it
-// directly (delete, edit). Anything that just needs to read/filter the
-// list (search, categories, Select Mode) stays at the App level, since
-// it isn't really "wishlist data" - it's page-level presentation state.
 export function useWishlist() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,14 +23,8 @@ export function useWishlist() {
     loadWishlist();
   }, []);
 
-  // Quiet background refetch when this tab regains focus - covers the
-  // Chrome extension case directly: save a product there, switch back
-  // to this tab, and it's already in the grid, no manual reload
-  // needed. No loading state toggled and failures are swallowed - this
-  // should feel like the data was just already there, not like a
-  // visible reload, and a background check silently not working is
-  // better than surfacing an error for something the user didn't
-  // explicitly ask for.
+  // Quiet background refetch on tab focus - no loading state, failures
+  // swallowed.
   useRefetchOnFocus(async () => {
     try {
       const wishlistItems = await getWishlistItems();
@@ -44,9 +34,6 @@ export function useWishlist() {
     }
   });
 
-  // The actual delete call - both a direct single-item delete and the
-  // Donate flow (which confirms via its own modal, not window.confirm)
-  // call this.
   async function performDelete(id) {
     setError(null);
 
@@ -96,13 +83,9 @@ export function useWishlist() {
     }
   }
 
-  // Called after AddItemModal's own orchestration (upload -> insert)
-  // already succeeded - `product` is the already-normalized/enriched
-  // object wishlist.js's saveWishlistItem returned (signed imageUrl
-  // included for a manual photo), so this only ever updates local
-  // state, never touches Supabase itself. Prepended rather than
-  // appended to match getWishlistItems()'s own newest-first ordering
-  // (date_saved defaults to now()) without a full refetch.
+  // Called after AddItemModal's own upload/insert already succeeded -
+  // only updates local state. Prepended to match getWishlistItems()'s
+  // newest-first ordering, without a full refetch.
   function handleCreate(product) {
     setProducts((currentProducts) => [product, ...currentProducts]);
   }

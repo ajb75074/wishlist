@@ -6,20 +6,10 @@ const LOOKS_TABLE = "looks";
 const LOOK_ITEMS_TABLE = "look_items";
 const LOOK_ILLUSTRATION_BUCKET = "look-illustrations";
 
-// Nested select pulls each Look's items straight from the join table,
-// already resolved to their wishitem rows - same nested-embed pattern
-// collections.js uses for collection_items(wishitems(*)). Also pulls
-// each look_item's own x/y/scale/is_placed so the bed canvas can
-// restore a saved arrangement instead of always falling back to the
-// deterministic one.
 const LOOK_SELECT = "*, look_items(x_position, y_position, scale, is_placed, wishitems(*))";
 
-// `position`/`isPlaced` are Look-specific (the same wishitem could sit
-// somewhere else, or not be placed at all, in a different Look), so
-// they're attached per-item here rather than on the shared product
-// shape from lib/productUtils. scale is optional even when x/y are
-// present - older rows saved before scale existed simply have it null,
-// which falls back to normal size (1x).
+// position/isPlaced are per-Look, so they're attached per item rather than to
+// the shared product shape.
 function databaseRowToLook(row) {
   return {
     id: row.id,
@@ -40,7 +30,6 @@ function databaseRowToLook(row) {
   };
 }
 
-// Returns every Look in a collection, newest first.
 export async function getLooksForCollection(collectionId) {
   const { data, error } = await supabase
     .from(LOOKS_TABLE)
@@ -55,7 +44,6 @@ export async function getLooksForCollection(collectionId) {
   return resolveLookImages(data.map(databaseRowToLook));
 }
 
-// Returns one Look by id, or null if it doesn't exist.
 export async function getLookById(lookId) {
   const { data, error } = await supabase
     .from(LOOKS_TABLE)
@@ -75,12 +63,8 @@ export async function getLookById(lookId) {
   return look;
 }
 
-// Creates a Look and its look_items in two client-side calls, since this
-// frontend-only Supabase setup has no way to run them in one real
-// transaction. If the look_items insert fails, we best-effort delete the
-// Look we just created rather than leaving a permanent empty orphan -
-// this is a cleanup attempt, not a guarantee (e.g. a dropped connection
-// between the two calls can still leave an empty Look behind).
+// Two calls, no transaction available - best-effort delete the Look if its
+// look_items insert fails.
 export async function createLook(collectionId, name, wishitemIds = []) {
   const trimmedName = name.trim();
 
@@ -118,18 +102,8 @@ export async function createLook(collectionId, name, wishitemIds = []) {
   return getLookById(look.id);
 }
 
-// Persists each look_item's canvas position, size, AND placement -
-// position as a 0-1 fraction of the bed canvas's own width/height (not
-// raw pixels) so a saved arrangement stays meaningful at any canvas
-// size, scale as the same multiplier the resize toolbar already
-// adjusts (1 = normal size), and isPlaced as whether it should render
-// on the bed at all. Entries may omit x/y/scale entirely (used when a
-// piece is being taken OFF the bed - its old position is deliberately
-// left alone in the database, so it reappears where it was last time
-// it's placed again, rather than being cleared). Upserts by the
-// existing UNIQUE(look_id, wishitem_id) constraint (same approach
-// collections.js's addItemToCollection uses) rather than looping
-// individual updates, so moving several pieces is still one round trip.
+// Position is a 0-1 fraction of the bed canvas, not raw pixels, so it stays
+// meaningful at any size.
 export async function updateLookLayout(lookId, positions) {
   if (positions.length === 0) {
     return getLookById(lookId);
@@ -156,16 +130,6 @@ export async function updateLookLayout(lookId, positions) {
   return getLookById(lookId);
 }
 
-// Persists a Milestone 2 generation result (a temporary data: URL held
-// only in IllustrateLookModal's own state) as this Look's one saved
-// illustration - Milestone 3 deliberately supports zero-or-one per
-// Look, no history/versions. Mirrors wishlist.js's uploadPieceCutout +
-// updateWishitemCutoutImage pair (upload, then point the row at the
-// result), the only other place this app touches Supabase Storage:
-// same stable-path-plus-upsert approach (re-saving overwrites the same
-// object rather than accumulating orphans) and the same cache-busting
-// `?v=` suffix so the browser doesn't keep showing a stale image after
-// a re-save.
 export async function saveLookIllustration(lookId, imageDataUrl) {
   let blob;
   try {

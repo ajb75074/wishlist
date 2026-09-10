@@ -1,20 +1,12 @@
-// Read-only lookup of the Supabase session the React wishlist page
-// (running as this same extension) already persisted to
-// chrome.storage.local via its own chromeStorageAdapter
-// (web/src/lib/chromeStorageAdapter.js). Never signs in, signs out, or
-// refreshes anything here - the wishlist page owns the session's whole
-// lifecycle; this only reads what's already there.
+// Read-only lookup of the session the React page already persisted to
+// chrome.storage.local.
 const WishlistAuthSession = (() => {
     // Same idea as any token-refresh guard: don't start a new request
     // with a token that's about to expire mid-flight.
     const EXPIRY_BUFFER_SECONDS = 60;
 
-    // Matches @supabase/supabase-js's own default storage key exactly
-    // (its SupabaseClient builds `sb-${hostname.split(".")[0]}-auth-token`
-    // when no custom storageKey is configured, which this project
-    // doesn't set) - derived from the configured Supabase URL rather
-    // than hardcoded, so this keeps working if the project URL ever
-    // changes and never duplicates the project ref as its own constant.
+    // Matches supabase-js's default storage key: sb-<hostname first
+    // label>-auth-token.
     function deriveStorageKey(supabaseUrl) {
         const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
         return `sb-${projectRef}-auth-token`;
@@ -30,13 +22,8 @@ const WishlistAuthSession = (() => {
         );
     }
 
-    // Returns one of:
-    //   { status: "valid", accessToken }
-    //   { status: "expired" }
-    //   { status: "signed_out" }
-    // Never returns/logs the raw session, refresh_token, or full
-    // access_token anywhere but the one `accessToken` field on the
-    // "valid" result.
+    // Returns { status: "valid", accessToken } | { status: "expired" } | {
+    // status: "signed_out" }. Never logs the raw session or refresh token.
     async function getStoredSession(supabaseUrl) {
         const key = deriveStorageKey(supabaseUrl);
         const result = await chrome.storage.local.get(key);

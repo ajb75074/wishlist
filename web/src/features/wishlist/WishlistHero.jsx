@@ -2,11 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useProfile } from "../profile/useProfile";
 import "./WishlistHero.css";
 
-// The Wishlist page's own global header + hero - deliberately separate
-// from components/header/Header (still used as-is by Collections) so
-// restyling this page can never change how Collections looks. Owns
-// nothing: search term and its setter are App.jsx's own state, passed
-// straight through, same as the old Header did.
 function WishlistHero({ searchTerm, onSearchChange }) {
   const navigate = useNavigate();
   const { displayName, profileImageUrl, isLoading } = useProfile();

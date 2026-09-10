@@ -5,7 +5,6 @@ import { supabase } from "../../lib/supabase";
 const COLLECTIONS_TABLE = "collections";
 const COLLECTION_ITEMS_TABLE = "collection_items";
 
-// Keeps snake_case (image_url) out of the UI - components only ever see imageUrl.
 function databaseRowToCollection(row) {
   return {
     id: row.id,
@@ -16,7 +15,6 @@ function databaseRowToCollection(row) {
   };
 }
 
-// Returns every collection, newest first.
 export async function getCollections() {
   const { data, error } = await supabase
     .from(COLLECTIONS_TABLE)
@@ -30,7 +28,6 @@ export async function getCollections() {
   return data.map(databaseRowToCollection);
 }
 
-// Returns one collection by id, or null if it doesn't exist.
 export async function getCollectionById(collectionId) {
   const { data, error } = await supabase
     .from(COLLECTIONS_TABLE)
@@ -45,9 +42,6 @@ export async function getCollectionById(collectionId) {
   return data ? databaseRowToCollection(data) : null;
 }
 
-// Creates a new collection. Throws if the name is blank after trimming.
-// image_url is optional; color always gets a value (the DB column also
-// has its own default, so this is belt-and-suspenders, not the only guard).
 export async function createCollection({ name, imageUrl, color }) {
   const trimmedName = name.trim();
 
@@ -72,10 +66,6 @@ export async function createCollection({ name, imageUrl, color }) {
   return databaseRowToCollection(data);
 }
 
-// Updates an existing collection's name/cover - same shape as
-// createCollection's own arguments, so the edit and create modals can
-// share the exact same field handling. Throws if the new name is blank
-// after trimming.
 export async function updateCollection(collectionId, { name, imageUrl, color }) {
   const trimmedName = name.trim();
 
@@ -137,8 +127,6 @@ export async function addItemToCollection(collectionId, wishitemId) {
   return { success: true, alreadyExists: data === null, membership: data };
 }
 
-// Removes a wishlist item from one collection only - it stays in any
-// other collections it belongs to, and the wishlist item itself is untouched.
 export async function removeItemFromCollection(collectionId, wishitemId) {
   const { error } = await supabase
     .from(COLLECTION_ITEMS_TABLE)
@@ -153,8 +141,6 @@ export async function removeItemFromCollection(collectionId, wishitemId) {
   return { success: true };
 }
 
-// Returns the actual wishlist products in a collection, already normalized
-// into the same product shape the rest of the app (ProductCard/ProductGrid) uses.
 export async function getCollectionItems(collectionId) {
   const { data, error } = await supabase
     .from(COLLECTION_ITEMS_TABLE)
@@ -173,8 +159,6 @@ export async function getCollectionItems(collectionId) {
   return resolveItemImages(products);
 }
 
-// Returns the collections a given wishlist item currently belongs to.
-// Useful for an "Add to Collection" checklist UI.
 export async function getCollectionsForItem(wishitemId) {
   const { data, error } = await supabase
     .from(COLLECTION_ITEMS_TABLE)

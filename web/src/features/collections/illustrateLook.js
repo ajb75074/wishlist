@@ -1,17 +1,5 @@
-// Illustrate Look's client -> server boundary. Mirrors
-// features/wishlist/wishlist.js's fetchProductImageViaProxy - same
-// Edge Function invocation convention (VITE_SUPABASE_URL +
-// functions/v1/<name>, no service-role key, no provider credentials in
-// this bundle at all). The actual Gemini call, prompt, and API key
-// live entirely in supabase/functions/illustrate-look/ - this file
-// only ever sends the app-level payload IllustrateLookModal builds and
-// returns the normalized result.
-//
-// Authorization is now the signed-in user's own access_token, not the
-// publishable key - the function requires a real authenticated user
-// and loads the Look's own pieces from the database itself, so the
-// publishable key alone is no longer sufficient (it stays in `apikey`,
-// which Supabase's gateway still expects on every request).
+// Client -> server boundary. The Gemini call, prompt, and API key all live in
+// the Edge Function.
 import { supabase } from "../../lib/supabase";
 
 export async function generateLookIllustration(payload) {

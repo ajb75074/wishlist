@@ -3,28 +3,14 @@ import { parseGIF, decompressFrames } from "gifuct-js";
 import clothingGifUrl from "../../assets/clothing.gif";
 import "./ClothingRackAnimation.css";
 
-// No idle loop anymore - the animation sits paused until the user is
-// actively typing, then pauses again shortly after they stop. This is
-// a deliberate reversal of an earlier version of this component, which
-// always kept a slow ambient loop running.
 const IDLE_TIMEOUT_MS = 850;
 const TYPING_WINDOW_MS = 1000;
 const MIN_INTERVAL_MS = 35;
-// Snappier than a pure "typing speed" reading (below) would need on
-// its own - the point is to erase any sense of one-frame-per-keystroke
-// stepping, not just track velocity precisely.
 const EASING_FACTOR = 0.22;
-// completeToEnd()'s "finish the loop" catch-up - capped so finishing
-// from anywhere in a 160-frame sequence still feels quick, never a
-// multi-second wait after pressing Enter.
 const CATCHUP_MAX_DURATION_MS = 500;
 const CATCHUP_MIN_FRAME_MS = 16;
 
 // Recent-keystroke count (within TYPING_WINDOW_MS) -> target ms/frame.
-// Fast enough at every bucket that several frames play between
-// consecutive keystrokes (a normal ~150-250ms typing cadence), not
-// roughly one frame per key - that's what actually reads as smooth,
-// continuous motion instead of a mechanical per-keystroke step.
 function targetIntervalForKeystrokeCount(count) {
   if (count >= 8) return 45;
   if (count >= 5) return 65;
@@ -32,15 +18,8 @@ function targetIntervalForKeystrokeCount(count) {
   return 140;
 }
 
-// gifuct-js only decodes each frame's own raw PATCH (the changed
-// region, per that frame's disposal method) - this composites every
-// frame into a full, independently-drawable ImageData ONCE up front,
-// respecting disposalType exactly as the GIF spec requires (2 = clear
-// the previous frame's region back out before the next one draws, 3 =
-// restore what was there before the previous frame drew). After this,
-// playback is just "put this frame's full pixel data on the canvas" -
-// the same random-access-by-index model a plain frame-image sequence
-// would give, which is what makes pause/resume/scrub/loop all trivial.
+// gifuct-js only decodes each frame's changed patch, so composite full frames
+// once up front (disposalType 2 = clear the previous region first).
 function compositeFrames(frames, width, height) {
   const tempCanvas = document.createElement("canvas");
   tempCanvas.width = width;
@@ -79,12 +58,8 @@ function compositeFrames(frames, width, height) {
   return composited;
 }
 
-// Isolated on purpose (see AuthShell.jsx's own comment) - all frame/
-// playback state lives in refs and a <canvas>, updated via
-// requestAnimationFrame, so a keystroke in the form next to it never
-// re-renders SignInScreen/ForgotPasswordScreen. The parent talks to
-// this component through the imperative handle below (reportKeystroke,
-// completeToEnd), never through props/state, for exactly that reason.
+// Playback state lives in refs and a <canvas>, so a keystroke in the form
+// beside it never re-renders this.
 const ClothingRackAnimation = forwardRef(function ClothingRackAnimation(_props, ref) {
   const canvasRef = useRef(null);
   const framesRef = useRef([]);
@@ -98,11 +73,8 @@ const ClothingRackAnimation = forwardRef(function ClothingRackAnimation(_props, 
   const lastKeystrokeAtRef = useRef(0);
   const currentIntervalRef = useRef(500);
   const accumulatorRef = useRef(0);
-  // Non-null while the submit-triggered "finish the loop" catch-up is
-  // running - takes priority over normal typing-driven playback in the
-  // tick loop below until it completes. In practice nothing else can
-  // interrupt it anyway: the form disables its fields during submit,
-  // so reportKeystroke can't fire again until a fresh attempt.
+  // Non-null while the submit-triggered catch-up runs; takes priority over
+  // typing-driven playback until it completes.
   const catchUpRef = useRef(null);
 
   function drawFrame(index) {
@@ -115,19 +87,11 @@ const ClothingRackAnimation = forwardRef(function ClothingRackAnimation(_props, 
   useImperativeHandle(
     ref,
     () => ({
-      // Called directly from the form's own onChange handlers (input
-      // events - typing and backspace/delete both fire one; Shift/
-      // Ctrl/Tab/arrow keys etc. never do) - never from raw keydown, so
-      // only real text-editing activity ever affects playback.
       reportKeystroke() {
         const now = performance.now();
         keystrokeTimestampsRef.current.push(now);
         lastKeystrokeAtRef.current = now;
       },
-      // Called once, right as the form submits - guarantees the loop
-      // always reaches its final frame by the time Enter/Sign in is
-      // pressed, regardless of how far through it typing had gotten.
-      // A no-op if it's already there, or under reduced motion.
       completeToEnd() {
         if (prefersReducedMotion) return;
 
@@ -226,9 +190,6 @@ const ClothingRackAnimation = forwardRef(function ClothingRackAnimation(_props, 
       const isTypingActive = timestamp - lastKeystrokeAtRef.current < IDLE_TIMEOUT_MS;
 
       if (!isTypingActive) {
-        // Paused, not slowed - no frame advance at all. Reset the
-        // accumulator so resuming later doesn't immediately fire off a
-        // frame from leftover buildup.
         accumulatorRef.current = 0;
         rafId = requestAnimationFrame(tick);
         return;
@@ -238,8 +199,6 @@ const ClothingRackAnimation = forwardRef(function ClothingRackAnimation(_props, 
         MIN_INTERVAL_MS,
         targetIntervalForKeystrokeCount(keystrokeTimestampsRef.current.length),
       );
-      // Eased, not snapped - typing faster/slower smoothly speeds up or
-      // slows down the loop rather than jumping between fixed speeds.
       currentIntervalRef.current += (targetInterval - currentIntervalRef.current) * EASING_FACTOR;
 
       accumulatorRef.current += deltaMs;

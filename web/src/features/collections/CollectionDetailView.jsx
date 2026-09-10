@@ -20,21 +20,14 @@ import {
 import { useRefetchOnFocus } from "../../lib/useRefetchOnFocus";
 import "./CollectionDetailView.css";
 
-// Owns its own fetched product list (separate from the global wishlist
-// state in App.jsx) - App.jsx only owns which collection is selected.
-// Also owns its own Select Mode / "remove from this rack" state, kept
-// isolated here since it's specific to this collection, unlike All
-// Saves' select state which App.jsx owns.
 function CollectionDetailView({
   collection,
   onUpdate,
   updatingId,
 }) {
   const navigate = useNavigate();
-  // lookName is only present when this route matched the nested
-  // "/looks/:lookName" pattern - undefined on the plain
-  // "/collections/:collectionName" route, which is how Look Studio
-  // being open is distinguished from the Pieces/Looks tabs view.
+  // Only present on the nested /looks/:lookName route - that's how "Look
+  // Studio is open" is detected.
   const { lookName } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,8 +38,6 @@ function CollectionDetailView({
   const [removeError, setRemoveError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const successTimeoutRef = useRef(null);
-  // Pieces/Looks is local view state, not navigation - App.jsx never
-  // needs to know which one is showing.
   const [activeTab, setActiveTab] = useState("pieces");
   const [looks, setLooks] = useState([]);
   const [isLooksLoading, setIsLooksLoading] = useState(true);
@@ -55,10 +46,8 @@ function CollectionDetailView({
   const [isRemovingLook, setIsRemovingLook] = useState(false);
   const [removeLookError, setRemoveLookError] = useState("");
 
-  // Switching to a different collection (e.g. via the Sidebar, without
-  // ever unmounting this view) shouldn't carry over select state from
-  // the collection we just left - same render-time reset pattern used
-  // elsewhere in this app to react to a prop change without an effect.
+  // Reset select state when the collection changes, since this view never
+  // unmounts between collections.
   const [lastCollectionId, setLastCollectionId] = useState(collection.id);
   if (collection.id !== lastCollectionId) {
     setLastCollectionId(collection.id);
@@ -69,10 +58,8 @@ function CollectionDetailView({
     setActiveTab("pieces");
   }
 
-  // Derived from the URL + the already-loaded looks list, rather than
-  // its own local state, so a direct link/refresh straight into
-  // Look Studio resolves correctly instead of always landing back on
-  // the Pieces/Looks tabs.
+  // Derived from the URL plus the loaded looks list, so a direct link or
+  // refresh into Look Studio resolves correctly.
   const selectedLook = lookName
     ? looks.find((look) => look.name.toLowerCase() === lookName.toLowerCase()) ?? null
     : null;
@@ -140,45 +127,27 @@ function CollectionDetailView({
     };
   }, [collection.id]);
 
-  // Background, silent refetches when this tab regains focus - covers
-  // "saved a wishlist item / prepared a cutout / saved an illustration
-  // via another tab or the Chrome extension while this one sat open."
-  // No loading state toggled here on purpose: this should feel like the
-  // data was just already there, not like the page reloaded. Reads
-  // collection.id fresh via closure each render (useRefetchOnFocus
-  // always calls the latest callback it was given), so switching
-  // collections doesn't need to be handled specially here - the
-  // isCurrent-guarded mount effects above still own the "first load for
-  // this collection" case untouched.
+  // Silent background refetch on tab focus - covers a save from another
+  // tab or the extension. No loading state toggled: should feel like
+  // the data was already there, not a reload.
   useRefetchOnFocus(async () => {
     try {
       const items = await getCollectionItems(collection.id);
       setProducts(items);
     } catch {
-      // Quiet failures here just mean the background refresh didn't
-      // happen - the visible list stays whatever it already was,
-      // rather than surfacing an error for something the user didn't
-      // explicitly ask for.
+      // Fail quietly - keep showing whatever was already there.
     }
   });
 
   useRefetchOnFocus(async () => {
     try {
-      // Also keeps an already-open Look Studio view in sync - covers
-      // saving an illustration (or an arrangement) via another tab
-      // while this one sat open on the same Look in the background.
-      // No separate mirroring needed here: selectedLook is derived from
-      // this same looks list on every render, so updating it is enough.
       const items = await getLooksForCollection(collection.id);
       setLooks(items);
     } catch {
-      // Same reasoning as above - fail quietly, keep showing what's
-      // already there.
+      // Fail quietly - keep showing whatever was already there.
     }
   });
 
-  // Same idea for edits: the real update still goes through App.jsx's
-  // existing handler; this just mirrors the result into the local copy.
   async function handleUpdate(id, updates) {
     const result = await onUpdate(id, updates);
 
@@ -191,12 +160,6 @@ function CollectionDetailView({
     return result;
   }
 
-  // Presentation + form state lives in CreateLookModal - this just makes
-  // the actual Supabase call and mirrors the result into local state,
-  // same division of responsibility as handleCreateCollection. A new
-  // Look always starts empty (wishitemIds is always []) - selecting it
-  // immediately drops the user straight into Look Studio to style it,
-  // rather than back onto the Looks grid.
   async function handleCreateLook(name, wishitemIds) {
     try {
       const look = await createLook(collection.id, name, wishitemIds);
@@ -251,18 +214,7 @@ function CollectionDetailView({
     }
   }
 
-  // Uploads through wishlist.js (the only place that ever touches
-  // Supabase Storage), then mirrors the new cutoutImageUrl into every
-  // spot this wishitem currently appears - `products` (this
-  // Collection's own piece list, what Look Studio's catalog panel
-  // actually renders from - and what Edit Mode's bed reads from too,
-  // see LookDetailView's bedPieces), the open Look, and (in case the
-  // same piece is in more than one Look in this Collection) every
-  // entry in `looks`. Global wishlist state (All Saves) is deliberately
-  // left untouched - Prepare Piece only affects this Collection's own
-  // views. products was previously missed here, which is exactly why
-  // a freshly-prepared cutout wouldn't show up in the catalog (or the
-  // bed while actively editing) until a full page reload re-fetched it.
+  // Mirror the new cutoutImageUrl into every place this wishitem appears.
   async function handlePrepareCutoutSaved(wishitemId, blob) {
     try {
       const uploadResult = await uploadPieceCutout(wishitemId, blob);
@@ -299,11 +251,6 @@ function CollectionDetailView({
     }
   }
 
-  // Saves Illustrate Look's generated result as this Look's one saved
-  // illustration (Milestone 3 - zero or one per Look, no history).
-  // Mirrors handleSaveLookLayout's own shape: call the data-layer
-  // function, mirror the result into both selectedLook and the looks
-  // list, return a plain {success, error} the modal can render.
   async function handleSaveIllustration(imageDataUrl) {
     const result = await saveLookIllustration(selectedLook.id, imageDataUrl);
 
@@ -344,11 +291,8 @@ function CollectionDetailView({
     });
   }
 
-  // "Remove from this rack ♡" only touches this collection's own
-  // collection_items relationship - the wishlist item itself, and its
-  // membership in any other collection, is untouched. Non-destructive
-  // to the wishlist, so no confirmation modal (matches Donate, which
-  // IS destructive and does need one).
+  // Only touches this collection's own collection_items link - the wishlist
+  // item itself is untouched.
   async function handleRemoveFromRack() {
     const ids = Array.from(selectedProductIds);
 
@@ -381,11 +325,8 @@ function CollectionDetailView({
     }
   }
 
-  // lookName present but not (yet) resolvable: while looks are still
-  // loading (a fresh page load/refresh straight into this URL), show a
-  // loading state rather than flashing the Pieces/Looks tabs first; once
-  // loaded, a lookName that still matches nothing is a stale/bad URL,
-  // so fall back to this collection's own tabs view.
+  // lookName present but not yet resolvable while looks load - show loading
+  // rather than flashing the tabs.
   if (lookName && isLooksLoading) {
     return <p className="collection-detail__status">Loading...</p>;
   }
@@ -394,9 +335,6 @@ function CollectionDetailView({
     return <Navigate to={`/collections/${encodeURIComponent(collection.name)}`} replace />;
   }
 
-  // A Look's own detail replaces this whole view (same drill-down
-  // pattern App.jsx uses for CollectionsView -> CollectionDetailView),
-  // rather than nesting inside the Pieces/Looks tabs.
   if (selectedLook) {
     return (
       <LookDetailView

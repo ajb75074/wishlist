@@ -48,7 +48,6 @@ function Sticker({ src, className, alt = "" }) {
       const dx = event.clientX - startRef.current.x;
       const dy = event.clientY - startRef.current.y;
 
-      // Not enough movement yet - treat this as a click, not a drag.
       if (Math.hypot(dx, dy) < DRAG_THRESHOLD) {
         return;
       }

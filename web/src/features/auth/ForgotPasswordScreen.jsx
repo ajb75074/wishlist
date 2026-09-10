@@ -9,11 +9,6 @@ const STATUS_SENDING = "sending";
 const STATUS_SENT = "sent";
 const STATUS_ERROR = "error";
 
-// Its own route (/forgot-password) - distinct from /reset-password,
-// which the recovery email itself must point at (see
-// ResetPasswordScreen.jsx). Shares AuthShell (and its clothing-rack
-// animation) with SignInScreen/SignUpScreen purely for visual
-// consistency.
 function ForgotPasswordScreen() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");

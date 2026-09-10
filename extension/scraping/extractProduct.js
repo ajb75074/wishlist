@@ -1,7 +1,5 @@
-// Orchestration only - merges WishlistStructuredData and
-// WishlistGenericProduct's outputs using the per-field precedence
-// documented in the Phase 1 report. No JSON-LD parsing, no meta/DOM
-// queries of its own.
+// Orchestration only - merges the structured/meta/DOM results by per-field
+// precedence.
 const WishlistExtractProduct = (() => {
     const REQUIRED_FIELDS = ["name", "imageUrl", "productUrl", "store"];
 
@@ -26,12 +24,9 @@ const WishlistExtractProduct = (() => {
             // variant, so JSON-LD's stability is a feature here.
             name: firstNonNull(structured.name, meta.name, dom.name),
 
-            // PRICE / IMAGE: a confident current-product DOM reading
-            // (today, only the Amazon-specific selectors qualify) wins
-            // first, since price/image are the fields most likely to go
-            // stale when JSON-LD/meta describe the base product rather
-            // than the selected variant. Falls back to structured, then
-            // meta, exactly as before, for every other retailer.
+            // PRICE/IMAGE: a confident DOM reading wins first, since these go
+            // stale when JSON-LD describes the base product rather than the
+            // selected variant.
             price: firstNonNull(dom.price, structured.price, meta.price),
             currency: firstNonNull(structured.currency, meta.currency) || "USD",
             imageUrl: firstNonNull(dom.imageUrl, structured.imageUrl, meta.imageUrl),
@@ -42,9 +37,7 @@ const WishlistExtractProduct = (() => {
             color: firstNonNull(selectedColor, structured.color),
 
             // Canonical URL, falling back to location.href - never
-            // JSON-LD-derived, never variant-synthesized. Same-URL
-            // variant collisions remain a known, unresolved issue (see
-            // the Phase 1 report).
+            // synthesized. Same-URL variants remain a known limitation.
             productUrl: WishlistGenericProduct.extractCanonicalUrl(doc, currentLocation),
 
             // Unchanged: hostname, not a scraped brand name.

@@ -1,7 +1,3 @@
-// Shared between App.jsx (actual filtering) and FilterPopover.jsx
-// (rendering the checkboxes) so the ranges themselves - and their
-// boundaries - only live in one place, same pattern as categorize.js
-// and basicColor.js.
 export const PRICE_RANGES = [
   { key: "under-50", label: "Under $50", test: (price) => price < 50 },
   { key: "50-100", label: "$50 – $100", test: (price) => price >= 50 && price < 100 },

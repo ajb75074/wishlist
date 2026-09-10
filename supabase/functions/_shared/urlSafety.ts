@@ -1,41 +1,6 @@
-// SSRF protections for any function that fetches a client-influenced
-// URL. image-proxy uses this directly; illustrate-look no longer needs
-// to fetch client-supplied URLs at all (see its own file), but this
-// module is written to be safe for either.
-//
-// LAYERED APPROACH - read this before changing the limitation notes below:
-//
-// 1. Literal checks (hostname string match + literal IP parsing) -
-//    zero runtime dependency, always active, cannot fail or degrade.
-//    This alone blocks every non-DNS-rebinding case: a literal private
-//    IP, loopback, link-local, or metadata-hostname supplied directly.
-//
-// 2. A DNS-resolution check via Deno.resolveDns(), layered on top as
-//    defense-in-depth. This was NOT blindly assumed - Deno.resolveDns
-//    is confirmed present as a real API on the Deno object inside
-//    Supabase's actual edge-runtime (verified against a
-//    supabase/edge-runtime GitHub issue that logs the runtime's own
-//    Deno object, not just Deno Deploy's own docs, which separately
-//    document it as a stable, available API there too - and Supabase's
-//    own docs state edge-runtime intentionally mirrors the Deno Deploy
-//    API surface). It could not be verified to actually SUCCEED inside
-//    the real deployed sandbox from this environment (no Docker
-//    available locally to run `supabase functions serve` against the
-//    real edge-runtime image, and deploying was out of scope for this
-//    task) - so it's wrapped to degrade gracefully: if it throws or is
-//    ever unavailable, that is logged server-side and treated as
-//    "could not confirm via DNS", never as a crash and never by
-//    blocking all traffic. Layer 1's guarantees do not depend on layer
-//    2 succeeding.
-//
-// REMAINING LIMITATION, stated plainly: even with both layers active,
-// this does not fully close a determined DNS-rebinding attack (resolve
-// to a public address for our check, then have DNS answer a private
-// address by the time fetch() performs its own separate resolution
-// moments later). Fully closing that gap means fetching over a
-// pre-resolved, pinned IP with the Host header set manually by hand -
-// real added complexity this project's threat model doesn't currently
-// justify.
+// SSRF protections for any function that fetches a client-influenced URL:
+// scheme and host checks, private-range rejection, manual redirect handling,
+// timeouts, and size caps.
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal"]);
 
@@ -70,10 +35,8 @@ function isLiteralPrivateAddress(hostname: string): boolean {
   return isPrivateIPv4(hostname) || isPrivateIPv6(hostname);
 }
 
-// Best-effort only - see module header. Never throws; a failure here
-// means "could not confirm via DNS", not "confirmed safe" - callers
-// only ever use this to REJECT (a true result), never to approve a URL
-// the literal check would otherwise have blocked.
+// Best-effort: a failure means "could not confirm via DNS", not "safe". Only
+// ever used to reject.
 async function resolvesToPrivateAddress(hostname: string): Promise<boolean> {
   try {
     const [v4, v6] = await Promise.all([
@@ -118,13 +81,8 @@ export async function assertSafeUrl(rawUrl: string): Promise<URL> {
 const FETCH_TIMEOUT_MS = 8000;
 export const MAX_RESPONSE_BYTES = 8 * 1024 * 1024; // 8MB - generous for a product photo
 
-// redirect: "manual" is deliberate - a URL that passed assertSafeUrl
-// could still redirect to an internal address, so any 3xx is treated
-// as a rejection rather than silently followed. This was kept as
-// specified even though real stored retailer image URLs could not be
-// tested against this behavior from this environment (no live DB
-// access and no example URLs found anywhere in the repo) - see the
-// accompanying report for what to verify after this deploys.
+// redirect: "manual" is deliberate - a URL that passed the safety check could
+// still redirect to an internal address, so any 3xx is a rejection.
 export async function safeFetch(rawUrl: string): Promise<Response> {
   const url = await assertSafeUrl(rawUrl);
 

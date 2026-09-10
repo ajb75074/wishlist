@@ -1,12 +1,7 @@
-// JSON-LD parsing only - no meta tags, no DOM queries, no retailer
-// knowledge. Returns a predictable partial-extraction shape so the
-// orchestrator (extractProduct.js) never has to know this module's
-// internal JSON-LD structure.
+// JSON-LD parsing only - no meta tags, no DOM queries, no retailer knowledge.
 const WishlistStructuredData = (() => {
-    // Walks a parsed JSON-LD document looking for Product/ProductGroup
-    // entries, including ones nested inside a top-level @graph array.
-    // Safe against arbitrary nesting shapes - anything that isn't a
-    // plain object/array is simply ignored rather than throwing.
+    // Collects Product/ProductGroup entries at any depth, including inside
+    // @graph. Anything malformed is ignored rather than thrown.
     function collectProductLikeEntries(data, acc) {
         if (!data || typeof data !== "object") {
             return;
@@ -30,14 +25,8 @@ const WishlistStructuredData = (() => {
         }
     }
 
-    // Normalizes any legitimate schema.org `image` value into a single
-    // usable URL string, or null - never an object, never
-    // "[object Object]". Handles, in order of how this is actually
-    // structured in the wild: a plain string; an array (of strings
-    // and/or ImageObjects, first usable entry wins); an ImageObject
-    // (preferring .url, falling back to .contentUrl); anything else
-    // (missing/malformed) contributes nothing rather than being
-    // stringified.
+    // schema.org image can be a string, an array, or an ImageObject -
+    // normalize all of them to one URL, or null.
     function extractImageUrl(image) {
         if (!image) {
             return null;
@@ -69,9 +58,6 @@ const WishlistStructuredData = (() => {
         return null;
     }
 
-    // Same field-by-field logic as the original inline JSON-LD block -
-    // first entry to supply a given field wins, later entries only fill
-    // in whatever is still missing.
     function applyEntry(entry, result) {
         if (!result.name && entry.name) {
             result.name = entry.name;
@@ -84,9 +70,6 @@ const WishlistStructuredData = (() => {
             }
         }
 
-        // A real schema.org Product field (not a synthesized one) - only
-        // used as a fallback behind the live selected-DOM color, per the
-        // documented precedence.
         if (!result.color && typeof entry.color === "string") {
             result.color = entry.color;
         }
@@ -105,10 +88,8 @@ const WishlistStructuredData = (() => {
             }
         }
 
-        // ProductGroup variants - picks the first variant with a price,
-        // same as today's behavior. This is a known limitation (not the
-        // necessarily-*selected* variant) tracked as the same-URL
-        // variant problem, not something this phase resolves.
+        // Picks the first variant with a price - not necessarily the selected
+        // one (known limitation).
         if (!result.price && Array.isArray(entry.hasVariant)) {
             const variant = entry.hasVariant.find((v) => v.offers?.price);
 
@@ -122,10 +103,6 @@ const WishlistStructuredData = (() => {
         }
     }
 
-    // Returns a predictable partial object - missing fields are always
-    // null, never undefined, and raw JSON-LD structures never leak past
-    // this function. productUrl is always null here: JSON-LD is never
-    // used as a URL source (see extractProduct.js for why).
     function extractStructuredProduct(doc = document) {
         const result = {
             name: null,

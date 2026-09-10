@@ -1,9 +1,5 @@
-// Message boundary only - extraction itself lives in scraping/. Loaded
-// after scraping/extractStructuredData.js, scraping/extractGenericProduct.js,
-// and scraping/extractProduct.js (see manifest.json's content_scripts
-// order), which is what makes WishlistExtractProduct available here as
-// a plain global - same convention popup.html already uses for its own
-// scripts.
+// Message boundary only - extraction lives in scraping/, loaded before this
+// (see manifest).
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request?.type !== "GET_PRODUCT") {
         return false;

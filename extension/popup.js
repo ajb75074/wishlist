@@ -1,14 +1,5 @@
-// Wishlist popup - rendering, state transitions, and the Save/View
-// actions. Extraction itself is entirely the content script's job (see
-// content.js and scraping/); this file only ever calls the typed
-// GET_PRODUCT contract and the existing WishlistService/AuthSession
-// interfaces, unchanged.
 
 const app = document.getElementById("app");
-
-// --- small inline icons, kept as plain strings so nothing here needs
-// an external asset or a build step. currentColor lets each icon pick
-// up whatever color its container sets. ---
 
 const HEART_ICON = `
 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
@@ -40,10 +31,8 @@ const CHECK_ICON = `
   <path d="M5 12.5 9.5 17 19 7.5"/>
 </svg>`;
 
-// Escapes text pulled from the scraped page before it's ever
-// interpolated into innerHTML - product name/store/color come from
-// whatever the current tab's DOM/JSON-LD contained, which is untrusted
-// content as far as this popup is concerned.
+// Escapes scraped text before it reaches innerHTML - the source page is
+// untrusted.
 function escapeHtml(value) {
     const div = document.createElement("div");
     div.textContent = value ?? "";
@@ -54,24 +43,15 @@ function prefersReducedMotion() {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-// product.store is the scraper's hostname value (e.g. "reformation.com")
-// - the scraper deliberately never extracts a real brand name, only the
-// hostname (see extractStore() in extractGenericProduct.js). This is a
-// purely cosmetic display transform, not a new extraction capability:
-// strip a trailing TLD and uppercase what's left, so "reformation.com"
-// reads as "REFORMATION" instead of looking like a raw URL.
+// store is the scraper's hostname value, never a real brand name.
 function formatStoreLabel(store) {
     if (!store) return "";
     const withoutTld = store.replace(/\.(com|co|net|org|io|shop|store)(\.[a-z]{2})?$/i, "");
     return withoutTld.toUpperCase();
 }
 
-// Sends the typed GET_PRODUCT request to the active tab's content
-// script and normalizes chrome.runtime's own failure mode (no receiving
-// end, e.g. a chrome:// page or a not-yet-injected content script) into
-// the same {success:false, reason} shape content.js itself returns -
-// so every caller only ever has to handle one typed contract, never a
-// raw undefined.
+// Normalizes chrome.runtime's "no receiving end" failure (chrome:// pages, or
+// a not-yet-injected content script).
 function requestProduct(tabId) {
     return new Promise((resolve) => {
         chrome.tabs.sendMessage(tabId, { type: "GET_PRODUCT" }, (response) => {
@@ -84,9 +64,6 @@ function requestProduct(tabId) {
     });
 }
 
-// Same action every "wishlist" header icon performs - reused, not
-// duplicated, as the one way to sign in (the wishlist page is the only
-// login UI; the popup never gets its own email/password fields).
 function openWishlist() {
     chrome.tabs.create({
         url: chrome.runtime.getURL("wishlist/index.html")
@@ -108,8 +85,6 @@ function setNote(el, text, kind) {
     el.classList.toggle("wl-inline-note--error", kind === "error");
 }
 
-// The header is identical across every state - a small helper avoids
-// repeating this markup in all four render functions.
 function headerHtml() {
     return `
         <div class="wl-header">
@@ -125,8 +100,6 @@ function bindHeader() {
     document.getElementById("headerWishlistBtn").addEventListener("click", openWishlist);
 }
 
-// --- render: loading skeleton ---
-
 function renderLoading() {
     app.innerHTML = `
         ${headerHtml()}
@@ -140,8 +113,6 @@ function renderLoading() {
     `;
     bindHeader();
 }
-
-// --- render: no product detected ---
 
 function renderExtractionError() {
     app.innerHTML = `
@@ -164,8 +135,6 @@ function renderExtractionError() {
     bindHeader();
     document.getElementById("tryAgainButton").addEventListener("click", loadProduct);
 }
-
-// --- render: product detected ---
 
 function renderInfoRows(product) {
     const rows = [];
@@ -226,14 +195,8 @@ function renderProduct(product) {
 
     document.getElementById("saveButton").addEventListener("click", handleSaveClick);
 
-    // Reflects the current session state in the Save button itself,
-    // before the user ever clicks it - only meaningful now that the
-    // button actually exists (it's rendered fresh per product, unlike
-    // the old static markup).
     refreshAuthState();
 }
-
-// --- render: saved successfully ---
 
 function renderSuccess(product) {
     const hasImage = !!product.imageUrl;
@@ -270,10 +233,8 @@ function renderSuccess(product) {
     document.getElementById("viewWishlistSuccess").addEventListener("click", openWishlist);
 }
 
-// Plays a brief exit animation on the current product screen before
-// swapping to the success screen - skipped entirely (instant swap) when
-// the product screen isn't there for some reason, or reduced motion is
-// requested.
+// Brief exit animation before swapping screens; skipped when reduced motion
+// is requested.
 function playExitThenRenderSuccess(product) {
     const screen = document.getElementById("productScreen");
 
@@ -286,14 +247,8 @@ function playExitThenRenderSuccess(product) {
     setTimeout(() => renderSuccess(product), 200);
 }
 
-// --- auth state (reflected on the product screen's Save button) ---
-
-// Whether the last auth check found a usable session - read by the
-// click handler so a signed-out/expired popup opens the wishlist
-// instead of attempting (and always failing) a save. This is a UX
-// short-circuit only: WishlistService.saveWishlistItem() independently
-// re-checks the session itself before ever calling Supabase, so a
-// stale value here can never cause an unauthenticated insert attempt.
+// Whether the last auth check found a usable session - a signed-out popup
+// opens the wishlist instead of failing a save.
 let hasUsableSession = false;
 
 async function refreshAuthState() {
@@ -323,8 +278,6 @@ async function refreshAuthState() {
         setNote(note, "", "clear");
     }
 }
-
-// --- save action ---
 
 // Synchronous lock, checked and set in the same tick as the click -
 // the original popup had no protection at all against a rapid
@@ -361,13 +314,7 @@ async function handleSaveClick() {
         currentWindow: true
     });
 
-    // A fresh extraction, independent of whatever was shown when the
-    // popup opened - preserved deliberately, this is what already
-    // gives Save its up-to-date variant state. A failure here is
-    // treated the same as a save failure (inline message, product
-    // screen stays visible) rather than bouncing the user back to the
-    // "No product found" screen after they've already been looking at
-    // a real product.
+    // A fresh extraction, so Save always uses up-to-date variant state.
     const extraction = await requestProduct(tab.id);
 
     if (!extraction.success) {
@@ -386,11 +333,8 @@ async function handleSaveClick() {
     }
 
     if (result.authRequired) {
-        // Covers both "turned out to have no/expired session after
-        // all" and "Supabase itself rejected the token" - either way,
-        // re-run the upfront check so the button correctly reflects
-        // the real state on the next click instead of staying stuck
-        // offering "Save to Wishlist".
+        // Covers both a missing session and a token Supabase rejected - re-
+        // run the check either way.
         resetButton();
         setNote(
             saveNote,
@@ -419,8 +363,6 @@ async function handleSaveClick() {
     isSaving = false;
     playExitThenRenderSuccess(product);
 }
-
-// --- initial load ---
 
 async function loadProduct() {
     renderLoading();
