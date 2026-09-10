@@ -4,10 +4,6 @@ import { supabase } from "../../lib/supabase";
 import AuthShell from "./AuthShell";
 import "./AuthForm.css";
 
-// Sign Up's own route (/sign-up) - split out of what used to be
-// SignInScreen's own internal "mode" state, see that file's header
-// comment. Same validation/signUp call/error-handling as before the
-// split.
 function SignUpScreen() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -60,12 +56,8 @@ function SignUpScreen() {
         return;
       }
 
-      // With email confirmation required, signUp creates the user but
-      // returns no session - the AuthContext listener has nothing to
-      // react to, so tell the user to confirm by email instead of
-      // silently doing nothing. With confirmation off, a session comes
-      // back immediately and the listener swaps this screen out exactly
-      // like a normal sign-in.
+      // With email confirmation on, signUp returns no session, so the
+      // AuthContext listener never fires - tell the user to confirm by email.
       if (!data.session) {
         setSuccessMessage("Check your email to confirm your account, then sign in.");
         setIsSubmitting(false);
@@ -134,6 +126,7 @@ function SignUpScreen() {
                 autoComplete="new-password"
                 disabled={isSubmitting}
                 required
+                minLength={6}
               />
 
               <button
@@ -162,6 +155,7 @@ function SignUpScreen() {
               autoComplete="new-password"
               disabled={isSubmitting}
               required
+              minLength={6}
             />
           </div>
 
