@@ -1,20 +1,15 @@
 import { supabase } from "../../lib/supabase";
+import { SIGNED_URL_EXPIRY_SECONDS } from "../../lib/itemImages";
 
 const PROFILES_TABLE = "profiles";
 const PROFILE_IMAGES_BUCKET = "profile-images";
 const BED_MODEL_IMAGES_BUCKET = "bed-models";
 
-// Long enough that a normal session doesn't see it expire mid-visit,
-// short enough that a copied/leaked link doesn't stay valid forever.
-const SIGNED_URL_EXPIRY_SECONDS = 60 * 60;
-
 export const ALLOWED_PROFILE_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 export const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
 
-// A deliberately open set (not a strict binary) - mirrors the
-// profiles.gender check constraint exactly. Used by Illustrate Look's
-// prompt to describe the illustrated model; "prefer not to say" isn't
-// a fourth option in that set, it's just leaving gender unset (null).
+// Mirrors the profiles.gender check constraint - a deliberately open set, not
+// a strict binary.
 export const GENDER_OPTIONS = [
   { value: "feminine", label: "Feminine" },
   { value: "masculine", label: "Masculine" },
@@ -53,8 +48,6 @@ export async function updateDisplayName(userId, displayName) {
   return { success: true };
 }
 
-// `gender` is one of GENDER_OPTIONS' values, or null to clear it
-// ("prefer not to say") - both are valid, deliberate states.
 export async function updateGender(userId, gender) {
   const { error } = await supabase
     .from(PROFILES_TABLE)
@@ -68,10 +61,8 @@ export async function updateGender(userId, gender) {
   return { success: true };
 }
 
-// The bucket is private, so the stored path alone can't be used as an
-// <img src> - every read needs its own fresh signed URL. Returns null
-// (rather than throwing) on any failure, since a missing preview image
-// should fall back to the default avatar, not break the page.
+// Private bucket, so the stored path can't be used as an <img src> - every
+// read needs a fresh signed URL. Returns null rather than throwing.
 export async function getProfileImageUrl(path) {
   if (!path) {
     return null;
@@ -88,11 +79,9 @@ export async function getProfileImageUrl(path) {
   return data.signedUrl;
 }
 
-// Always the same fixed key per user (no extension - the private
-// bucket is only ever read back via signed URL, whose response carries
-// the real Content-Type from upload time, so the path itself doesn't
-// need one). "Change photo" is a clean overwrite via upsert, not a
-// second file alongside the old one.
+// Fixed key per user, no extension - the signed-URL response already
+// carries the real Content-Type. Upsert makes "change photo" a clean
+// overwrite, not a second file.
 export async function uploadProfileImage(userId, file) {
   const path = `${userId}/profile`;
 
@@ -116,13 +105,9 @@ export async function uploadProfileImage(userId, file) {
   return { success: true, path };
 }
 
-// Storage removal happens first, then the DB reference is cleared -
-// if the DB update fails after Storage succeeds, that's surfaced
-// explicitly via `storageRemoved` rather than reported as a plain
-// success, so the caller can tell the user to retry instead of the two
-// silently disagreeing. (If they don't retry, the stale path still
-// self-heals visually: ProfileView's <img onError> falls back to the
-// default avatar the next time that now-missing object fails to load.)
+// Storage removal happens first, then the DB reference - if the DB
+// update then fails, that's surfaced via `storageRemoved` so the
+// caller can prompt a retry instead of the two silently disagreeing.
 export async function removeProfileImage(userId, path) {
   const { error: removeError } = await supabase.storage
     .from(PROFILE_IMAGES_BUCKET)
@@ -144,14 +129,6 @@ export async function removeProfileImage(userId, path) {
   return { success: true };
 }
 
-// The optional custom "model" photo for Look Studio - shown as the
-// bed's own avatar (in place of the app's one fixed avatar.png) and,
-// server-side, used as Illustrate Look's identity reference. Mirrors
-// getProfileImageUrl/uploadProfileImage/removeProfileImage above
-// exactly, just against the bed-models bucket/column instead of
-// profile-images/profile_image_path - same private-bucket-plus-
-// signed-URL reasoning applies (this photo may be of the user
-// themselves, so it gets the same privacy treatment).
 export async function getBedModelImageUrl(path) {
   if (!path) {
     return null;

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useEscapeKey } from "../../lib/useEscapeKey";
 import { CATEGORIES } from "../../lib/categorize";
 import { basicColor, BASIC_COLOR_SWATCHES } from "../../lib/basicColor";
 import { PRICE_RANGES } from "../../lib/priceRanges";
@@ -10,11 +11,6 @@ function toggleValue(list, value) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-// Only ever mounted while open (see WishlistToolbar) - each open is a
-// fresh mount, so this draft state always starts from whatever was
-// last actually applied, with no reset-on-open effect needed. Nothing
-// the user picks here reaches App.jsx's real filter state until
-// Apply is clicked; closing without applying just unmounts the draft.
 function FilterPopover({
   id,
   products,
@@ -37,15 +33,22 @@ function FilterPopover({
 
   const panelRef = useRef(null);
 
-  const availableStores = [...new Set(products.map((p) => p.store).filter(Boolean))].sort();
-  const availableColors = [...new Set(products.map((p) => basicColor(p.color)).filter(Boolean))].sort();
+  // products doesn't change while the popover is open, but every draft
+  // checkbox toggle re-renders this component - memoized so that
+  // doesn't re-derive these on every click.
+  const availableStores = useMemo(
+    () => [...new Set(products.map((p) => p.store).filter(Boolean))].sort(),
+    [products],
+  );
+  const availableColors = useMemo(
+    () => [...new Set(products.map((p) => basicColor(p.color)).filter(Boolean))].sort(),
+    [products],
+  );
   const visibleStores = showAllStores ? availableStores : availableStores.slice(0, STORE_PREVIEW_COUNT);
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") onClose();
-    }
+  useEscapeKey(onClose);
 
+  useEffect(() => {
     function handleClickOutside(event) {
       if (panelRef.current?.contains(event.target)) return;
       // The Filter button toggles open/closed on its own click; if this
@@ -56,13 +59,8 @@ function FilterPopover({
       onClose();
     }
 
-    document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose, triggerRef]);
 
   function handleApply() {
