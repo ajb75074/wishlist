@@ -1,45 +1,34 @@
 :root {
-  /* Canvas */
   --cream: #fff9f2;
   --surface: #fffcf8;
-  /* Deeper than --surface, lighter than --blush - the Sidebar/Look
-     Studio "second surface" tone (panels sitting on the cream canvas)
-     introduced for that redesign specifically. */
   --surface-secondary: #f7f1ea;
 
-  /* Strawberry */
-  --strawberry: #e95d75;
-  --strawberry-hover: #c84460;
+  --strawberry: #cc1f47;
+  --strawberry-hover: #a8173a;
   --blush: #fadadd;
   --powder-pink: #fce8ea;
 
-  /* Matcha */
   --matcha: #78966b;
+  --matcha-hover: #5f7858;
   --pistachio: #dde8d4;
 
-  /* Ink */
   --cherry-ink: #3c2028;
   --cocoa-ink: #493c3e;
-  --muted-ink: #9b6972;
-  /* Green-based heading/nav ink, used only in Sidebar/Look Studio -
-     everywhere else keeps --cherry-ink. Deliberately not pink-tinted:
-     the whole point of that redesign was de-saturating pink out of
-     those two areas, and cherry-ink still reads as a wine/pink ink. */
+  --muted-ink: #875058;
   --forest-ink: #244f43;
 
-  /* Structure */
   --border: #e8c9cc;
 
-  /* Semantic */
   --success: #55764f;
   --error: #b84257;
 
-  /* Typography - three distinct jobs, not interchangeable decorative
-     fonts:
-       --font-display major titles/hero moments only (rare)
-       --font-accent  short (1-4 word) section-label stamps,
-                      e.g. "MY COLLECTIONS" - never a sentence
-       --font-ui      everything else (the actual interface) */
+  --cherry-ink-rgb: 60, 32, 40;
+  --cocoa-ink-rgb: 73, 60, 62;
+  --forest-ink-rgb: 36, 79, 67;
+  --strawberry-rgb: 204, 31, 71;
+  --strawberry-hover-rgb: 168, 23, 58;
+  --surface-rgb: 255, 252, 248;
+
   --font-display: "Elsie", Georgia, serif;
   --font-accent: "Bitcount", monospace;
   --font-ui: "Quicksand", sans-serif;
@@ -59,8 +48,6 @@
   }
 }
 
-/* Custom cursors */
-
 body {
   margin: 0;
   background: var(--cream);
@@ -78,8 +65,6 @@ textarea,
   cursor: url("./assets/Text Select.cur"), text;
 }
 
-/* Full-bleed app shell - Sidebar owns the left edge, .app-content
-   owns its own content gutter, so #root no longer caps/centers width. */
 #root {
   min-height: 100svh;
   display: flex;
@@ -116,26 +101,14 @@ p {
   margin: 0;
 }
 
-/* ============================================================
-   Decorative motifs - shared, restrained CSS-only patterns.
-   One idea per component (see each file's own comment for which
-   motif it uses); these are the only definitions, so every use
-   stays visually consistent instead of each file reinventing it.
-   ============================================================ */
-
-/* Gingham check - collection covers. Two overlaid linear-gradients
-   at 90/0deg on a doubled tile size read as a woven check instead of
-   a flat plaid when kept this pale. */
 .motif-gingham {
   background-image:
-    linear-gradient(90deg, rgba(233, 93, 117, 0.1) 50%, transparent 50%),
-    linear-gradient(rgba(233, 93, 117, 0.1) 50%, transparent 50%);
+    linear-gradient(90deg, rgba(var(--strawberry-rgb), 0.1) 50%, transparent 50%),
+    linear-gradient(rgba(var(--strawberry-rgb), 0.1) 50%, transparent 50%);
   background-size: 16px 16px;
   background-color: var(--powder-pink);
 }
 
-/* Polka dot - small accent panels (empty states, decorative
-   backgrounds). Radial-gradient dots on a two-axis tile. */
 .motif-polka {
   background-image: radial-gradient(var(--strawberry) 1.4px, transparent 1.5px);
   background-size: 14px 14px;
@@ -143,12 +116,8 @@ p {
   background-color: var(--blush);
 }
 
-/* Scalloped edge - a repeating radial-gradient mask cut into one edge
-   of a panel, like a die-cut stationery card. Apply to the element
-   that should carry the scallop; --scallop-bg must match the surface
-   behind it (the mask punches through to whatever is *behind* the
-   element, so a mismatched value shows a hard edge instead of a
-   smooth curve). */
+/* --scallop-bg must match the surface behind the element, since the mask
+   punches the scallop out of that color. */
 .motif-scalloped-top {
   --scallop-r: 9px;
   --scallop-bg: var(--cream);
@@ -171,16 +140,12 @@ p {
   pointer-events: none;
 }
 
-/* Lace-inspired border - a fine double rule with a soft dotted inset,
-   for the one or two "keepsake frame" moments (profile). */
 .motif-lace-border {
   border: 1px solid var(--border);
   outline: 1px dotted var(--muted-ink);
   outline-offset: -5px;
 }
 
-/* Tiny floral mark - empty states. A single ✿ used as a lone glyph,
-   not a repeating pattern. */
 .motif-floral-mark {
   display: block;
   font-family: var(--font-display);
