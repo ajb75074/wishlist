@@ -21,12 +21,6 @@ const BASIC_COLOR_KEYWORDS = {
 
 export const BASIC_COLORS = Object.keys(BASIC_COLOR_KEYWORDS);
 
-// Display-only swatch color for the Filter popover's color picker -
-// kept next to the basic-color list itself rather than in the UI
-// layer, so a new basic color and its swatch are added in one place.
-// Pink/Green reuse the brand's own strawberry/matcha tokens rather
-// than a generic red/green, since those are this app's actual pink
-// and green. Multi gets a small gradient instead of a single hue.
 export const BASIC_COLOR_SWATCHES = {
   Black: "#2b2224",
   White: "#fdfaf6",
@@ -42,16 +36,17 @@ export const BASIC_COLOR_SWATCHES = {
   Multi: "conic-gradient(#e95d75, #d9b65c, #78966b, #5f7ea6, #8d6fa8, #e95d75)",
 };
 
+// Compiled once at module load, not per call.
+const BASIC_COLOR_PATTERNS = Object.entries(BASIC_COLOR_KEYWORDS).map(
+  ([basic, keywords]) => [basic, new RegExp(`\\b(${keywords.join("|")})\\b`, "i")],
+);
+
 export function basicColor(rawColor) {
   const value = (rawColor ?? "").toLowerCase();
   if (!value) return null;
 
-  for (const [basic, keywords] of Object.entries(BASIC_COLOR_KEYWORDS)) {
-    const matches = keywords.some((keyword) =>
-      new RegExp(`\\b${keyword}\\b`, "i").test(value),
-    );
-
-    if (matches) {
+  for (const [basic, pattern] of BASIC_COLOR_PATTERNS) {
+    if (pattern.test(value)) {
       return basic;
     }
   }
