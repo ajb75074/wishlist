@@ -2,15 +2,11 @@
   position: relative;
   overflow: hidden;
 
-  /* Less modern / bubbly */
   border-radius: 5px;
 
   background: var(--surface);
   border: 1px solid var(--border);
 }
-
-
-/* IMAGE */
 
 .product-card__visual {
   position: relative;
@@ -29,10 +25,6 @@
   transition: transform 400ms ease;
 }
 
-
-/* Save to collection - hidden until hover, like the rest of the card's
-   interactive affordances, so the resting card stays image-only */
-
 .product-card__save {
   position: absolute;
   top: 8px;
@@ -49,7 +41,7 @@
 
   border: none;
   border-radius: 4px;
-  background: rgba(60, 32, 40, 0.55);
+  background: rgba(var(--cherry-ink-rgb), 0.55);
 
   color: var(--surface);
 
@@ -63,11 +55,9 @@
 }
 
 .product-card__save:hover {
-  background: rgba(60, 32, 40, 0.8);
+  background: rgba(var(--cherry-ink-rgb), 0.8);
   transform: scale(1.08);
 }
-
-/* HOVER OVERLAY */
 
 .product-card__overlay {
   position: absolute;
@@ -77,10 +67,9 @@
   flex-direction: column;
   justify-content: center;
 
-  /* Smaller padding for 4-column cards */
   padding: 18px;
 
-  background: rgba(60, 32, 40, 0.68);
+  background: rgba(var(--cherry-ink-rgb), 0.68);
 
   opacity: 0;
 
@@ -97,57 +86,34 @@
   transform: scale(1.03);
 }
 
-/* While editing (triggered from the Select Mode tray, where the mouse
-   is nowhere near the card), keep it looking selected/active the whole
-   time - same pink treatment as an actively-selected card - instead of
-   relying on real :hover, which the tray click doesn't produce. */
 .product-card__visual.is-editing {
   box-shadow: inset 0 0 0 2px var(--strawberry);
 }
 
-
-/* PRODUCT DETAILS */
-
 .product-card__details {
   width: 100%;
 
-  /* Still sits on the dark cherry-ink scrim above, not the page's own
-     light ground, so this stays a light ink rather than flipping dark. */
   color: var(--surface);
   text-align: center;
 }
-
-
-/* Product title */
 
 .product-card__name {
   margin: 0 auto 8px;
 
   max-width: 90%;
 
-  /* Explicit UI font (not the global h2 -> display-font rule) - product
-     names repeat once per card across a dense grid, so they stay quiet
-     editorial type rather than a display moment. */
   font-family: var(--font-ui);
   font-size: 1.05rem;
   line-height: 1.1;
-  /* Explicit, not inherited from .product-card__details - a bare
-     global `h2` rule elsewhere would otherwise win (direct rules beat
-     inherited ones) and tie this to the visitor's OS light/dark
-     preference instead of the dark overlay it actually sits on. */
+  /* Set explicitly, not inherited - the global `h2` rule would otherwise win. */
   color: var(--surface);
 
   text-align: center;
 }
 
-
-/* Store */
-
 .product-card__store {
   margin: 0 0 12px;
 
-  /* Plain metadata, same as price/tags - product photography stays
-     the focus, not the typography. */
   font-family: var(--font-ui);
   font-size: 0.62rem;
   font-weight: 500;
@@ -160,9 +126,6 @@
   text-align: center;
 }
 
-
-/* Price */
-
 .product-card__price {
   margin: 0;
 
@@ -171,9 +134,6 @@
 
   text-align: center;
 }
-
-
-/* COLOR */
 
 .product-card__meta {
   margin-top: 16px;
@@ -192,7 +152,6 @@
 .product-card__meta > div {
   display: grid;
 
-  /* Label on left, value on right */
   grid-template-columns: 55px minmax(0, 1fr);
 
   gap: 10px;
@@ -215,12 +174,8 @@
 
   font-weight: normal;
 
-  /* Prevent long colors from overflowing */
   overflow-wrap: anywhere;
 }
-
-
-/* Inline color/size inputs, styled to sit inside the metadata row */
 
 .product-card__meta-input {
   width: 100%;
@@ -242,13 +197,18 @@
   border-bottom-color: var(--strawberry);
 }
 
+.product-card__meta-error {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
 
-/* EDIT/CANCEL + VIEW ITEM/SAVE */
+  color: var(--strawberry);
+  font-family: var(--font-ui);
+  font-size: 0.58rem;
+}
 
 .product-card__actions {
   display: grid;
 
-  /* Keep your original unequal button proportions */
   grid-template-columns: 1fr 1.4fr;
 
   gap: 6px;
@@ -269,10 +229,8 @@
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 3px;
 
-  /* Softened from the old uppercase/tracked "monospace button" look -
-     letter-spacing near-normal, real case as authored in the JSX. */
   font-family: var(--font-ui);
-  font-size: 0.52rem;
+  font-size: 0.6rem;
 
   letter-spacing: 0.01em;
   text-transform: none;
@@ -280,23 +238,15 @@
   text-decoration: none;
 }
 
-/* View Item alone in Browse Mode - spans both grid columns since
-   there's no Edit button beside it anymore */
 .product-card__action--full {
   grid-column: 1 / -1;
 }
-
-
-/* Secondary action: Cancel (Edit's own button no longer exists) */
 
 .product-card__action--secondary {
   background: transparent;
 
   color: var(--surface);
 }
-
-
-/* Primary action: View Item / Save */
 
 .product-card__action--primary {
   background: var(--strawberry);
@@ -310,10 +260,6 @@
   opacity: 0.6;
   cursor: default;
 }
-
-
-/* SELECT MODE - sits above everything else in the card so a click
-   toggles selection instead of reaching View Item/Edit/+ underneath */
 
 .product-card__select-layer {
   position: absolute;

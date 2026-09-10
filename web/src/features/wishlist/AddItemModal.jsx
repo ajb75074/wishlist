@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "../../lib/AuthContext";
+import { useAuth } from "../../lib/useAuth";
+import { useEscapeKey } from "../../lib/useEscapeKey";
+import { parsePriceInput } from "../../lib/priceInput";
 import "../../components/modal.css";
 import "./AddItemModal.css";
 import {
@@ -9,29 +11,6 @@ import {
   saveWishlistItem,
   uploadItemImage,
 } from "./wishlist";
-
-// Non-negative decimal, optionally with a leading $ and thousands
-// separators the user might naturally type - anything else is
-// rejected outright rather than silently coerced (the extension's own
-// normalizePrice strips non-numeric characters first, which would
-// turn "abc" into 0 via Number("") - deliberately not reused here).
-const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/;
-
-function parsePriceInput(rawValue) {
-  const trimmed = rawValue.trim();
-
-  if (!trimmed) {
-    return { valid: true, value: null };
-  }
-
-  const cleaned = trimmed.replace(/^\$/, "").replace(/,/g, "");
-
-  if (!PRICE_PATTERN.test(cleaned)) {
-    return { valid: false };
-  }
-
-  return { valid: true, value: Number(cleaned) };
-}
 
 function parseProductUrlInput(rawValue) {
   const trimmed = rawValue.trim();
@@ -51,8 +30,6 @@ function parseProductUrlInput(rawValue) {
   }
 }
 
-// Simple picture-frame glyph, matching the app's existing blocky/
-// geometric icon style (see ProductCard's AddToCollectionIcon).
 function PhotoIcon() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
@@ -63,19 +40,11 @@ function PhotoIcon() {
   );
 }
 
-// App only renders this while the modal should be open, so each open
-// is a fresh mount - form state, the preview, and the one UUID this
-// creation lifecycle uses all start clean for free, same pattern as
-// every other modal in this app.
 function AddItemModal({ onClose, onCreated }) {
   const { user } = useAuth();
 
-  // Generated once per mount (lazy - only on first render), reused
-  // across every retry within this same open/submit lifecycle so a
-  // failed attempt never abandons one Storage upload just to make
-  // another under a different, orphaned path. A genuinely fresh
-  // lifecycle only ever starts from a fresh mount (closing and
-  // reopening the modal), which naturally produces a new one.
+  // Generated once per mount and reused across retries, so a failed attempt
+  // never orphans its upload.
   const wishitemIdRef = useRef(null);
   if (wishitemIdRef.current === null) {
     wishitemIdRef.current = crypto.randomUUID();
@@ -97,13 +66,9 @@ function AddItemModal({ onClose, onCreated }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Synchronous lock, not just isSubmitting - the same reasoning as
-  // ChangePasswordModal's isSubmittingRef: isSubmitting is regular
-  // React state, so a second submit landing before the next render
-  // commits could still read the old (false) value. This is set in
-  // the same tick as the check, so a duplicate call (rapid
-  // double-click, double Enter) can never slip through and produce a
-  // second UUID, upload, or wishitem.
+  // Synchronous lock (same reasoning as ChangePasswordModal's
+  // isSubmittingRef) - prevents a rapid double-submit from producing a
+  // second UUID/upload/wishitem before React re-renders with isSubmitting true.
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -119,20 +84,8 @@ function AddItemModal({ onClose, onCreated }) {
     onClose();
   }
 
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        handleClose();
-      }
-    }
+  useEscapeKey(handleClose);
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSubmitting]);
-
-  // Shared by the file input and drag-and-drop below, so both paths
-  // get identical validation/preview behavior.
   function processFile(file) {
     if (!file) return;
 
@@ -239,10 +192,8 @@ function AddItemModal({ onClose, onCreated }) {
       });
 
       if (!saveResult.success) {
-        // The row was never created (or wasn't the one this photo was
-        // meant for) - the upload is now orphaned, clean it up rather
-        // than leaving it behind. Best-effort: if this also fails, the
-        // user still sees the real error below, not a second one.
+        // The row was never created - clean up the now-orphaned upload. Best-
+        // effort.
         await removeItemImage(uploadResult.path);
 
         if (saveResult.duplicate) {

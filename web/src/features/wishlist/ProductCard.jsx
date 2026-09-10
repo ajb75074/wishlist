@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { parsePriceInput } from "../../lib/priceInput";
 import "./ProductCard.css";
 
-// Simple blocky plus, matching FilterBar's rect-based icon style.
 function AddToCollectionIcon() {
   return (
     <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
@@ -22,11 +22,11 @@ function ProductCard({
   onToggleSelect,
   startEditSignal,
 }) {
-  // Controls whether the overlay is showing inputs instead of text
   const [isEditing, setIsEditing] = useState(false);
 
-  // Stores temporary edit values
   const [colorInput, setColorInput] = useState("");
+  const [priceInput, setPriceInput] = useState("");
+  const [priceError, setPriceError] = useState(false);
 
   // Focus the color input whenever editing begins, from either trigger
   // below - a real DOM side effect, so this belongs in an effect.
@@ -37,31 +37,32 @@ function ProductCard({
     }
   }, [isEditing]);
 
-  // Lets App.jsx's "edit" action-tray button (Select Mode, exactly one
-  // item selected) open THIS card's existing edit mode, without lifting
-  // isEditing out of the card. startEditSignal changes to a new,
-  // distinct value each time the tray button is clicked - even for the
-  // same product twice in a row - so this keeps re-triggering correctly.
-  // Handled during render (React's sanctioned way to react to a prop
-  // change without an effect) rather than in a useEffect, since calling
-  // setState synchronously inside an effect body is the exact pattern
-  // React's own lint rule flags as a cascading-render risk.
+  // startEditSignal changes value on every click, so the same card can be re-
+  // opened twice in a row.
   const [lastEditSignal, setLastEditSignal] = useState(startEditSignal);
   if (startEditSignal && startEditSignal !== lastEditSignal) {
     setLastEditSignal(startEditSignal);
     setColorInput(product.color || "");
+    setPriceInput(product.price != null ? String(product.price) : "");
+    setPriceError(false);
     setIsEditing(true);
   }
 
-  // Close inline editing without saving
   function cancelEditing() {
     setIsEditing(false);
   }
 
-  // Save updated color
   async function saveEditing() {
+    const priceResult = parsePriceInput(priceInput);
+    if (!priceResult.valid) {
+      setPriceError(true);
+      return;
+    }
+    setPriceError(false);
+
     const result = await onUpdate(product.id, {
       color: colorInput.trim() || null,
+      price: priceResult.value,
     });
 
     if (result.success) {
@@ -104,14 +105,37 @@ function ProductCard({
               {product.store}
             </p>
 
-            <p className="product-card__price">
-              {product.price
-                ? `$${product.price}`
-                : "Price unavailable"}
-            </p>
+            {!isEditing && (
+              <p className="product-card__price">
+                {product.price
+                  ? `$${product.price}`
+                  : "Price unavailable"}
+              </p>
+            )}
 
             {/* Product metadata, editable in place */}
             <div className="product-card__meta">
+              {isEditing && (
+                <div>
+                  <span>PRICE</span>
+                  <input
+                    className="product-card__meta-input"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="e.g. 128.00"
+                    value={priceInput}
+                    onChange={(event) => {
+                      setPriceInput(event.target.value);
+                      setPriceError(false);
+                    }}
+                    disabled={isUpdating}
+                  />
+                  {priceError && (
+                    <p className="product-card__meta-error">Enter a valid price.</p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <span>COLOR</span>
                 {isEditing ? (
@@ -155,12 +179,8 @@ function ProductCard({
                 </button>
               </>
             ) : (
-              // Browse Mode only shows View Item - editing now only
-              // happens via the Select Mode action tray's "edit". A
-              // manual item may have no link at all (something the
-              // user already owns, nothing to view online) - rather
-              // than rendering an inert <a> with no href, the action
-              // is simply omitted for those items.
+              // A manual item may have no link at all, so View Item is
+              // conditional.
               product.productUrl && (
                 <a
                   className="product-card__action product-card__action--primary product-card__action--full"
