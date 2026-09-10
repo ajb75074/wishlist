@@ -1,5 +1,3 @@
-/* Always the same small rounded square, regardless of image vs. color -
-   only the fill inside it changes. */
 .collection-thumbnail {
   display: inline-block;
   flex-shrink: 0;

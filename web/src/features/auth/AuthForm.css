@@ -1,6 +1,3 @@
-/* Right-side form content, rendered inside AuthShell's own
-   .auth-shell__form-panel (which already centers it) - this file only
-   owns the form's own width/spacing/field styling, not the page shell. */
 .auth-form {
   width: 100%;
   max-width: 360px;
@@ -143,8 +140,6 @@
   color: var(--success);
 }
 
-/* Flat strawberry, full form width - the one primary action on this
-   screen, no gradient/glow/heavy shadow. */
 .auth-form__submit {
   width: 100%;
   margin-top: 6px;

@@ -1,8 +1,3 @@
-/* Pinned to the viewport and locked to its exact height (not just
-   sticky + auto height) so it can never need its own scroll and never
-   drifts out of place, whatever the main content's length is. A quiet
-   fashion-archive nav rail, not a pink panel: warm cream/blush-
-   neutral ground, barely distinguishable from the page behind it. */
 .sidebar {
   position: sticky;
   top: 0;
@@ -45,9 +40,6 @@
   height: auto;
 }
 
-/* WORDMARK - the one place Elsie appears at real display size in the
-   sidebar. Generous space below it is deliberate breathing room, not
-   a card. */
 .sidebar-wordmark {
   margin: 4px 0 8px;
 }
@@ -58,9 +50,6 @@
   height: auto;
 }
 
-/* Shared button reset only - typography/color/padding are set per
-   section below so nav, collection rows, and New Collection can each
-   have their own scale without fighting each other. */
 .sidebar-nav button,
 .sidebar-collections button {
   border: 0;
@@ -69,8 +58,6 @@
   cursor: pointer;
 }
 
-/* NAV - quieter than the content it leads to. Deep-ink text at rest,
-   a pale blush pill (not a strawberry block) for the active page. */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -94,7 +81,7 @@
 }
 
 .sidebar-nav button:hover {
-  background: rgba(36, 79, 67, 0.06);
+  background: rgba(var(--forest-ink-rgb), 0.06);
 }
 
 .sidebar-nav button.active {
@@ -107,7 +94,6 @@
   flex-shrink: 0;
 }
 
-/* A quiet rose hairline. */
 .sidebar-divider {
   height: 1px;
   flex-shrink: 0;
@@ -122,8 +108,6 @@
   gap: 2px;
 }
 
-/* Small tracked-out eyebrow label, not a brand moment - the wordmark
-   above already carries the personality. */
 .sidebar-label {
   margin: 4px 0 8px;
   padding: 0 10px;
@@ -136,9 +120,6 @@
   color: var(--muted-ink);
 }
 
-/* Collection rows - tight list, consistent casing regardless of how
-   each name was typed, flex row so the swatch/thumbnail sits before
-   the text. */
 .sidebar-collection-item {
   display: flex;
   align-items: center;
@@ -156,18 +137,14 @@
 }
 
 .sidebar-collection-item:hover {
-  background: rgba(36, 79, 67, 0.06);
+  background: rgba(var(--forest-ink-rgb), 0.06);
 }
 
-/* Pistachio marks "this is the open collection" - distinct from the
-   nav's blush active pill so the two kinds of "active" don't compete. */
 .sidebar-collection-item.active {
   background: var(--pistachio);
   color: var(--forest-ink);
 }
 
-/* Quiet tertiary action, not a decorative sticker taking up the
-   sidebar's own real estate - same row scale as a collection item. */
 button.sidebar-new-collection {
   display: flex;
   align-items: center;
@@ -190,8 +167,6 @@ button.sidebar-new-collection {
   background: var(--blush);
 }
 
-/* WHIMSY - the sidebar's one decorative moment. A small hand-drawn
-   bow + a handwritten line, nothing else. */
 .sidebar-whimsy {
   display: flex;
   align-items: center;

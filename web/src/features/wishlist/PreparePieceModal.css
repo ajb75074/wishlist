@@ -1,14 +1,6 @@
-/* Container base/typography/buttons live in ../../components/modal.css -
-   this file only holds what's specific to this modal's editor. */
 .prepare-piece-modal {
   width: 640px;
   max-width: calc(100vw - 32px);
-  /* The shared .modal/.modal-backdrop (modal.css) have no max-height or
-     scroll handling at all - fine for this app's other short, fixed
-     modals, but this one's content grows dynamically (the canvas, then
-     the preview cutout image appearing below it) and can exceed the
-     viewport, with no way to reach Save/Cancel underneath. Scoped here
-     rather than in modal.css since the other modals don't need it. */
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -22,16 +14,11 @@
   margin: 28px 0;
 }
 
-/* Simple rotating ring - a real "still working" cue instead of static
-   text alone, in the same pink/cream language the rest of the app's
-   loading/generating states already use (see Illustrate Look's own
-   pulsating-generate button). No fake progress percentage, since
-   there's nothing to measure here either. */
 .prepare-piece-modal__spinner {
   width: 34px;
   height: 34px;
 
-  border: 3px solid rgba(73, 60, 62, 0.18);
+  border: 3px solid rgba(var(--cocoa-ink-rgb), 0.18);
   border-top-color: var(--strawberry);
   border-radius: 50%;
 
@@ -58,8 +45,6 @@
   font-size: 0.85rem;
 }
 
-/* Underline-tab pair, same lightweight pattern CreateCollectionModal's
-   cover-type toggle already uses - not a segmented pill. */
 .prepare-piece-modal__mode-toggle {
   display: flex;
   justify-content: center;
@@ -67,7 +52,7 @@
 
   margin: 18px 0 14px;
 
-  border-bottom: 1px solid rgba(73, 60, 62, 0.12);
+  border-bottom: 1px solid rgba(var(--cocoa-ink-rgb), 0.12);
 }
 
 .prepare-piece-modal__mode-btn {
@@ -111,13 +96,6 @@
 
   display: flex;
   justify-content: center;
-  /* Without this, flex's default align-items: stretch forces the
-     canvas to fill this wrapper's full height regardless of the
-     image's real proportions - a <canvas> doesn't support object-fit
-     the way an <img> does, so its bitmap just gets non-uniformly
-     squished/stretched to whatever box height it's handed. Centering
-     instead lets the canvas render at its own natural,
-     aspect-ratio-correct size (bounded by max-width/max-height below). */
   align-items: center;
 
   max-height: 55vh;
@@ -145,7 +123,7 @@
   padding: 4px 10px;
 
   border-radius: 10px;
-  background: rgba(60, 32, 40, 0.75);
+  background: rgba(var(--cherry-ink-rgb), 0.75);
 
   color: var(--surface);
   font-family: var(--font-ui);
@@ -163,7 +141,7 @@
 .prepare-piece-modal__point-actions button {
   padding: 8px 14px;
 
-  border: 1px solid rgba(73, 60, 62, 0.22);
+  border: 1px solid rgba(var(--cocoa-ink-rgb), 0.22);
   border-radius: 8px;
   background: transparent;
 
@@ -192,7 +170,7 @@
   margin-top: 16px;
   padding: 16px;
 
-  border: 1px dashed rgba(73, 60, 62, 0.2);
+  border: 1px dashed rgba(var(--cocoa-ink-rgb), 0.2);
   border-radius: 10px;
   background:
     linear-gradient(45deg, var(--blush) 25%, transparent 25%) -8px 0 / 16px 16px,

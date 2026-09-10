@@ -1,6 +1,3 @@
-/* Collection Detail's own simple toolbar row (just this kebab menu,
-   no tabs/filter/count) - All Saves has its own richer toolbar now
-   (WishlistToolbar.css) built on a different layout. */
 .toolbar-row {
   display: flex;
   align-items: center;
@@ -9,7 +6,6 @@
   margin: 22px 0 20px;
 }
 
-/* Icon-only, 30x30 square. */
 .select-mode-bar__enter {
   flex-shrink: 0;
 

@@ -2,8 +2,6 @@
   padding-top: 28px;
 }
 
-/* Global row - search recedes to the left, profile stays compact on
-   the right. Nothing here competes with the hero below it. */
 .wishlist-hero__bar {
   display: flex;
   align-items: center;
@@ -11,8 +9,6 @@
   gap: 16px;
 }
 
-/* Medium width, not page-spanning - search is useful here, not the
-   focal point. */
 .wishlist-hero__search {
   display: flex;
   align-items: center;
@@ -47,8 +43,6 @@
   color: var(--muted-ink);
 }
 
-/* A plain control, not a pill/card - the personal, understated
-   treatment the brief asks for over an "enterprise account menu". */
 .wishlist-hero__profile {
   flex-shrink: 0;
 
@@ -110,8 +104,6 @@
   font-size: 0.7rem;
 }
 
-/* Editorial and airy, on purpose: no card, no background fill.
-   Whitespace (the margins here) is doing most of the work. */
 .wishlist-hero__identity {
   position: relative;
 

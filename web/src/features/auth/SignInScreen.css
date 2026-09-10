@@ -1,11 +1,3 @@
-/* Now used ONLY by ResetPasswordScreen.jsx (the /reset-password email-
-   link landing page, reached directly from AuthGate, never through
-   SignInScreen's own mode switch) - SignInScreen and
-   ForgotPasswordScreen moved to AuthShell.css/AuthForm.css's split-
-   screen redesign and no longer reference these classes. Left as its
-   own minimal functional style rather than folded into that redesign,
-   since ResetPasswordScreen's various checking/invalid/success states
-   were out of scope for it. */
 .sign-in-screen {
   min-height: 100svh;
   width: 100%;
@@ -102,7 +94,6 @@
   cursor: pointer;
 }
 
-/* Functional nav link, not a scrapbook moment - plain Quicksand. */
 .sign-in-screen__switch {
   margin-top: 12px;
   padding: 0;

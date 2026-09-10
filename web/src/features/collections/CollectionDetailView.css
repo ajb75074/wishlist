@@ -50,15 +50,13 @@
   color: var(--muted-ink);
 }
 
-/* Editorial, not SaaS-pill - just a muted/active label pair over a
-   thin shared baseline, with the active tab's own underline riding it. */
 .collection-tabs {
   display: flex;
   gap: 28px;
 
   margin-bottom: 24px;
 
-  border-bottom: 1px solid rgba(73, 60, 62, 0.15);
+  border-bottom: 1px solid rgba(var(--cocoa-ink-rgb), 0.15);
 }
 
 .collection-tabs__tab {
@@ -97,8 +95,6 @@
   color: var(--error);
 }
 
-/* Same pink success-banner treatment as CollectionSavePopover's
-   "added to X ♡" message, reused here for "removed from X ♡". */
 .collection-detail__success {
   margin: 0 0 16px;
   padding: 6px 8px;
@@ -166,7 +162,6 @@
 .collection-detail__looks-subtitle {
   margin: 0;
 
-  /* Handwritten annotation, pairing with the heart + title above. */
   font-family: var(--font-ui);
   font-size: 0.95rem;
   line-height: 1.5;
@@ -182,9 +177,6 @@
   margin-bottom: 20px;
 }
 
-/* Short editorial section stamp, matching the sidebar's "MY
-   COLLECTIONS" treatment - not a sentence, so --font-accent (not
-   --font-ui) is right here. */
 .looks-header__title {
   margin: 0;
 
@@ -223,7 +215,7 @@
   margin-top: 14px;
   padding: 10px 18px;
 
-  border: 1px solid rgba(73, 60, 62, 0.22);
+  border: 1px solid rgba(var(--cocoa-ink-rgb), 0.22);
   border-radius: 8px;
   background: transparent;
 

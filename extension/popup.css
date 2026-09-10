@@ -1,6 +1,3 @@
-/* Wishlist popup - warm editorial redesign. All popup styling lives
-   here rather than an inline <style> block, per the redesign brief. */
-
 :root {
   --wl-cream: #faf6ee;
   --wl-cream-deep: #f2e9db;
@@ -32,10 +29,6 @@ body {
   padding: 0;
 }
 
-/* A Chrome extension popup has no browser chrome of its own - the HTML
-   page IS the window - so rounding html/body and clipping overflow is
-   what makes the popup box itself read as rounded, rather than just
-   rounding some inner content block. */
 html {
   border-radius: 14px;
   overflow: hidden;
@@ -71,10 +64,6 @@ a {
   border-radius: 4px;
 }
 
-/* HEADER - persistent across every state. The heart is a navigation
-   icon to the existing wishlist page, not a per-item favorite toggle
-   (it never changes state, always does the same thing). */
-
 .wl-header {
   display: flex;
   align-items: center;
@@ -109,8 +98,6 @@ a {
 .wl-header__wishlist-btn:active {
   transform: scale(0.95);
 }
-
-/* SHARED BUTTONS */
 
 .wl-btn {
   width: 100%;
@@ -196,8 +183,6 @@ a {
   text-decoration: underline;
 }
 
-/* INLINE STATUS NOTE (below the Save button) */
-
 .wl-inline-note {
   margin: 10px 0 0;
   text-align: center;
@@ -208,8 +193,6 @@ a {
 .wl-inline-note--error {
   color: #b1435c;
 }
-
-/* SKELETON / LOADING */
 
 .wl-skeleton {
   display: flex;
@@ -265,18 +248,11 @@ a {
   }
 }
 
-/* PRODUCT SCREEN */
-
 .wl-product {
   display: flex;
   flex-direction: column;
 }
 
-/* No fixed height and no background here - a real photo should define
-   this area's size on its own (width-first, then capped by max-height
-   below), so it never sits inside a visibly-colored frame. The broken-
-   image placeholder is the one case that still needs a deliberate box,
-   handled separately on .wl-product__image-placeholder itself. */
 .wl-product__image-frame {
   position: relative;
   width: 100%;
@@ -332,9 +308,6 @@ a {
   color: var(--wl-charcoal-soft);
 }
 
-/* Price / color shown as a small clean info list, matching the
-   reference layout - label left, value right, thin dividers. */
-
 .wl-product__rows {
   margin: 16px 0 20px;
   border-top: 1px solid var(--wl-border);
@@ -359,13 +332,10 @@ a {
   color: var(--wl-charcoal);
 }
 
-/* If there are no rows, keep the rhythm before the button */
 .wl-product__store + .wl-btn,
 .wl-product__name + .wl-btn {
   margin-top: 20px;
 }
-
-/* EMPTY / EXTRACTION ERROR SCREEN */
 
 .wl-empty {
   display: flex;
@@ -428,8 +398,6 @@ a {
 .wl-empty__tips-list li + li {
   margin-top: 4px;
 }
-
-/* SUCCESS SCREEN */
 
 .wl-success {
   display: flex;
@@ -536,8 +504,6 @@ a {
   flex-shrink: 0;
 }
 
-/* ANIMATION - entrance for whole screens */
-
 .wl-anim-in {
   opacity: 1;
 }
@@ -549,13 +515,9 @@ a {
   }
 }
 
-/* Product screen exit, played just before the success screen swaps in */
-
 .wl-product.wl-exit {
   animation: wl-exit-shrink 200ms ease forwards;
 }
-
-/* Success screen staggered entrance */
 
 .wl-success__badge,
 .wl-success__check,
@@ -604,8 +566,6 @@ a {
     animation: wl-fade-up 200ms ease 500ms forwards;
   }
 }
-
-/* KEYFRAMES */
 
 @keyframes wl-shimmer-sweep {
   100% {

@@ -1,8 +1,3 @@
-/* Fixed-size viewport matching the source GIF's own 480x270 canvas -
-   the <canvas> element's internal pixel buffer is set to that exact
-   size in JS (see ClothingRackAnimation.jsx), so this only controls
-   its DISPLAY size; since the aspect-ratio here matches the buffer
-   exactly, the browser scales it uniformly with no distortion. */
 .clothing-rack-animation {
   display: flex;
   align-items: center;

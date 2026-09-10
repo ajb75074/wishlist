@@ -11,28 +11,13 @@
   display: flex;
   flex-direction: column;
 
-  /* Shared content gutter - Header/FilterBar/ProductGrid all span
-     this box's full width, so they line up with each other without
-     needing their own horizontal padding. */
   padding: 0 24px;
 }
 
-/* Everything except the footer - grows to fill the leftover vertical
-   space, so Footer always lands at the bottom of the viewport (on
-   short pages) or the bottom of the scrolled content (on long ones),
-   never floating right under a short page's own content. */
 .app-content__main {
   flex: 1;
 }
 
-/* Look Studio gets the full window width instead of sharing it with
-   the collections sidebar - selectedLook is local state inside
-   CollectionDetailView, not lifted up to App.jsx, so this is done
-   purely in CSS (a relative :has() check for .look-detail anywhere in
-   the tree) rather than threading an "is a Look open" flag down
-   through App -> CollectionDetailView just to toggle one element.
-   .app-content is already flex: 1, so it fills the freed width on its
-   own once .sidebar is gone - no other layout change needed. */
 .app-layout:has(.look-detail) .sidebar {
   display: none;
 }

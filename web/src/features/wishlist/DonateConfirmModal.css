@@ -1,5 +1,3 @@
-/* Container base/typography/buttons now live in ./modal.css - this
-   file only holds what's actually specific to this modal. */
 .donate-confirm-modal {
   width: 300px;
 }

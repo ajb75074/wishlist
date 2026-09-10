@@ -17,7 +17,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(60, 32, 40, 0.2);
+  box-shadow: 0 8px 24px rgba(var(--cherry-ink-rgb), 0.2);
 }
 
 .action-tray__button {

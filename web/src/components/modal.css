@@ -1,11 +1,3 @@
-/* Shared visual language for the app's confirmation/creation modals -
-   a calm, editorial "task" surface that's intentionally quieter than
-   the scrapbook/jewel-frame personality of the page behind it. Each
-   modal's own CSS file only needs its width and any content-specific
-   layout (form controls, toggles, etc.); this file owns the backdrop,
-   container base, typography scale, form-field system, and buttons so
-   every modal reads as one system instead of hand-copied ones. */
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -15,18 +7,9 @@
   align-items: center;
   justify-content: center;
 
-  /* Translucent and warm, not a heavy black/purple scrim - the page
-     behind should still read as itself, just clearly inactive. */
-  background: rgba(60, 32, 40, 0.4);
+  background: rgba(var(--cherry-ink-rgb), 0.4);
 }
 
-/* Stationery-card moment: a slightly larger, uneven radius on the top
-   two corners only (vs. a uniform radius) reads as a die-cut/deckle-
-   edge card without fighting the translucent backdrop scrim the way a
-   literal scallop mask would - the one restrained decorative touch
-   for every modal built on this shared shell. Kept subtle (not the
-   exaggerated 28px/16px split this used to be) so it registers as a
-   detail, not a shape statement. */
 .modal {
   box-sizing: border-box;
   max-width: calc(100vw - 32px);
@@ -36,16 +19,12 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px 20px 14px 14px;
-  box-shadow: 0 12px 32px rgba(60, 32, 40, 0.14);
+  box-shadow: 0 12px 32px rgba(var(--cherry-ink-rgb), 0.14);
 
   color: var(--cocoa-ink);
   text-align: center;
 }
 
-/* Serif carries the emotional weight - titles/questions only, nothing
-   else in the modal competes with it. Centered by default (the simple
-   confirmation dialogs - Donate, Delete - read best that way); form
-   modals override to left-aligned via their own header, below. */
 .modal__title {
   margin: 0 0 10px;
 
@@ -53,21 +32,12 @@
   font-size: 1.2rem;
   font-weight: 400;
   line-height: 1.35;
-  /* Explicit, not inherited from .modal - a bare global `h2` rule
-     elsewhere would otherwise win (direct rules beat inherited ones)
-     and tie this to the visitor's OS light/dark preference instead of
-     this app's fixed light theme. */
+  /* Set explicitly, not inherited - the global `h2` rule would otherwise win. */
   color: var(--cherry-ink);
 
   overflow-wrap: anywhere;
 }
 
-/* Title row for the form modals (Add Item, Create/Edit Collection):
-   title on the left, close button on the right, left-aligned - the
-   editorial anchor the brief asks for, instead of every modal being
-   centered. No subtitle row anymore - titles are confident enough on
-   their own (see the copy audit that removed "save the things you
-   love"-style descriptions). */
 .modal__header {
   display: flex;
   align-items: flex-start;
@@ -82,9 +52,6 @@
   margin: 0;
 }
 
-/* Consistent close affordance across every modal - a plain "×", not a
-   filled circle, with padding rather than a bigger glyph so the hit
-   area is comfortable without looking heavy. */
 .modal__close {
   flex-shrink: 0;
   margin: -6px -6px 0 0;
@@ -106,8 +73,6 @@
   color: var(--strawberry);
 }
 
-/* Everything else is quiet editorial body copy, sharing the app's
-   --font-ui stack rather than introducing another display font. */
 .modal__body {
   margin: 0;
 
@@ -115,7 +80,7 @@
   font-size: 0.82rem;
   line-height: 1.55;
 
-  color: rgba(73, 60, 62, 0.65);
+  color: rgba(var(--cocoa-ink-rgb), 0.65);
 }
 
 .modal__error {
@@ -127,10 +92,6 @@
   color: var(--error);
 }
 
-/* Centered by default - matches the simple, centered confirmation
-   dialogs (Donate, Delete) this shell also serves. The three form
-   modals in this redesign override to flex-end in their own CSS,
-   pairing with their now-left-aligned header. */
 .modal__actions {
   display: flex;
   justify-content: center;
@@ -139,11 +100,6 @@
   margin-top: 22px;
 }
 
-/* Base button is the shared "cream/pistachio secondary action" -
-   --pistachio is documented in index.css as the secondary-button
-   token, so the default (Cancel, etc.) reads as a soft secondary
-   pill against the card; .modal__button--primary below overrides it
-   for the one strawberry call-to-action per modal. */
 .modal__button {
   padding: 10px 18px;
 
@@ -174,12 +130,6 @@
   border-color: var(--strawberry-hover);
 }
 
-/* Quieter alternative to the base (pistachio-filled) button, for the
-   three form modals in this redesign - Cancel shouldn't visually
-   compete with the primary action next to it. Plain outline at rest,
-   a soft matcha wash on hover/focus. Additive rather than a change to
-   .modal__button itself, so Donate/Delete's existing Cancel buttons
-   elsewhere keep their current look. */
 .modal__button--secondary {
   background: transparent;
   border-color: var(--border);
@@ -196,13 +146,6 @@
   cursor: default;
 }
 
-/* ============================================================
-   Shared form-field system - Add Item and Create/Edit Collection all
-   build their forms from these instead of each hand-rolling its own
-   input/label styling, so they can't drift into separate visual
-   systems again.
-   ============================================================ */
-
 .modal-field-group {
   margin-bottom: 20px;
   text-align: left;
@@ -212,8 +155,6 @@
   margin-bottom: 0;
 }
 
-/* Two columns on desktop (e.g. Price + Color), one on narrow screens -
-   see each modal's own responsive rules for the exact breakpoint. */
 .modal-field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -230,9 +171,6 @@
   color: var(--cocoa-ink);
 }
 
-/* Appended to an optional field's label text, not a separate element -
-   only genuinely required fields get a "*"; everything else says so
-   plainly instead of leaving it ambiguous. */
 .modal-field-label__hint {
   font-weight: 500;
   color: var(--muted-ink);

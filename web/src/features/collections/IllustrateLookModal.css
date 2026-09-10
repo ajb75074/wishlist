@@ -1,8 +1,3 @@
-/* Container base/typography/buttons live in ../modal.css - this file
-   only holds what's specific to Illustrate Look's own sections. The
-   shared .modal is text-align: center by default (fits the app's other
-   short confirmation modals); this one has real left-aligned content,
-   so that's overridden here. */
 .illustrate-look-modal {
   width: 540px;
   max-height: 90vh;
@@ -19,10 +14,6 @@
   margin-bottom: 22px;
 }
 
-/* Deliberately NOT .modal__title - matches Look Studio's own header
-   (LookDetailView.css's .look-studio__title), which uses the same
-   --font-accent stamp treatment, so this modal reads as part of that
-   same tool rather than borrowing the app's generic modal title style. */
 .illustrate-look-modal__title {
   margin: 0 0 4px;
 
@@ -55,8 +46,6 @@
   margin-bottom: 20px;
 }
 
-/* Short (1-2 word) structural stamp - exactly the "editorial section
-   label" role --font-accent is for now, not a sentence. */
 .illustrate-look-modal__section-label {
   margin: 0 0 10px;
 
@@ -67,12 +56,6 @@
   text-transform: uppercase;
 }
 
-/* MODEL - a small dimensional frame around the same custom model photo
-   Look Studio's own bed uses (LookDetailView's useBedModel) - shows the
-   real photo when the user has uploaded one, or an inline upload
-   prompt in its place otherwise (see .illustrate-look-modal__avatar-
-   placeholder below), so this always reflects exactly what generation
-   will actually use, never a generic placeholder. */
 .illustrate-look-modal__avatar-frame {
   display: flex;
   align-items: center;
@@ -85,7 +68,7 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), var(--blush));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -2px 4px rgba(73, 60, 62, 0.15);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), inset 0 -2px 4px rgba(var(--cocoa-ink-rgb), 0.15);
 }
 
 .illustrate-look-modal__avatar {
@@ -147,10 +130,6 @@
   text-align: center;
 }
 
-/* YOUR LOOK - compact thumbnail row of only the currently-placed
-   pieces (passed in as `pieces`, already filtered by LookDetailView).
-   Same warm-white/pink-frame tile language as the catalog, scaled
-   down for a read-only preview strip. */
 .illustrate-look-modal__pieces {
   display: flex;
   flex-wrap: wrap;
@@ -166,10 +145,10 @@
   height: 64px;
   padding: 6px;
 
-  border: 1.5px solid rgba(200, 68, 96, 0.65);
+  border: 1.5px solid rgba(var(--strawberry-hover-rgb), 0.65);
   border-radius: 12px;
   background: linear-gradient(145deg, var(--surface), var(--powder-pink));
-  box-shadow: 0 4px 10px rgba(60, 32, 40, 0.12);
+  box-shadow: 0 4px 10px rgba(var(--cherry-ink-rgb), 0.12);
 }
 
 .illustrate-look-modal__piece img {
@@ -187,8 +166,6 @@
   font-size: 0.92rem;
 }
 
-/* STYLE - single selectable card now, built to hold more later
-   (ILLUSTRATION_STYLES is an array) without restructuring this markup. */
 .illustrate-look-modal__styles {
   display: flex;
   flex-direction: column;
@@ -213,7 +190,7 @@
 }
 
 .illustrate-look-modal__style-card:hover {
-  border-color: rgba(233, 93, 117, 0.5);
+  border-color: rgba(var(--strawberry-rgb), 0.5);
 }
 
 .illustrate-look-modal__style-card:focus-visible {
@@ -223,12 +200,9 @@
 
 .illustrate-look-modal__style-card.is-selected {
   border-color: var(--strawberry);
-  box-shadow: 0 0 0 3px rgba(233, 93, 117, 0.16);
+  box-shadow: 0 0 0 3px rgba(var(--strawberry-rgb), 0.16);
 }
 
-/* Decorative placeholder for a future style preview thumbnail - no
-   generated image exists yet, so this is a plain tinted swatch, not a
-   faked result. */
 .illustrate-look-modal__style-swatch {
   flex-shrink: 0;
 
@@ -259,8 +233,6 @@
   line-height: 1.45;
 }
 
-/* Functional status text (errors especially) - plain and readable,
-   not decorative type. */
 .illustrate-look-modal__note {
   margin: 4px 0 0;
 
@@ -273,12 +245,6 @@
   color: var(--success);
 }
 
-/* Result state - the generated image fits within a fixed max-height so
-   a tall/odd-aspect result can never push the modal (and Look Studio's
-   own no-page-scroll layout behind it) past the viewport. The modal
-   itself already scrolls its own overflow via the browser's default
-   flow if content ever exceeds it, but capping height here keeps that
-   from ever being needed in practice. */
 .illustrate-look-modal__result-frame {
   display: flex;
   align-items: center;
@@ -305,18 +271,13 @@
   justify-content: flex-end;
 }
 
-/* Pulsating glow while a generation request is in flight - a real
-   working-state cue instead of a static disabled button, without a
-   fake progress bar/percentage (there's nothing to measure). Respects
-   reduced-motion; the button's own "illustrating your look..." label
-   still communicates the state either way. */
 @keyframes illustrate-look-pulse {
   0%,
   100% {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(233, 93, 117, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 0 rgba(var(--strawberry-rgb), 0.55);
   }
   50% {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 20px 6px rgba(233, 93, 117, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 20px 6px rgba(var(--strawberry-rgb), 0.55);
   }
 }
 

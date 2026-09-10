@@ -2,9 +2,6 @@
   margin-bottom: 28px;
 }
 
-/* VIEW - text tabs, not a segmented control. Centered under the hero,
-   close together, reading as archive sections rather than a settings
-   toggle. */
 .wishlist-toolbar__tabs {
   display: flex;
   justify-content: center;
@@ -13,11 +10,6 @@
   margin-bottom: 18px;
 }
 
-/* Sits between the Saved/Owned tabs and the actions row below - the
-   box itself stays a fixed, small height (so it never pushes Add Item/
-   Filter further down than that), while the image inside it renders
-   bigger and simply overflows the box (overflow: visible + centered),
-   rather than the box growing to fit it. */
 .wishlist-toolbar__accent {
   display: flex;
   align-items: center;
@@ -59,9 +51,6 @@
   border-bottom-color: var(--strawberry);
 }
 
-/* ACTIONS - creation on the left, browsing/management on the right.
-   space-between rather than hardcoded positions, so it stays correct
-   at any width. */
 .wishlist-toolbar__actions {
   display: flex;
   align-items: center;
@@ -130,8 +119,6 @@
   border-color: var(--strawberry);
 }
 
-/* Same height/visual family as Filter, narrower and icon-only - the
-   component itself (SelectModeBar) already renders exactly that. */
 .wishlist-toolbar__management .select-mode-bar__enter {
   width: 34px;
   height: 34px;
