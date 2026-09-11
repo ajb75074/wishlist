@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import AuthShell from "./AuthShell";
 import "./AuthForm.css";
@@ -119,6 +119,10 @@ function SignInScreen() {
           >
             New here? Create an account
           </button>
+
+          <p className="auth-form__footer">
+            <Link to="/privacy">Privacy</Link>
+          </p>
         </div>
       </form>
     </AuthShell>

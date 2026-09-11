@@ -140,6 +140,40 @@
   color: var(--success);
 }
 
+.auth-form__footer {
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.auth-form__footer a {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--muted-ink);
+  text-decoration: none;
+}
+
+.auth-form__footer a:hover {
+  color: var(--strawberry);
+  text-decoration: underline;
+}
+
+.auth-form__disclosure {
+  margin: 4px 0 14px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-ink);
+}
+
+.auth-form__disclosure a {
+  color: var(--muted-ink);
+  text-decoration: underline;
+}
+
+.auth-form__disclosure a:hover {
+  color: var(--strawberry);
+}
+
 .auth-form__submit {
   width: 100%;
   margin-top: 6px;

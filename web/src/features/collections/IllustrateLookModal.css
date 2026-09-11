@@ -233,6 +233,24 @@
   line-height: 1.45;
 }
 
+.illustrate-look-modal__disclosure {
+  margin: 14px 0 0;
+
+  color: var(--muted-ink);
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.illustrate-look-modal__disclosure a {
+  color: var(--muted-ink);
+  text-decoration: underline;
+}
+
+.illustrate-look-modal__disclosure a:hover {
+  color: var(--strawberry);
+}
+
 .illustrate-look-modal__note {
   margin: 4px 0 0;
 

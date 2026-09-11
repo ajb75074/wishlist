@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import "../../components/modal.css";
 import "./IllustrateLookModal.css";
 import { generateLookIllustration } from "./illustrateLook";
@@ -291,6 +292,12 @@ function IllustrateLookModal({
             </div>
 
             {phase === "error" && <p className="illustrate-look-modal__note">{errorMessage}</p>}
+
+            <p className="illustrate-look-modal__disclosure">
+              Visualize uses Google Gemini to process the outfit and reference imagery needed to
+              generate your illustration.{" "}
+              <Link to="/privacy">Learn more</Link>
+            </p>
 
             {/* No separate Cancel here - the modal's own × already closes
                 it, so a second "cancel" button next to Generate was

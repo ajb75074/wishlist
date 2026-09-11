@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import AuthShell from "./AuthShell";
 import "./AuthForm.css";
@@ -162,6 +162,11 @@ function SignUpScreen() {
           {errorMessage && <p className="auth-form__error">{errorMessage}</p>}
           {successMessage && <p className="auth-form__success">{successMessage}</p>}
 
+          <p className="auth-form__disclosure">
+            By creating an account, you acknowledge the{" "}
+            <Link to="/privacy">Privacy Policy</Link>.
+          </p>
+
           <button type="submit" className="auth-form__submit" disabled={isSubmitting}>
             {isSubmitting ? "Creating account…" : "Create account"}
           </button>
@@ -174,6 +179,10 @@ function SignUpScreen() {
           >
             Already have an account? Sign in
           </button>
+
+          <p className="auth-form__footer">
+            <Link to="/privacy">Privacy</Link>
+          </p>
         </div>
       </form>
     </AuthShell>

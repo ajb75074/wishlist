@@ -4,6 +4,7 @@ import SignInScreen from "../features/auth/SignInScreen";
 import SignUpScreen from "../features/auth/SignUpScreen";
 import ForgotPasswordScreen from "../features/auth/ForgotPasswordScreen";
 import ResetPasswordScreen from "../features/auth/ResetPasswordScreen";
+import PrivacyPolicyView from "../components/PrivacyPolicyView";
 
 const SIGNED_OUT_ROUTES = {
   "/sign-in": SignInScreen,
@@ -16,6 +17,12 @@ const SIGNED_OUT_ROUTES = {
 function AuthGate({ children }) {
   const { session, isLoading, isPasswordRecovery } = useAuth();
   const location = useLocation();
+
+  // Reachable regardless of session/loading state - a public document, not
+  // an app screen.
+  if (location.pathname === "/privacy") {
+    return <PrivacyPolicyView />;
+  }
 
   if (isLoading) {
     return <p>Loading...</p>;

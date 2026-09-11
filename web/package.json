@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:extension-config && vite build",
+    "build:web": "npm run build:extension-config && vite build --outDir dist",
     "build:extension-config": "node scripts/build-extension-config.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
