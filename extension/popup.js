@@ -323,7 +323,7 @@ async function handleSaveClick() {
         return;
     }
 
-    const product = extraction.product;
+    const product = WishlistProductUtils.normalizeProduct(extraction.product);
     const result = await WishlistService.saveWishlistItem(product);
 
     if (result.duplicate) {
@@ -379,7 +379,7 @@ async function loadProduct() {
         return;
     }
 
-    renderProduct(extraction.product);
+    renderProduct(WishlistProductUtils.normalizeProduct(extraction.product));
 }
 
 loadProduct();
