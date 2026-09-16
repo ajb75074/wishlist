@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:extension-config && vite build",
-    "build:web": "npm run build:extension-config && vite build --outDir dist",
+    "build": "npm run build:extension-config",
+    "build:web": "vite build",
     "build:extension-config": "node scripts/build-extension-config.mjs",
     "lint": "eslint .",
     "preview": "vite preview"

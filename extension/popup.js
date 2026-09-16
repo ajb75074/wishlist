@@ -66,7 +66,7 @@ function requestProduct(tabId) {
 
 function openWishlist() {
     chrome.tabs.create({
-        url: chrome.runtime.getURL("wishlist/index.html")
+        url: globalThis.WishlistExtensionConfig.appUrl
     });
 }
 
